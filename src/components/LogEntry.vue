@@ -8,7 +8,7 @@
         </div>
         <div class="log-item-time">
             <span>
-                {{ logItem.time }}
+                {{ logItem.timestamp }}
             </span>
         </div>
         <div class="log-item-text text-muted">
