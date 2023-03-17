@@ -15,7 +15,14 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { RouterView, useRoute } from "vue-router";
-const route = useRoute();
+import { useUserStore } from "@/stores/useUserStore";
 
+const route = useRoute();
+const userStore = useUserStore();
+
+onMounted(() => {
+  userStore.init();
+});
 </script>

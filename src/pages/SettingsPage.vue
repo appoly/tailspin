@@ -1,10 +1,13 @@
 <template>
     <div>
-        ADD SETTINGS HERE
+        <button @click="userStore.toggleTheme" class="btn btn-primary">Toggle Theme</button>
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { useUserStore } from '@/stores/useUserStore';
+
+const userStore = useUserStore();
 
 </script>
 

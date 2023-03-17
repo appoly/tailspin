@@ -14,14 +14,16 @@ export const useUserStore = defineStore("user", {
     },
     toggleTheme() {
       this.theme = this.theme === "light" ? "dark" : "light";
+      console.log(this.theme);
+
       this.setTheme();
     },
     setTheme() {
       window.localStorage.setItem("theme", this.theme);
       if (this.theme === "dark") {
-        document.documentElement.classList.add("dark");
+        document.documentElement.setAttribute("data-bs-theme", "dark");
       } else {
-        document.documentElement.classList.remove("dark");
+        document.documentElement.setAttribute("data-bs-theme", "light");
       }
     },
   },
