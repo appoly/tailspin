@@ -29,7 +29,7 @@
       </div>
     </div>
 
-        <template v-if="isLoading">
+    <template v-if="isLoading">
       <div v-for="row in 25" class="log-item p-2 my-2 cursor-none">
         <div class="log-item-severity placeholder-glow">
           <span class="col-9 placeholder rounded"
@@ -44,43 +44,43 @@
       </div>
     </template>
     <template v-else>
-    <div class="log-entry-container">
-      <LogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
-    </div>
+      <div class="log-entry-container">
+        <TheLogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
+      </div>
 
-    <!-- pagination -->
-    <div class="my-5" v-if="totalItems">
+      <!-- pagination -->
+      <div class="my-5" v-if="totalItems">
 
-      <div class="row justify-content-center">
-        <div class="col-8 text-center align-content-center">
-          <nav id="pagination">
-            <ul class="pagination">
-              <!-- pagination buttons -->
-              <li class="page-item" @click="page--" :disabled="page === 1">
-                <a href="#" class="page-link">
-                  Previous
-                </a>
-              </li>
-              <!-- paginationLinks -->
-              <li class="page-item" v-for="pageNumber in paginationLinks" @click="page = pageNumber"
-                :class="{ 'active': pageNumber === page }">
-                <a href="#" class="page-link">
-                  {{ pageNumber }}
-                </a>
-              </li>
+        <div class="row justify-content-center">
+          <div class="col-8 text-center align-content-center">
+            <nav id="pagination">
+              <ul class="pagination">
+                <!-- pagination buttons -->
+                <li class="page-item" @click="page--" :disabled="page === 1">
+                  <a href="#" class="page-link">
+                    Previous
+                  </a>
+                </li>
+                <!-- paginationLinks -->
+                <li class="page-item" v-for="pageNumber in paginationLinks" @click="page = pageNumber"
+                  :class="{ 'active': pageNumber === page }">
+                  <a href="#" class="page-link">
+                    {{ pageNumber }}
+                  </a>
+                </li>
 
-              <!-- next -->
-              <li class="page-item" @click="page++" :disabled="page === totalPages">
-                <a href="#" class="page-link">
-                  Next
-                </a>
-              </li>
-            </ul>
-          </nav>
-          Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
+                <!-- next -->
+                <li class="page-item" @click="page++" :disabled="page === totalPages">
+                  <a href="#" class="page-link">
+                    Next
+                  </a>
+                </li>
+              </ul>
+            </nav>
+            Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
+          </div>
         </div>
       </div>
-    </div>
     </template>
 
   </div>
@@ -90,7 +90,6 @@
 import { readFile } from "fs/promises";
 import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
-import LogEntry from "./components/LogEntry.vue"
 import TheLogEntry from "./components/TheLogEntry.vue"
 import { LogEntry } from "./interfaces";
 import { selectRandomFromArray } from "./helpers";
