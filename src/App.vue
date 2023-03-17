@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <template v-if="isLoading">
+        <template v-if="isLoading">
       <div v-for="row in 25" class="log-item p-2 my-2 cursor-none">
         <div class="log-item-severity placeholder-glow">
           <span class="col-9 placeholder rounded"
@@ -44,10 +44,45 @@
       </div>
     </template>
     <template v-else>
-      <InfiniteList :data="filteredLogItems" :width="'100%'" :height="1500" :itemSize="40" v-slot="{ item, index }">
-        <TheLogEntry :logItem="item" />
-      </InfiniteList>
+    <div class="log-entry-container">
+      <LogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
+    </div>
+
+    <!-- pagination -->
+    <div class="my-5" v-if="totalItems">
+
+      <div class="row justify-content-center">
+        <div class="col-8 text-center align-content-center">
+          <nav id="pagination">
+            <ul class="pagination">
+              <!-- pagination buttons -->
+              <li class="page-item" @click="page--" :disabled="page === 1">
+                <a href="#" class="page-link">
+                  Previous
+                </a>
+              </li>
+              <!-- paginationLinks -->
+              <li class="page-item" v-for="pageNumber in paginationLinks" @click="page = pageNumber"
+                :class="{ 'active': pageNumber === page }">
+                <a href="#" class="page-link">
+                  {{ pageNumber }}
+                </a>
+              </li>
+
+              <!-- next -->
+              <li class="page-item" @click="page++" :disabled="page === totalPages">
+                <a href="#" class="page-link">
+                  Next
+                </a>
+              </li>
+            </ul>
+          </nav>
+          Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
+        </div>
+      </div>
+    </div>
     </template>
+
   </div>
 </template>
 
@@ -55,10 +90,10 @@
 import { readFile } from "fs/promises";
 import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
+import LogEntry from "./components/LogEntry.vue"
 import TheLogEntry from "./components/TheLogEntry.vue"
 import { LogEntry } from "./interfaces";
 import { selectRandomFromArray } from "./helpers";
-import InfiniteList from 'vue3-infinite-list';
 
 const dateTimestampRegex = new RegExp(/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\]/);
 /**
@@ -83,6 +118,24 @@ const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
 
+const page = ref(1);
+const itemsPerPage = 20;
+const totalItems = computed(() => logEntries.value.length);
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage));
+const hasPreviousPage = computed(() => page.value > 1);
+const hasNextPage = computed(() => page.value < totalPages.value);
+const paginationLinks = computed(() => {
+  // two pages before and after the current page but not beyond the start or end
+  const start = Math.max(1, page.value - 2);
+  const end = Math.min(totalPages.value, page.value + 2);
+  const links = [];
+  for (let i = start; i <= end; i++) {
+    links.push(i);
+  }
+  return links;
+});
+
+
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
 
@@ -92,7 +145,6 @@ const filteredLogItems = computed(() => {
   let items = logEntries.value
 
   if (search.length > 0) {
-    console.log('searching', search);
     items = logEntries.value.filter((logItem) => {
       return (
         logItem.text.toLowerCase().includes(search) ||
@@ -101,7 +153,8 @@ const filteredLogItems = computed(() => {
       );
     })
   }
-  return items
+
+  return items.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
 });
 
 
@@ -174,5 +227,13 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
 .log-entry-container {
   max-height: 100vh;
   overflow-y: auto;
+}
+
+#pagination {
+  // center pagination
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
 }
 </style>
