@@ -18,13 +18,13 @@
 
 <script setup lang="ts">
 import { readFile } from "fs/promises";
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
 
 interface LogEntry {
   timestamp: string;
   severity: string;
-  level: string;
+  environment: string;
   text: string;
 }
 
@@ -44,7 +44,7 @@ async function content(path: string): Promise<string> {
   return await readFile(path, "utf8");
 }
 
-const dateTimestampRegex = new RegExp(/^\[\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\]/);
+const dateTimestampRegex = new RegExp(/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\]/);
 
 /**
  * This pattern, used for processing Laravel logs, returns these results:
@@ -72,15 +72,8 @@ function parseLogEntries(logData: string) {
   // First split by new lines. A lot of logs are on one line, but some are not. This is much more efficient than splitting by the date.
   const logEntries = logData.split("\n").filter(line => line.trim() !== '');
   const parsedEntries: LogEntry[] = [];
-  const entries: {
-    timestamp: string;
-    level: string;
-    severity: string;
-    text: string;
-  }[] = [];
-  let entryIndex = 0;
 
-  const currentMessage: string[][] = [];
+  let entryIndex = 0; // Track this outside of the loop - we have split by line, but below we are splitting by date (ie. by log).
 
   for (let i = 0; i < logEntries.length; i++) {
     const entry = logEntries[i];
@@ -91,7 +84,7 @@ function parseLogEntries(logData: string) {
     }
 
     // If it matches the date regex, it is a new entry)
-    let timestamp = entry.match(dateTimestampRegex)?.[0] ?? null;
+    let timestamp = entry.match(dateTimestampRegex)?.[1] ?? null;
 
     if (timestamp) {
       // If we have found a timestamp match, lets call the complicated variable match
@@ -99,7 +92,7 @@ function parseLogEntries(logData: string) {
 
       parsedEntries[entryIndex] = {
         timestamp,
-        level: matches?.[5] ?? 'unknown',
+        environment: matches?.[5] ?? 'unknown',
         severity: matches?.[6] ?? 'unknown',
         text: matches?.[7] ?? '',
       };
