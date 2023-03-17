@@ -1,5 +1,5 @@
 {
-  "name": "Larvel Log Viewer",
+  "name": "laravel-log-viewer",
   "version": "2.0.0",
   "main": "dist-electron/main/index.js",
   "license": "MIT",

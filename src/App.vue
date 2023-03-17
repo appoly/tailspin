@@ -3,8 +3,8 @@
     <div class="container-fluid">
       <a class="navbar-brand" href="/">Home</a>
       <div class="d-flex" style="gap: 0.5rem;">
-        <a class="nav-item nav-link" href="/log-viewer">Log Viewer</a>
-        <a class="nav-item nav-link" href="/settings">Settings</a>
+        <RouterLink class="nav-item nav-link" to="/log-viewer">Log Viewer</RouterLink>
+        <RouterLink class="nav-item nav-link" to="/settings">Settings</RouterLink>
       </div>
     </div>
   </nav>
@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { RouterView, useRoute } from "vue-router";
+import { RouterLink, RouterView, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/useUserStore";
 
 const route = useRoute();
