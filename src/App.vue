@@ -7,7 +7,7 @@
 
   <div class="container-fluid my-4">
     <div class="input-group mb-3">
-      <input ref="logFile" type="file" class="form-control" />
+      <input ref="logFile" type="file" class="form-control" @change="handleFileSelect" />
     </div>
   </div>
 
@@ -28,13 +28,16 @@ interface LogEntry {
   text: string;
 }
 
-onMounted(async () => {
-  const file = await content("storage/laravel.log");
-  log.value = file;
-  logEntries.value = parseLogEntries(file);
-});
+async function handleFileSelect(evt: any) {
+  const files = evt.target.files; // FileList object
+  const file = files[0];
+  const filePath = file.path;
 
-const log = ref("");
+  const fileContent = await content(filePath);
+  logEntries.value = parseLogEntries(fileContent);
+}
+
+
 const logEntries = ref<LogEntry[]>([]);
 
 async function content(path: string): Promise<string> {
@@ -54,10 +57,12 @@ const dateTimestampRegex = new RegExp(/^\[\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\]
  * $matches[6] - log severity (info, debug, error, etc)
  * $matches[7] - the log text, the rest of the text.
  */
-
-console.log(LogStatuses.join('|'));
-
-const logParsingRegex = new RegExp(`^\\[(\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.?(\\d{6}([\\+-]\\d\\d:\\d\\d)?)?)\\](.*?(\\w+)\\.|.*?)(` + LogStatuses.join('|') + `)?: (.*?)( in [\\/].*?:[0-9]+)?$`, 'i');
+const logParsingRegex =
+  new RegExp(
+    `^\\[(\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.?(\\d{6}([\\+-]\\d\\d:\\d\\d)?)?)\\](.*?(\\w+)\\.|.*?)(` +
+    LogStatuses.join('|') +
+    `)?: (.*?)( in [\\/].*?:[0-9]+)?$`, 'i'
+  );
 
 /**
  * Parse log entries from log file
