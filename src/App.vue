@@ -7,28 +7,36 @@
 
   <div class="container-fluid my-4">
     <div class="input-group mb-3">
-      <input ref="logFile" type="file" class="form-control" @change="handleFileSelect" />
+      <input id="logFile" type="file" class="form-control" @change="handleFileSelect" />
     </div>
   </div>
 
-  <div v-if="isLoading">
-    Loading...
-  </div>
-  <div style="padding: 2rem" v-else>
-    <div style="margin-bottom:0.5rem; padding:2rem; background-color:aquamarine; border-radius: 0.5rem;"
-      v-for="(entry, index) in logEntries.slice(0, 100)" :key="index">
-      <div>{{ entry.timestamp }}</div>
-      <div>{{ entry.environment }}</div>
-      <div>{{ entry.severity }}</div>
-      <span v-html="entry.text"></span>
+  <div class="container-fluid">
+    <!-- Search Bar -->
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm" />
     </div>
+    <div class="d-flex">
+      <div class="log-item-severity">
+        Severity
+      </div>
+      <div class="log-item-time">
+        Time
+      </div>
+      <div class="log-item-text">
+        Content
+      </div>
+    </div>
+
+    <LogEntry v-for="logItem in logEntries.slice(0,25)" :logItem="logItem" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { readFile } from "fs/promises";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
+import LogEntry from "./components/LogEntry.vue"
 
 interface LogEntry {
   timestamp: string;
@@ -57,7 +65,22 @@ const logParsingRegex =
   );
 
 const logEntries = ref<LogEntry[]>([]);
+const searchTerm = ref('');
 const isLoading = ref(false);
+
+// computed filteredLogItems
+const filteredLogItems = computed(() => {
+
+  const search = searchTerm.value.toLowerCase();
+  if (search === "") return logEntries.value;
+  return logEntries.value.filter((logItem) => {
+    return (
+      logItem.text.toLowerCase().includes(search) ||
+      logItem.severity.toLowerCase().includes(search) ||
+      logItem.timestamp.includes(search)
+    );
+  }).slice(0,25);
+});
 
 
 async function handleFileSelect(evt: any) {
@@ -120,7 +143,6 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
     resolve(parsedEntries);
   });
 }
-
 
 </script>
 
