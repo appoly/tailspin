@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <LogEntry v-for="logItem in logEntries.slice(0,25)" :logItem="logItem" />
+    <LogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
   </div>
 </template>
 
@@ -70,16 +70,15 @@ const isLoading = ref(false);
 
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
-
   const search = searchTerm.value.toLowerCase();
-  if (search === "") return logEntries.value;
+  if (search === "") return logEntries.value.slice(0, 25);
   return logEntries.value.filter((logItem) => {
     return (
       logItem.text.toLowerCase().includes(search) ||
       logItem.severity.toLowerCase().includes(search) ||
       logItem.timestamp.includes(search)
     );
-  }).slice(0,25);
+  }).slice(0, 25);
 });
 
 
