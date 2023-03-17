@@ -29,7 +29,7 @@
     </div>
 
     <InfiniteList :data="filteredLogItems" :width="'100%'" :height="1500" :itemSize="40" v-slot="{ item, index }">
-      <LogEntry :logItem="item" />
+      <TheLogEntry :logItem="item" />
     </InfiniteList>
   </div>
 </template>
@@ -38,15 +38,9 @@
 import { readFile } from "fs/promises";
 import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
-import LogEntry from "./components/LogEntry.vue"
+import TheLogEntry from "./components/TheLogEntry.vue"
+import { LogEntry } from "./interfaces";
 import InfiniteList from 'vue3-infinite-list';
-
-interface LogEntry {
-  timestamp: string;
-  severity: string;
-  environment: string;
-  text: string;
-}
 
 const dateTimestampRegex = new RegExp(/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\]/);
 /**
@@ -108,10 +102,6 @@ async function handleFileSelect(evt: any) {
 async function content(path: string): Promise<string> {
   return await readFile(path, "utf8");
 }
-
-onMounted(() => {
-  // 
-});
 
 /**
  * Parse log entries from log file
