@@ -28,9 +28,9 @@
       </div>
     </div>
 
-    <InfiniteList :data="filteredLogItems" :width="'100%'" :height="1500" :itemSize="40" v-slot="{ item, index }">
-      <LogEntry :logItem="item" />
-    </InfiniteList>
+    <div class="log-entry-container">
+      <LogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
+    </div>
   </div>
 </template>
 
@@ -39,7 +39,6 @@ import { readFile } from "fs/promises";
 import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
 import LogEntry from "./components/LogEntry.vue"
-import InfiniteList from 'vue3-infinite-list';
 
 interface LogEntry {
   timestamp: string;
@@ -71,6 +70,8 @@ const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
 
+const pageHeight = ref(0);
+
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
 
@@ -89,7 +90,10 @@ const filteredLogItems = computed(() => {
       );
     })
   }
-  return items
+
+  const itemsToShow = Math.floor(pageHeight.value / 40);
+
+  return items.slice(0, itemsToShow);
 });
 
 
@@ -110,7 +114,20 @@ async function content(path: string): Promise<string> {
 }
 
 onMounted(() => {
-  // 
+  // watch for page height changes
+  pageHeight.value = window.innerHeight
+  window.addEventListener('resize', () => {
+    // get view height
+    pageHeight.value = window.innerHeight
+  });
+
+  // watch .log-item for when it leaves the screen
+  const logItem = document.querySelector('.log-item');
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting === false) {
+      console.log('log item is not visible');
+    }
+  });
 });
 
 /**
