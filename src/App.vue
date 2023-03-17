@@ -14,7 +14,8 @@
   <div class="container-fluid">
     <!-- Search Bar -->
     <div class="input-group mb-3">
-      <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm" />
+      <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
+        :disabled="isLoading" />
     </div>
     <div class="d-flex">
       <div class="log-item-severity">
@@ -28,9 +29,25 @@
       </div>
     </div>
 
-    <InfiniteList :data="filteredLogItems" :width="'100%'" :height="1500" :itemSize="40" v-slot="{ item, index }">
-      <TheLogEntry :logItem="item" />
-    </InfiniteList>
+    <template v-if="isLoading">
+      <div v-for="row in 25" class="log-item p-2 my-2 cursor-none">
+        <div class="log-item-severity placeholder-glow">
+          <span class="col-9 placeholder rounded"
+            :class="'bg-' + selectRandomFromArray(['primary', 'warning', 'danger', 'secondary'])"></span>
+        </div>
+        <div class="log-item-time placeholder-glow">
+          <span class="col-10 placeholder rounded"></span>
+        </div>
+        <div class="log-item-text placeholder-glow">
+          <span class="col-12 placeholder rounded"></span>
+        </div>
+      </div>
+    </template>
+    <template v-else>
+      <InfiniteList :data="filteredLogItems" :width="'100%'" :height="1500" :itemSize="40" v-slot="{ item, index }">
+        <TheLogEntry :logItem="item" />
+      </InfiniteList>
+    </template>
   </div>
 </template>
 
@@ -40,6 +57,7 @@ import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
 import TheLogEntry from "./components/TheLogEntry.vue"
 import { LogEntry } from "./interfaces";
+import { selectRandomFromArray } from "./helpers";
 import InfiniteList from 'vue3-infinite-list';
 
 const dateTimestampRegex = new RegExp(/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\]/);

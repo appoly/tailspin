@@ -17,3 +17,35 @@ body{
 .log-item-text {
     width: 85%;
 }
+
+.log-item {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    background: #edede9e8;
+    margin: 0.1rem 0;
+    align-items: center;
+    border-radius: 0.50rem;
+
+    .log-item-time {
+        font-size: .9rem;
+    }
+
+    .log-item-text {
+        font-size: .9rem;
+        // set to one line and add ellipsis
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.expanded {
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.2s;
+
+    &.show {
+        max-height: 1000px;
+    }
+}

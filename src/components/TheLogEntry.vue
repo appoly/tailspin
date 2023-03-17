@@ -1,5 +1,5 @@
 <template>
-    <div class="log-item p-2" @click="showAll = !showAll">
+    <div class="log-item p-2" @click="showAll = !showAll" role="button">
         <div class="log-item-severity">
             <span :class="['badge', severityColour(logItem.severity)]">
                 <i :class="severityIcon(logItem.severity)"></i>
@@ -63,38 +63,3 @@ const severityIcon = (severity: string) => {
 };
 
 </script>
-
-<style lang="scss" scoped>
-.log-item {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    background: #edede9e8;
-    cursor: pointer;
-    margin: 0.1rem 0;
-    align-items: center;
-    border-radius: 0.50rem;
-
-    .log-item-time {
-        font-size: .9rem;
-    }
-
-    .log-item-text {
-        font-size: .9rem;
-        // set to one line and add ellipsis
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-}
-
-.expanded {
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.2s;
-
-    &.show {
-        max-height: 1000px;
-    }
-}
-</style>
