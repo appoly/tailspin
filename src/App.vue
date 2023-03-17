@@ -220,11 +220,20 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
 
     resolve(parsedEntries);
   });
-
-
-
-
 }
+
+onMounted(async () => {
+  // get users system color mode 
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+  const prefersLight = window.matchMedia('(prefers-color-scheme: light)');
+  console.log(prefersDark.matches, prefersLight.matches)
+  // set data-bs-theme on html element
+  if (prefersDark.matches) {
+    document.documentElement.setAttribute('data-bs-theme', 'dark');
+  } else if (prefersLight.matches) {
+    document.documentElement.setAttribute('data-bs-theme', 'light');
+  }
+});
 
 </script>
 
