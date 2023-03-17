@@ -1,20 +1,24 @@
 <template>
-    <div class="log-item p-2" @click="showAll = !showAll" role="button">
-        <div class="log-item-severity">
-            <span :class="['badge', severityColour(logItem.severity)]">
-                <i :class="severityIcon(logItem.severity)"></i>
-                {{ logItem.severity }}
-            </span>
-        </div>
-        <div class="log-item-time">
-            <span>
-                {{ logItem.timestamp }}
-            </span>
-        </div>
-        <div class="log-item-text text-muted">
-            <span>
-                {{ logItem.text }}
-            </span>
+    <div class="list-group-item p-2 log-ite" @click="showAll = !showAll" role="button">
+        <div class="row">
+            <div class="col-2 log-item-severity">
+                <span :class="['badge', severityColour(logItem.severity)]">
+                    <i :class="severityIcon(logItem.severity)"></i>
+                    {{ logItem.severity }}
+                </span>
+            </div>
+            <div class="col-2 log-item-time">
+                <span>
+                    {{ logItem.timestamp }}
+                </span>
+            </div>
+            <div class="col">
+                <div class="log-item-text">
+                    <span>
+                        {{ getEllipsis(logItem.text, 250) }}
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -35,6 +39,13 @@ defineProps<{
 }>();
 
 const showAll = ref(false);
+
+function getEllipsis(text: string, maxLength: number) {
+    if (text.length > maxLength) {
+        return text.substring(0, maxLength) + "...";
+    }
+    return text;
+}
 
 const severityColour = (severity: string) => {
     switch (severity) {
