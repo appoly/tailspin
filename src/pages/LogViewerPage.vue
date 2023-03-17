@@ -24,16 +24,16 @@
     </div>
 
     <template v-if="isLoading">
-        <div v-for="row in 25" class="log-item p-2 my-2 cursor-none">
-            <div class="log-item-severity placeholder-glow">
-                <span class="col-9 placeholder rounded"
+        <div v-for="row in 25" class="row p-2 my-2 cursor-none">
+            <div class="col-2 log-item-severity placeholder-glow">
+                <span class="col-4 placeholder rounded"
                     :class="'bg-' + selectRandomFromArray(['primary', 'warning', 'danger', 'secondary'])"></span>
             </div>
-            <div class="log-item-time placeholder-glow">
-                <span class="col-10 placeholder rounded"></span>
+            <div class="col-2 log-item-time placeholder-glow">
+                <span class="col-4 placeholder rounded"></span>
             </div>
-            <div class="log-item-text placeholder-glow">
-                <span class="col-12 placeholder rounded"></span>
+            <div class="col log-item-text placeholder-glow">
+                <span class="col-10 placeholder rounded"></span>
             </div>
         </div>
     </template>
