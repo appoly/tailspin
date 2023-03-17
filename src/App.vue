@@ -16,13 +16,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { readFile } from "fs/promises";
 import { ref, onMounted } from "vue";
 
 const log = ref("");
 
-async function content(path) {
+async function content(path: string): Promise<string> {
   return await readFile(path, "utf8");
 }
 
