@@ -28,24 +28,7 @@ interface LogEntry {
   text: string;
 }
 
-async function handleFileSelect(evt: any) {
-  const files = evt.target.files; // FileList object
-  const file = files[0];
-  const filePath = file.path;
-
-  const fileContent = await content(filePath);
-  logEntries.value = parseLogEntries(fileContent);
-}
-
-
-const logEntries = ref<LogEntry[]>([]);
-
-async function content(path: string): Promise<string> {
-  return await readFile(path, "utf8");
-}
-
 const dateTimestampRegex = new RegExp(/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\]/);
-
 /**
  * This pattern, used for processing Laravel logs, returns these results:
  * $matches[0] - the full log line being tested.
@@ -63,6 +46,22 @@ const logParsingRegex =
     LogStatuses.join('|') +
     `)?: (.*?)( in [\\/].*?:[0-9]+)?$`, 'i'
   );
+
+const logEntries = ref<LogEntry[]>([]);
+
+
+async function handleFileSelect(evt: any) {
+  const files = evt.target.files; // FileList object
+  const file = files[0];
+  const filePath = file.path;
+
+  const fileContent = await content(filePath);
+  logEntries.value = parseLogEntries(fileContent);
+}
+
+async function content(path: string): Promise<string> {
+  return await readFile(path, "utf8");
+}
 
 /**
  * Parse log entries from log file
