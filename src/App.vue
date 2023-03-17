@@ -31,6 +31,16 @@
     <div class="log-entry-container">
       <LogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
     </div>
+
+    <!-- pagination -->
+    <div class="my-5" v-if="totalItems">
+      Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
+      <div class="d-flex">
+        <button class="btn btn-primary" @click="page--" :disabled="page <= 1">Previous</button>
+        <button class="btn btn-primary mx-2" @click="page++" :disabled="page >= totalPages">Next</button>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -70,7 +80,11 @@ const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
 
-const pageHeight = ref(0);
+const page = ref(1);
+const itemsPerPage = 20;
+const totalItems = computed(() => logEntries.value.length);
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage));
+
 
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
@@ -81,7 +95,6 @@ const filteredLogItems = computed(() => {
   let items = logEntries.value
 
   if (search.length > 0) {
-    console.log('searching', search);
     items = logEntries.value.filter((logItem) => {
       return (
         logItem.text.toLowerCase().includes(search) ||
@@ -91,9 +104,7 @@ const filteredLogItems = computed(() => {
     })
   }
 
-  const itemsToShow = Math.floor(pageHeight.value / 40);
-
-  return items.slice(0, itemsToShow);
+  return items.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
 });
 
 
@@ -114,20 +125,7 @@ async function content(path: string): Promise<string> {
 }
 
 onMounted(() => {
-  // watch for page height changes
-  pageHeight.value = window.innerHeight
-  window.addEventListener('resize', () => {
-    // get view height
-    pageHeight.value = window.innerHeight
-  });
-
-  // watch .log-item for when it leaves the screen
-  const logItem = document.querySelector('.log-item');
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting === false) {
-      console.log('log item is not visible');
-    }
-  });
+  // 
 });
 
 /**
