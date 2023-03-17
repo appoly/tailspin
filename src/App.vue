@@ -56,22 +56,21 @@
             <nav id="pagination">
               <ul class="pagination">
                 <!-- pagination buttons -->
-                <li class="page-item" @click="page--" :disabled="page === 1">
-                  <a href="#" class="page-link">
+                <li class="page-item">
+                  <a href="#" class="page-link" @click="changePage('previous')" :disabled="page === 1">
                     Previous
                   </a>
                 </li>
                 <!-- paginationLinks -->
-                <li class="page-item" v-for="pageNumber in paginationLinks" @click="page = pageNumber"
-                  :class="{ 'active': pageNumber === page }">
-                  <a href="#" class="page-link">
+                <li class="page-item" v-for="pageNumber in paginationLinks" :class="{ 'active': pageNumber === page }">
+                  <a href="#" class="page-link" @click="page = pageNumber">
                     {{ pageNumber }}
                   </a>
                 </li>
 
                 <!-- next -->
-                <li class="page-item" @click="page++" :disabled="page === totalPages">
-                  <a href="#" class="page-link">
+                <li class="page-item">
+                  <a href="#" class="page-link" @click="changePage('next')" :disabled="page === totalPages">
                     Next
                   </a>
                 </li>
@@ -137,9 +136,6 @@ const paginationLinks = computed(() => {
 
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
-
-  // each item is 20px high, so we can calculate the number of items to show
-
   const search = searchTerm.value.toLowerCase();
   let items = logEntries.value
 
@@ -171,6 +167,14 @@ async function handleFileSelect(evt: any) {
 
 async function content(path: string): Promise<string> {
   return await readFile(path, "utf8");
+}
+
+function changePage(type: string) {
+  if (type === 'next' && hasNextPage.value) {
+    page.value++;
+  } else if (type === 'previous' && hasPreviousPage.value) {
+    page.value--;
+  }
 }
 
 /**
@@ -216,6 +220,8 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
 
     resolve(parsedEntries);
   });
+
+
 
 
 }
