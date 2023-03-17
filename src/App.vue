@@ -28,13 +28,15 @@
       </div>
     </div>
 
-    <LogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
+    <div class="log-entry-container">
+      <LogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { readFile } from "fs/promises";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "./constants/LogStatuses"
 import LogEntry from "./components/LogEntry.vue"
 
@@ -68,17 +70,30 @@ const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
 
+const pageHeight = ref(0);
+
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
+
+  // each item is 20px high, so we can calculate the number of items to show
+
   const search = searchTerm.value.toLowerCase();
-  if (search === "") return logEntries.value.slice(0, 25);
-  return logEntries.value.filter((logItem) => {
-    return (
-      logItem.text.toLowerCase().includes(search) ||
-      logItem.severity.toLowerCase().includes(search) ||
-      logItem.timestamp.includes(search)
-    );
-  }).slice(0, 25);
+  let items = logEntries.value
+
+  if (search.length > 0) {
+    console.log('searching', search);
+    items = logEntries.value.filter((logItem) => {
+      return (
+        logItem.text.toLowerCase().includes(search) ||
+        logItem.severity.toLowerCase().includes(search) ||
+        logItem.timestamp.includes(search)
+      );
+    })
+  }
+
+  const itemsToShow = Math.floor(pageHeight.value / 40);
+
+  return items.slice(0, itemsToShow);
 });
 
 
@@ -97,6 +112,23 @@ async function handleFileSelect(evt: any) {
 async function content(path: string): Promise<string> {
   return await readFile(path, "utf8");
 }
+
+onMounted(() => {
+  // watch for page height changes
+  pageHeight.value = window.innerHeight
+  window.addEventListener('resize', () => {
+    // get view height
+    pageHeight.value = window.innerHeight
+  });
+
+  // watch .log-item for when it leaves the screen
+  const logItem = document.querySelector('.log-item');
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting === false) {
+      console.log('log item is not visible');
+    }
+  });
+});
 
 /**
  * Parse log entries from log file
@@ -141,8 +173,15 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
 
     resolve(parsedEntries);
   });
+
+
 }
 
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.log-entry-container {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+</style>

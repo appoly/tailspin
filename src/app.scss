@@ -1,5 +1,11 @@
 @import "bootstrap";
 
+body{
+    max-height: 100vh;
+    overflow: hidden;
+    height: 100vh;
+}
+
 .log-item-severity {
     width: 5%;
 }
