@@ -39,6 +39,7 @@
     "chokidar": "^3.5.3",
     "drag-drop": "^7.2.0",
     "fs-extra": "^11.1.0",
-    "open": "^8.4.2"
+    "open": "^8.4.2",
+    "vue3-infinite-list": "^0.2.5"
   }
 }
