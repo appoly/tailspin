@@ -1,84 +1,81 @@
 <template>
-    <div class="container-fluid my-4">
+    <div class="my-4">
         <div class="input-group mb-3">
             <input id="logFile" type="file" class="form-control" @change="handleFileSelect" />
         </div>
     </div>
 
-    <div class="container-fluid">
-        <!-- Search Bar -->
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
-                :disabled="isLoading" />
-        </div>
-        <div class="d-flex">
-            <div class="log-item-severity">
-                Severity
-            </div>
-            <div class="log-item-time">
-                Time
-            </div>
-            <div class="log-item-text">
-                Content
-            </div>
-        </div>
-
-        <template v-if="isLoading">
-            <div v-for="row in 25" class="log-item p-2 my-2 cursor-none">
-                <div class="log-item-severity placeholder-glow">
-                    <span class="col-9 placeholder rounded"
-                        :class="'bg-' + selectRandomFromArray(['primary', 'warning', 'danger', 'secondary'])"></span>
-                </div>
-                <div class="log-item-time placeholder-glow">
-                    <span class="col-10 placeholder rounded"></span>
-                </div>
-                <div class="log-item-text placeholder-glow">
-                    <span class="col-12 placeholder rounded"></span>
-                </div>
-            </div>
-        </template>
-        <template v-else>
-            <div>
-                <TheLogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
-            </div>
-
-            <!-- pagination -->
-            <div class="my-5" v-if="totalItems">
-
-                <div class="row justify-content-center">
-                    <div class="col-8 text-center align-content-center">
-                        <nav id="pagination">
-                            <ul class="pagination">
-                                <!-- pagination buttons -->
-                                <li class="page-item">
-                                    <a href="#" class="page-link" @click="changePage('previous')" :disabled="page === 1">
-                                        Previous
-                                    </a>
-                                </li>
-                                <!-- paginationLinks -->
-                                <li class="page-item" v-for="pageNumber in paginationLinks"
-                                    :class="{ 'active': pageNumber === page }">
-                                    <a href="#" class="page-link" @click="page = pageNumber">
-                                        {{ pageNumber }}
-                                    </a>
-                                </li>
-
-                                <!-- next -->
-                                <li class="page-item">
-                                    <a href="#" class="page-link" @click="changePage('next')"
-                                        :disabled="page === totalPages">
-                                        Next
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                        Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
-                    </div>
-                </div>
-            </div>
-        </template>
-
+    <!-- Search Bar -->
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
+            :disabled="isLoading" />
     </div>
+
+    <div class="row">
+        <div class="col-2 log-item-severity">
+            Severity
+        </div>
+        <div class="col-2 log-item-time">
+            Time
+        </div>
+        <div class="col">
+            Message
+        </div>
+    </div>
+
+    <template v-if="isLoading">
+        <div v-for="row in 25" class="log-item p-2 my-2 cursor-none">
+            <div class="log-item-severity placeholder-glow">
+                <span class="col-9 placeholder rounded"
+                    :class="'bg-' + selectRandomFromArray(['primary', 'warning', 'danger', 'secondary'])"></span>
+            </div>
+            <div class="log-item-time placeholder-glow">
+                <span class="col-10 placeholder rounded"></span>
+            </div>
+            <div class="log-item-text placeholder-glow">
+                <span class="col-12 placeholder rounded"></span>
+            </div>
+        </div>
+    </template>
+    <template v-else>
+        <div>
+            <TheLogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
+        </div>
+
+        <!-- pagination -->
+        <div class="my-5" v-if="totalItems">
+
+            <div class="row justify-content-center">
+                <div class="col-8 text-center align-content-center">
+                    <nav id="pagination">
+                        <ul class="pagination">
+                            <!-- pagination buttons -->
+                            <li class="page-item">
+                                <a href="#" class="page-link" @click="changePage('previous')" :disabled="page === 1">
+                                    Previous
+                                </a>
+                            </li>
+                            <!-- paginationLinks -->
+                            <li class="page-item" v-for="pageNumber in paginationLinks"
+                                :class="{ 'active': pageNumber === page }">
+                                <a href="#" class="page-link" @click="page = pageNumber">
+                                    {{ pageNumber }}
+                                </a>
+                            </li>
+
+                            <!-- next -->
+                            <li class="page-item">
+                                <a href="#" class="page-link" @click="changePage('next')" :disabled="page === totalPages">
+                                    Next
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
+                </div>
+            </div>
+        </div>
+    </template>
 </template>
   
 <script setup lang="ts">

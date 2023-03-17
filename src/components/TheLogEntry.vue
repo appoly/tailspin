@@ -14,8 +14,8 @@
             </div>
             <div class="col">
                 <div class="log-item-text">
-                    <span>
-                        {{ getEllipsis(logItem.text, 250) }}
+                    <span class="text-muted">
+                        {{ getEllipsis(logItem.text, 200) }}
                     </span>
                 </div>
             </div>

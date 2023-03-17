@@ -9,9 +9,10 @@
     </div>
   </nav>
 
-  <h1>{{ route.name ?? 'Home' }}</h1>
-
-  <RouterView />
+  <div class="container-fluid my-4">
+    <h1>{{ route.name ?? 'Home' }}</h1>
+    <RouterView />
+  </div>
 </template>
 
 <script setup lang="ts">
