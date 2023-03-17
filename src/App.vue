@@ -12,7 +12,7 @@
   </div>
 
   <div>
-    <pre>{{ logEntries.slice(0, 5) ?? [] }}</pre>
+    <pre>{{ logEntries.slice(0, 250) ?? [] }}</pre>
   </div>
 </template>
 
@@ -90,7 +90,6 @@ function parseLogEntries(logData: string) {
       continue;
     }
 
-    if (entryIndex > 0) continue;
     // If it matches the date regex, it is a new entry)
     let timestamp = entry.match(dateTimestampRegex)?.[0] ?? null;
 
@@ -107,10 +106,11 @@ function parseLogEntries(logData: string) {
       entryIndex++;
     } else {
       // Otherwise, it is part of the message, so add it to the message of the previous entry
-      parsedEntries[entryIndex].text += "\n" + entry;
+      parsedEntries[entryIndex - 1].text += "\n" + entry;
     }
 
   }
+
   return parsedEntries;
 }
 
