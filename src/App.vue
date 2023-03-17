@@ -11,7 +11,10 @@
     </div>
   </div>
 
-  <div>
+  <div v-if="isLoading">
+    Loading...
+  </div>
+  <div v-else>
     <pre>{{ logEntries.slice(0, 250) ?? [] }}</pre>
   </div>
 </template>
@@ -48,6 +51,7 @@ const logParsingRegex =
   );
 
 const logEntries = ref<LogEntry[]>([]);
+const isLoading = ref(false);
 
 
 async function handleFileSelect(evt: any) {
@@ -55,8 +59,11 @@ async function handleFileSelect(evt: any) {
   const file = files[0];
   const filePath = file.path;
 
+  isLoading.value = true;
+
   const fileContent = await content(filePath);
-  logEntries.value = parseLogEntries(fileContent);
+  logEntries.value = await parseLogEntries(fileContent);
+  isLoading.value = false;
 }
 
 async function content(path: string): Promise<string> {
@@ -67,43 +74,45 @@ async function content(path: string): Promise<string> {
  * Parse log entries from log file
  * @param logData
  */
-function parseLogEntries(logData: string) {
-  // First split by new lines. A lot of logs are on one line, but some are not. This is much more efficient than splitting by the date.
-  const logEntries = logData.split("\n").filter(line => line.trim() !== '');
-  const parsedEntries: LogEntry[] = [];
+async function parseLogEntries(logData: string): Promise<LogEntry[]> {
+  return new Promise((resolve, reject) => {
+    // First split by new lines. A lot of logs are on one line, but some are not. This is much more efficient than splitting by the date.
+    const logEntries = logData.split("\n").filter(line => line.trim() !== '');
+    const parsedEntries: LogEntry[] = [];
 
-  let entryIndex = 0; // Track this outside of the loop - we have split by line, but below we are splitting by date (ie. by log).
+    let entryIndex = 0; // Track this outside of the loop - we have split by line, but below we are splitting by date (ie. by log).
 
-  for (let i = 0; i < logEntries.length; i++) {
-    const entry = logEntries[i];
-    // Skip rows that don't start with a date when it is the first entry
+    for (let i = 0; i < logEntries.length; i++) {
+      const entry = logEntries[i];
+      // Skip rows that don't start with a date when it is the first entry
 
-    if (entryIndex === 0 && !entry.match(dateTimestampRegex)) {
-      continue;
+      if (entryIndex === 0 && !entry.match(dateTimestampRegex)) {
+        continue;
+      }
+
+      // If it matches the date regex, it is a new entry)
+      let timestamp = entry.match(dateTimestampRegex)?.[1] ?? null;
+
+      if (timestamp) {
+        // If we have found a timestamp match, lets call the complicated variable match
+        let matches = entry.match(logParsingRegex);
+
+        parsedEntries[entryIndex] = {
+          timestamp,
+          environment: matches?.[5] ?? 'unknown',
+          severity: matches?.[6] ?? 'unknown',
+          text: matches?.[7] ?? '',
+        };
+        entryIndex++;
+      } else {
+        // Otherwise, it is part of the message, so add it to the message of the previous entry
+        parsedEntries[entryIndex - 1].text += "\n" + entry;
+      }
+
     }
 
-    // If it matches the date regex, it is a new entry)
-    let timestamp = entry.match(dateTimestampRegex)?.[1] ?? null;
-
-    if (timestamp) {
-      // If we have found a timestamp match, lets call the complicated variable match
-      let matches = entry.match(logParsingRegex);
-
-      parsedEntries[entryIndex] = {
-        timestamp,
-        environment: matches?.[5] ?? 'unknown',
-        severity: matches?.[6] ?? 'unknown',
-        text: matches?.[7] ?? '',
-      };
-      entryIndex++;
-    } else {
-      // Otherwise, it is part of the message, so add it to the message of the previous entry
-      parsedEntries[entryIndex - 1].text += "\n" + entry;
-    }
-
-  }
-
-  return parsedEntries;
+    resolve(parsedEntries);
+  });
 }
 
 
