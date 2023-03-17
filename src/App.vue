@@ -14,8 +14,14 @@
   <div v-if="isLoading">
     Loading...
   </div>
-  <div v-else>
-    <pre>{{ logEntries.slice(0, 250) ?? [] }}</pre>
+  <div style="padding: 2rem" v-else>
+    <div style="margin-bottom:0.5rem; padding:2rem; background-color:aquamarine; border-radius: 0.5rem;"
+      v-for="(entry, index) in logEntries.slice(0, 100)" :key="index">
+      <div>{{ entry.timestamp }}</div>
+      <div>{{ entry.environment }}</div>
+      <div>{{ entry.severity }}</div>
+      <span v-html="entry.text"></span>
+    </div>
   </div>
 </template>
 
