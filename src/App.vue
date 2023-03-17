@@ -44,7 +44,7 @@
       </div>
     </template>
     <template v-else>
-      <div class="log-entry-container">
+      <div>
         <TheLogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
       </div>
 
@@ -223,11 +223,6 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
 </script>
 
 <style lang="scss" scoped>
-.log-entry-container {
-  max-height: 100vh;
-  overflow-y: auto;
-}
-
 #pagination {
   // center pagination
   display: flex;
