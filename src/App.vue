@@ -34,10 +34,35 @@
 
     <!-- pagination -->
     <div class="my-5" v-if="totalItems">
-      Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
-      <div class="d-flex">
-        <button class="btn btn-primary" @click="page--" :disabled="page <= 1">Previous</button>
-        <button class="btn btn-primary mx-2" @click="page++" :disabled="page >= totalPages">Next</button>
+
+      <div class="row justify-content-center">
+        <div class="col-8 text-center align-content-center">
+          <nav id="pagination">
+            <ul class="pagination">
+              <!-- pagination buttons -->
+              <li class="page-item" @click="page--" :disabled="page === 1">
+                <a href="#" class="page-link">
+                  Previous
+                </a>
+              </li>
+              <!-- paginationLinks -->
+              <li class="page-item" v-for="pageNumber in paginationLinks" @click="page = pageNumber"
+                :class="{ 'active': pageNumber === page }">
+                <a href="#" class="page-link">
+                  {{ pageNumber }}
+                </a>
+              </li>
+
+              <!-- next -->
+              <li class="page-item" @click="page++" :disabled="page === totalPages">
+                <a href="#" class="page-link">
+                  Next
+                </a>
+              </li>
+            </ul>
+          </nav>
+          Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
+        </div>
       </div>
     </div>
 
@@ -84,6 +109,18 @@ const page = ref(1);
 const itemsPerPage = 20;
 const totalItems = computed(() => logEntries.value.length);
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage));
+const hasPreviousPage = computed(() => page.value > 1);
+const hasNextPage = computed(() => page.value < totalPages.value);
+const paginationLinks = computed(() => {
+  // two pages before and after the current page but not beyond the start or end
+  const start = Math.max(1, page.value - 2);
+  const end = Math.min(totalPages.value, page.value + 2);
+  const links = [];
+  for (let i = start; i <= end; i++) {
+    links.push(i);
+  }
+  return links;
+});
 
 
 // computed filteredLogItems
@@ -181,5 +218,13 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
 .log-entry-container {
   max-height: 100vh;
   overflow-y: auto;
+}
+
+#pagination {
+  // center pagination
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
 }
 </style>
