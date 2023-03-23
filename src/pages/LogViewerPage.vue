@@ -212,7 +212,7 @@ async function parseLogEntries(logData: string): Promise<LogEntry[]> {
 
         }
 
-        resolve(parsedEntries);
+        resolve(parsedEntries.reverse());
     });
 
 
