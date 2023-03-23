@@ -51,23 +51,24 @@
                         <ul class="pagination">
                             <!-- pagination buttons -->
                             <li class="page-item">
-                                <a href="#" class="page-link" @click="changePage('previous')" :disabled="page === 1">
+                                <button href="#" class="page-link" @click="changePage('previous')" :disabled="page === 1">
                                     Previous
-                                </a>
+                                </button>
                             </li>
                             <!-- paginationLinks -->
                             <li class="page-item" v-for="pageNumber in paginationLinks"
                                 :class="{ 'active': pageNumber === page }">
-                                <a href="#" class="page-link" @click="page = pageNumber">
+                                <button href="#" class="page-link" @click="page = pageNumber">
                                     {{ pageNumber }}
-                                </a>
+                                </button>
                             </li>
 
                             <!-- next -->
                             <li class="page-item">
-                                <a href="#" class="page-link" @click="changePage('next')" :disabled="page === totalPages">
+                                <button href="#" class="page-link" @click="changePage('next')"
+                                    :disabled="page === totalPages">
                                     Next
-                                </a>
+                                </button>
                             </li>
                         </ul>
                     </nav>

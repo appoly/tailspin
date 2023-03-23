@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">Home</a>
+      <RouterLink class="navbar-brand" to="/">Laravel Log Viewer</RouterLink>
       <div class="d-flex" style="gap: 0.5rem;">
         <RouterLink class="nav-item nav-link" to="/log-viewer">Log Viewer</RouterLink>
         <RouterLink class="nav-item nav-link" to="/settings">Settings</RouterLink>
