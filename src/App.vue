@@ -5,6 +5,9 @@
       <ConnectionsPage v-if="applicationStore.page === 'connections'" />
       <SettingsPage v-if="applicationStore.page === 'settings'" />
 
+      <!-- Example for now, a standard log viewer page -->
+      <LogViewerPage v-if="applicationStore.page === `log-viewer`" />
+
       <div class="container-fluid my-4">
         <LogViewerPage v-for="connection in applicationStore.connections" :key="connection.uid" :connection="connection"
           v-if="applicationStore.page === `connections.view`" />
