@@ -55,3 +55,7 @@ body,
   min-height: 5rem;
   padding: 0.5rem;
 }
+
+.main-content {
+    width: calc(100vw - 4.5rem); // Account for the sidebar
+}
