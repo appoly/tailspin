@@ -95,7 +95,6 @@
 </template>
   
 <script setup lang="ts">
-import { readFile } from "fs/promises";
 import { computed, ref } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
