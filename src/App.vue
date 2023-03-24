@@ -7,11 +7,13 @@
       <SettingsPage v-if="applicationStore.page === 'settings'" />
 
       <!-- Example for now, a standard log viewer page -->
-      <LogViewerPage v-if="applicationStore.page === `log-viewer`" />
+      <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
 
       <div class="container-fluid my-4">
-        <LogViewerPage v-for="connection in applicationStore.openConnections" :key="connection.uid"
-          :connection="connection" v-if="applicationStore.page === `connections.view`" />
+        <template v-for="connection in applicationStore.openConnections">
+          <ViewConnection :key="connection.uid" :connection="connection"
+            v-if="applicationStore.page === 'connections.page.' + connection.uid" />
+        </template>
       </div>
 
     </div>
@@ -27,6 +29,7 @@ import ConnectionsPage from "@/pages/ConnectionsPage.vue";
 import TheSidebar from "@/components/TheSidebar.vue";
 import SettingsPage from "./pages/SettingsPage.vue";
 import AddConnectionPage from "./pages/AddConnectionPage.vue";
+import ViewConnection from "./pages/ViewConnection.vue";
 
 const userStore = useUserStore();
 const applicationStore = useApplicationStore();

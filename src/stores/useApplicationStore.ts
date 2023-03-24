@@ -28,8 +28,8 @@ export const useApplicationStore = defineStore("application", {
       this.connections.push(connection);
       persistentStore.set("connections", this.connections);
     },
-    removeConnection(connection: Connection) {
-      this.connections = this.connections.filter((c) => c.uid !== connection.uid);
+    removeConnection(connectionId: String) {
+      this.connections = this.connections.filter((c) => c.uid !== connectionId);
       persistentStore.set("connections", this.connections);
     },
     goToConnection(connectionId: string) {
