@@ -6,7 +6,7 @@
                 <div class="alert alert-danger" role="alert" v-if="error">
                     {{ error }}
                 </div>
-                <form @submit="saveConnection">
+                <form @submit.prevent="saveConnection">
                     <div class="form-group">
                         <label for="connectionName">Connection name</label>
                         <input type="text" class="form-control" id="connectionName" placeholder="Connection name"
