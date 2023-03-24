@@ -44,10 +44,12 @@
 
 <script setup lang="ts">
 import { useApplicationStore } from '@/stores/useApplicationStore';
+import { useConnectionStore } from '@/stores/useConnectionStore';
 import { ref } from 'vue';
 import Application from '@/ipc-api/Application'
 
 const applicationStore = useApplicationStore();
+const connectionStore = useConnectionStore();
 
 const formFields = ref({
     connectionName: '',
@@ -67,13 +69,12 @@ function saveConnection() {
         return;
     }
 
-    applicationStore.addConnection({
+    connectionStore.addConnection({
         uid,
         name: formFields.value.connectionName,
         icon: formFields.value.icon,
         path: formFields.value.path,
         type: formFields.value.type,
-        isOpen: false
     });
     applicationStore.changePage('connections');
 }
