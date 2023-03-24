@@ -51,6 +51,7 @@ function saveConnection() {
         icon: formFields.icon,
         path: formFields.path,
         type: formFields.type,
+        isOpen: false
     });
     applicationStore.changePage('connections');
 }
