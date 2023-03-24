@@ -26,7 +26,6 @@
         </div>
     </div>
 
-
     <div class="row">
         <div class="col-2 log-item-severity">
             Severity
