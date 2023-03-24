@@ -11,6 +11,12 @@
             :disabled="isLoading" />
     </div>
 
+    <!-- Filter by severity -->
+    <div class="d-flex mb-4 ">
+        <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity" :count="filter.count"
+            :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
+    </div>
+
     <div class="row">
         <div class="col-2 log-item-severity">
             Severity
@@ -84,6 +90,7 @@ import { readFile } from "fs/promises";
 import { computed, ref } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
+import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 
@@ -109,6 +116,7 @@ const logParsingRegex =
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
+const selectedSeverity = ref('');
 
 const page = ref(1);
 const itemsPerPage = 20;
@@ -131,7 +139,11 @@ const paginationLinks = computed(() => {
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
     const search = searchTerm.value.toLowerCase();
-    let items = logEntries.value
+    let items = logEntries.value;
+
+    if (selectedSeverity.value) {
+        items = items.filter((logItem) => logItem.severity === selectedSeverity.value);
+    }
 
     if (search.length > 0) {
         items = logEntries.value.filter((logItem) => {
@@ -144,6 +156,22 @@ const filteredLogItems = computed(() => {
     }
 
     return items.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
+});
+
+const severityFilters = computed(() => {
+    const filters = [];
+    for (const severity of LogStatuses) {
+        const upperCaseSeverity = severity.toUpperCase();
+        const count = logEntries.value.filter((logItem) => logItem.severity === upperCaseSeverity).length;
+        if (count > 0) {
+            filters.push({
+                severity: upperCaseSeverity,
+                count: count,
+                selected: computed(() => selectedSeverity.value === upperCaseSeverity)
+            });
+        }
+    }
+    return filters;
 });
 
 
@@ -168,6 +196,14 @@ function changePage(type: string) {
         page.value++;
     } else if (type === 'previous' && hasPreviousPage.value) {
         page.value--;
+    }
+}
+
+function filterBySeverity(severity: string) {
+    if (selectedSeverity.value === severity) {
+        selectedSeverity.value = '';
+    } else {
+        selectedSeverity.value = severity;
     }
 }
 
