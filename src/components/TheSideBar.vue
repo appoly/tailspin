@@ -7,7 +7,7 @@
                 @setPage="() => applicationStore.changePage('log-viewer')" />
 
 
-            <li v-for="connection in applicationStore.connections" :key="connection.uid" class="nav-item">
+            <li v-for="connection in applicationStore.openConnections" :key="connection.uid" class="nav-item">
                 <SidebarItem :key="connection.uid" :label="connection.name" icon="bi bi-hdd-network"
                     :tooltip="connection.name" :active="applicationStore.page === 'connections'" :pageId="connection.uid"
                     @setPage="() => applicationStore.changePage('connection.page.' + connection.uid)" />
