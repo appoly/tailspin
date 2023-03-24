@@ -1,6 +1,6 @@
 <template>
     <div ref="iconPicker" class="icon-picker">
-        <button class="btn btn-primary icon-button" @click="selectorOpen = !selectorOpen">
+        <button type="button" :class="[buttonClass, 'icon-button']" @click="selectorOpen = !selectorOpen">
             <template v-if="selectedIcon">
                 <i :class="[iconClass + selectedIcon]"></i>
             </template>
@@ -44,6 +44,10 @@ export default {
         modelValue: {
             type: String,
             default: ''
+        },
+        buttonClass: {
+            type: String,
+            default: 'btn btn-primary'
         }
     },
     computed: {
@@ -106,6 +110,7 @@ export default {
     max-width: 300px;
     overflow: hidden;
     position: absolute;
+    z-index: 1;
 }
 
 

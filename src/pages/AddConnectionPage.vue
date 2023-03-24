@@ -14,7 +14,7 @@
                     </div>
                     <div class="form-group">
                         <label for="icon">Icon</label>
-                        <input type="text" class="form-control" id="icon" placeholder="Icon" v-model="formFields.icon" />
+                        <BootstrapIconPicker v-model="formFields.icon" />
                     </div>
                     <div class="form-group">
                         <label for="path">Path</label>
@@ -47,13 +47,14 @@ import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { ref } from 'vue';
 import Application from '@/ipc-api/Application'
+import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 
 const applicationStore = useApplicationStore();
 const connectionStore = useConnectionStore();
 
 const formFields = ref({
     connectionName: '',
-    icon: 'bi bi-book',
+    icon: 'book',
     path: '',
     type: 'local' as 'remote' | 'local',
 })
