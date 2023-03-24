@@ -2,7 +2,7 @@
     <div class="min-vh-100 d-flex flex-column flex-shrink-0 bg-body-tertiary h-100" style="width: 4.5rem;">
         <ul class="nav nav-pills nav-flush flex-column mb-auto text-center">
             <!-- Example for now, a standard log viewer page -->
-            <SidebarItem key="log-viewer" label="Log Viewer" icon="bi bi-book" tooltip="Log Viewer"
+            <SidebarItem key="log-viewer" label="View By File" icon="bi bi-book" tooltip="View By File"
                 :active="applicationStore.page === 'log-viewer'" :pageId="'log-viewer'"
                 @setPage="() => applicationStore.changePage('log-viewer')" />
 
