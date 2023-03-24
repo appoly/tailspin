@@ -1,10 +1,7 @@
 <template>
     <div class="mt-2 mb-4">
-        <div class="d-flex">
-            <div class="w-100">
-                <div class="input-group mb-3">
-                    <input ref="logInput" id="logFile" type="file" class="form-control" @change="handleFileSelect" />
-                </div>
+        <div class="d-flex mb-3">
+            <div class="flex-grow-1"><input class="form-control" type="text" :value="connection.path" readonly disabled />
             </div>
             <div class="ms-2">
                 <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="isLoading">
@@ -96,14 +93,22 @@
   
 <script setup lang="ts">
 import { readFile } from "fs/promises";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
 import SeverityFilter from "@/components/SeverityFilter.vue";
-import { LogEntry } from "@/interfaces";
+import { Connection, LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
 import Application from "@/ipc-api/Application";
+
+const props = defineProps<{
+    connection: Connection;
+}>();
+
+onMounted(() => {
+    readLog(props.connection.path);
+});
 
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
@@ -167,17 +172,7 @@ const severityFilters = computed(() => {
     return filters;
 });
 
-
-async function handleFileSelect(evt: any) {
-    const files = evt.target.files; // FileList object
-    const file = files[0];
-    const filePath = file.path;
-
-    readLog(filePath);
-}
-
 async function readLog(path: string) {
-    console.log('readLog', path);
     isLoading.value = true;
     const fileContent = await content(path);
     logEntries.value = await useLogParser(fileContent);
@@ -215,7 +210,6 @@ function refreshLog() {
 }
 
 </script>
-  
 <style lang="scss" scoped>
 #pagination {
     // center pagination
@@ -225,4 +219,3 @@ function refreshLog() {
 
 }
 </style>
-  

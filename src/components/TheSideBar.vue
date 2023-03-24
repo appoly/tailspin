@@ -6,16 +6,14 @@
                 :active="applicationStore.page === 'log-viewer'" :pageId="'log-viewer'"
                 @setPage="() => applicationStore.changePage('log-viewer')" />
 
+            <SidebarItem key="connections" label="View Connections" icon="bi bi-hdd-network" tooltip="View Connections"
+                :active="applicationStore.page === 'connections'" pageId="connections"
+                @setPage="() => applicationStore.changePage('connections')" />
 
-            <li v-for="connection in applicationStore.connections" :key="connection.uid" class="nav-item">
-                <SidebarItem :key="connection.uid" :label="connection.name" icon="bi bi-hdd-network"
-                    :tooltip="connection.name" :active="applicationStore.page === 'connections'" :pageId="connection.uid"
-                    @setPage="() => applicationStore.changePage('connection.page.' + connection.uid)" />
-            </li>
-            <li class="nav-item">
-                <SidebarItem key="connections" label="View Connections" icon="bi bi-hdd-network" tooltip="View Connections"
-                    :active="applicationStore.page === 'connections'" pageId="connections"
-                    @setPage="() => applicationStore.changePage('connections')" />
+            <li v-for="connection in connectionStore.openConnections" :key="connection.uid" class="nav-item">
+                <SidebarItem :key="connection.uid" :label="connection.name" icon="bi bi-book" :tooltip="connection.name"
+                    :active="applicationStore.page === 'connections.page.' + connection.uid" :pageId="connection.uid"
+                    @setPage="() => applicationStore.changePage('connections.page.' + connection.uid)" />
             </li>
         </ul>
         <div class="nav nav-pills nav-flush flex-column text-center border-top">
@@ -31,8 +29,10 @@ import { Tooltip } from 'bootstrap'
 import { onMounted } from 'vue';
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import SidebarItem from './SidebarItem.vue';
+import { useConnectionStore } from '@/stores/useConnectionStore';
 
 const applicationStore = useApplicationStore();
+const connectionStore = useConnectionStore();
 
 onMounted(() => {
     new Tooltip(document.body, {
