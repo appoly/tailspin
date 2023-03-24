@@ -11,5 +11,4 @@ export interface Connection {
   icon: string;
   path: string;
   type: "local" | "remote";
-  isOpen: boolean;
 }
