@@ -2,7 +2,8 @@
 
 body,
 #app {
-    min-height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
 }
 
 .log-item {
@@ -35,6 +36,9 @@ body,
     max-height: 70vh;
     overflow-y: auto;
     overflow-x: hidden;
+    &::-webkit-scrollbar {
+        width: 0.5rem;
+    }
 }
 
 .filter.badge {
