@@ -28,11 +28,12 @@
 </template>
 
 <script lang="ts">
+import { Icons } from "./icons";
 export default {
     name: "BootstrapIconPicker",
     data() {
         return {
-            icons: Array<string>(),
+            icons: Icons,
             search: '',
             selectedIcon: '',
             selectorOpen: false,
@@ -51,9 +52,6 @@ export default {
         }
     },
     mounted(): void {
-        // load the icons folder
-        this.loadIconsFolder();
-
         if (this.modelValue) {
             this.selectedIcon = this.modelValue;
         }
@@ -76,22 +74,6 @@ export default {
         });
     },
     methods: {
-        loadIconsFolder(): void {
-            const fs = require('fs');
-            const path = require('path');
-            const directoryPath = path.join('node_modules/bootstrap-icons/icons');
-            const _self = this;
-            fs.readdir(directoryPath, function (err: any, files: string[]) {
-                if (err) {
-                    alert('Please install the bootstrap-icons package first. Run "npm install bootstrap-icons" in the terminal.')
-                }
-                files.forEach(function (file: string) {
-                    // remove the .svg extension
-                    const icon = file.replace('.svg', '');
-                    _self.icons.push(icon);
-                });
-            });
-        },
         selectIcon(icon: string): void {
             if (this.selectedIcon === icon) {
                 this.selectedIcon = '';
