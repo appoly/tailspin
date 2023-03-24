@@ -1,15 +1,31 @@
 <template>
-    <div class="my-4">
+    <div class="mt-2 mb-4">
+        <div class="d-flex">
+            <div class="w-100">
+                <div class="input-group mb-3">
+                    <input ref="logInput" id="logFile" type="file" class="form-control" @change="handleFileSelect" />
+                </div>
+            </div>
+            <div class="ms-2">
+                <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="isLoading">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
         <div class="input-group mb-3">
-            <input id="logFile" type="file" class="form-control" @change="handleFileSelect" />
+            <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
+                :disabled="isLoading" />
+        </div>
+
+        <!-- Filter by severity -->
+        <div class="d-flex mb-4 ">
+            <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity" :count="filter.count"
+                :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
         </div>
     </div>
 
-    <!-- Search Bar -->
-    <div class="input-group mb-3">
-        <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
-            :disabled="isLoading" />
-    </div>
 
     <div class="row">
         <div class="col-2 log-item-severity">
@@ -38,7 +54,7 @@
         </div>
     </template>
     <template v-else>
-        <div>
+        <div class="log-container">
             <TheLogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
         </div>
 
@@ -84,6 +100,7 @@ import { readFile } from "fs/promises";
 import { computed, ref } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
+import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 
@@ -109,6 +126,8 @@ const logParsingRegex =
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
+const selectedSeverity = ref('');
+const logInput = ref<HTMLInputElement | null>(null);
 
 const page = ref(1);
 const itemsPerPage = 20;
@@ -131,7 +150,11 @@ const paginationLinks = computed(() => {
 // computed filteredLogItems
 const filteredLogItems = computed(() => {
     const search = searchTerm.value.toLowerCase();
-    let items = logEntries.value
+    let items = logEntries.value;
+
+    if (selectedSeverity.value) {
+        items = items.filter((logItem) => logItem.severity === selectedSeverity.value);
+    }
 
     if (search.length > 0) {
         items = logEntries.value.filter((logItem) => {
@@ -146,15 +169,35 @@ const filteredLogItems = computed(() => {
     return items.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
 });
 
+const severityFilters = computed(() => {
+    const filters = [];
+    for (const severity of LogStatuses) {
+        const upperCaseSeverity = severity.toUpperCase();
+        const count = logEntries.value.filter((logItem) => logItem.severity === upperCaseSeverity).length;
+        if (count > 0) {
+            filters.push({
+                severity: upperCaseSeverity,
+                count: count,
+                selected: computed(() => selectedSeverity.value === upperCaseSeverity)
+            });
+        }
+    }
+    return filters;
+});
+
 
 async function handleFileSelect(evt: any) {
     const files = evt.target.files; // FileList object
     const file = files[0];
     const filePath = file.path;
 
-    isLoading.value = true;
+    readLog(filePath);
+}
 
-    const fileContent = await content(filePath);
+async function readLog(path: string) {
+    console.log('readLog', path);
+    isLoading.value = true;
+    const fileContent = await content(path);
     logEntries.value = await parseLogEntries(fileContent);
     isLoading.value = false;
 }
@@ -168,6 +211,24 @@ function changePage(type: string) {
         page.value++;
     } else if (type === 'previous' && hasPreviousPage.value) {
         page.value--;
+    }
+}
+
+function filterBySeverity(severity: string) {
+    if (selectedSeverity.value === severity) {
+        selectedSeverity.value = '';
+    } else {
+        selectedSeverity.value = severity;
+    }
+}
+
+function refreshLog() {
+    // get log file path from input field using ref
+    const files = logInput.value?.files;
+    const file = files ? files[0] : null;
+    const filePath = file ? file.path : null;
+    if (filePath !== null) {
+        readLog(filePath);
     }
 }
 
