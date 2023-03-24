@@ -61,21 +61,14 @@ export default {
         }
 
         // watch for outside clicks
-        document.addEventListener('click', (e: MouseEvent) => {
-            // if e.target is not inside the icon picker, close the selector
-            if (!(this.$refs.iconPicker as HTMLElement).contains(e.target as HTMLElement)) {
-                this.selectorOpen = false;
-            }
-        });
+        document.addEventListener('click', this.mouseEventListener);
 
         // watch for backspace key
-        document.addEventListener('keydown', (e: KeyboardEvent) => {
-            // if backspace is pressed and the search is empty, close the selector and clear the selected icon
-            if (this.selectorOpen && e.key === 'Backspace' && this.search === '') {
-                this.selectorOpen = false;
-                this.selectedIcon = '';
-            }
-        });
+        document.addEventListener('keydown', this.keydownEventListener);
+    },
+    unmounted() {
+        document.removeEventListener('click', this.mouseEventListener);
+        document.removeEventListener('keydown', this.keydownEventListener);
     },
     methods: {
         selectIcon(icon: string): void {
@@ -87,6 +80,19 @@ export default {
             this.selectorOpen = false;
             this.search = '';
             this.$emit('update:modelValue', this.selectedIcon);
+        },
+        mouseEventListener(e: MouseEvent): void {
+            // if e.target is not inside the icon picker, close the selector
+            if (!(this.$refs.iconPicker as HTMLElement).contains(e.target as HTMLElement)) {
+                this.selectorOpen = false;
+            }
+        },
+        keydownEventListener(e: KeyboardEvent): void {
+            // if backspace is pressed and the search is empty, close the selector and clear the selected icon
+            if (this.selectorOpen && e.key === 'Backspace' && this.search === '') {
+                this.selectorOpen = false;
+                this.selectedIcon = '';
+            }
         }
     },
 }
