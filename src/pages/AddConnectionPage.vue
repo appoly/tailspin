@@ -17,7 +17,13 @@
                 </div>
                 <div class="form-group">
                     <label for="path">Path</label>
-                    <input type="text" class="form-control" id="path" placeholder="Path" v-model="formFields.path" />
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Path" v-model="formFields.path"
+                            aria-label="Path" aria-describedby="browseBtn">
+                        <button @click.prevent="handlePathSelection" class="btn btn-secondary" type="button"
+                            id="browseBtn">Browse</button>
+                    </div>
+                    <small>This can be a folder or a file.</small>
                 </div>
                 <div class="form-group">
                     <label for="type">Type</label>
@@ -37,12 +43,13 @@
 <script setup lang="ts">
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { ref } from 'vue';
+import Application from '@/ipc-api/Application'
 
 const applicationStore = useApplicationStore();
 
 const formFields = ref({
     connectionName: '',
-    icon: '',
+    icon: 'bi bi-book',
     path: '',
     type: 'local' as 'remote' | 'local',
 })
@@ -67,6 +74,13 @@ function saveConnection() {
         isOpen: false
     });
     applicationStore.changePage('connections');
+}
+
+async function handlePathSelection() {
+    const result = await Application.openFileDialogue({ properties: ['openDirectory', 'openFile'] });
+    if (result.filePaths[0]) {
+        formFields.value.path = result.filePaths[0];
+    }
 }
 
 </script>
