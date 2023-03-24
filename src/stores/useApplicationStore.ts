@@ -12,7 +12,7 @@ export const useApplicationStore = defineStore("application", {
     addOpenConnection(connectionId: string) {
       this.openConnections.push(connectionId);
     },
-    removeOpenConnection(connectionId: String) {
+    closeConnection(connectionId: string) {
       this.openConnections = this.openConnections.filter((c) => c !== connectionId);
     },
     goToConnection(connectionId: string) {

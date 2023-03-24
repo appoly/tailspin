@@ -10,9 +10,9 @@
       <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
 
       <div class="container-fluid my-4">
-        <template v-for="connection in connectionStore.openConnections">
-          <ViewConnection :key="connection.uid" :connection="connection"
-            v-if="applicationStore.page === 'connections.page.' + connection.uid" />
+        <template v-for="connection in connectionStore.openConnections" :key="connection.uid">
+          <ViewConnection :connection="connection"
+            v-show="applicationStore.page === 'connections.page.' + connection.uid" />
         </template>
       </div>
 

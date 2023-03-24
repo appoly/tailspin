@@ -29,11 +29,11 @@ export const useConnectionStore = defineStore("connection", {
       this.connections.push(connection);
       persistentStore.set("connections", this.connections);
     },
-    removeConnection(connectionId: String) {
+    removeConnection(connectionId: string) {
       this.connections = this.connections.filter((c) => c.uid !== connectionId);
       persistentStore.set("connections", this.connections);
       const applicationStore = useApplicationStore();
-      applicationStore.removeOpenConnection(connectionId);
+      applicationStore.closeConnection(connectionId);
     },
   },
 });

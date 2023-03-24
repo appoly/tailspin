@@ -5,7 +5,7 @@
             <ConnectionCard v-for="connection in connectionStore.connections" :key="connection.uid" :connection="connection"
                 @click="() => applicationStore.goToConnection(connection.uid)"
                 @delete="() => connectionStore.removeConnection(connection.uid)" />
-            <div class="col-lg-4 col-6">
+            <div class="col-lg-4 col-6 mb-2">
                 <div class="connection-card card shadow" role="button"
                     @click="() => applicationStore.changePage('connections.add')">
                     <div class="d-flex justify-content-between">
