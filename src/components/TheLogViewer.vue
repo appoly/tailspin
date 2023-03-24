@@ -1,11 +1,7 @@
 <template>
     <div class="mt-2 mb-4">
         <div class="d-flex">
-            <div class="w-100">
-                <div class="input-group mb-3">
-                    <input ref="logInput" id="logFile" type="file" class="form-control" @change="handleFileSelect" />
-                </div>
-            </div>
+            <div>{{ connection.path }}</div>
             <div class="ms-2">
                 <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="isLoading">
                     <i class="bi bi-arrow-clockwise"></i>
@@ -100,9 +96,13 @@ import { computed, ref } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
 import SeverityFilter from "@/components/SeverityFilter.vue";
-import { LogEntry } from "@/interfaces";
+import { Connection, LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
+
+const props = defineProps<{
+    connection: Connection;
+}>();
 
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
@@ -165,15 +165,6 @@ const severityFilters = computed(() => {
     }
     return filters;
 });
-
-
-async function handleFileSelect(evt: any) {
-    const files = evt.target.files; // FileList object
-    const file = files[0];
-    const filePath = file.path;
-
-    readLog(filePath);
-}
 
 async function readLog(path: string) {
     console.log('readLog', path);
