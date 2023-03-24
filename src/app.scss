@@ -32,3 +32,13 @@ body,
     overflow-y: auto;
     overflow-x: hidden;
 }
+
+.filter.badge {
+    opacity: 0.5;
+    cursor: pointer;
+    transition: all 0.2s;
+    &:hover,
+    &.selected {
+        opacity: 1;
+    }
+}
