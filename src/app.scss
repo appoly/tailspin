@@ -1,25 +1,28 @@
 @import "bootstrap";
 
+body,
+#app {
+  min-height: 100vh;
+}
 
-.log-item{
-    max-width: 100% !important;
+.log-item {
+  max-width: 100% !important;
 }
 
 .log-item-time {
-    font-size: .9rem;
+  font-size: 0.9rem;
 }
 
 .log-item-text {
-    width: 100%;
+  width: 100%;
 }
 
-
 .expanded {
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.2s;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.2s;
 
-    &.show {
-        max-height: 1000px;
-    }
+  &.show {
+    max-height: 1000px;
+  }
 }

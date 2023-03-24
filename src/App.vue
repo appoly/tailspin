@@ -1,29 +1,36 @@
 <template>
-  <nav class="navbar navbar-expand-lg bg-body-tertiary">
-    <div class="container-fluid">
-      <RouterLink class="navbar-brand" to="/">Laravel Log Viewer</RouterLink>
-      <div class="d-flex" style="gap: 0.5rem;">
-        <RouterLink class="nav-item nav-link" to="/log-viewer">Log Viewer</RouterLink>
-        <RouterLink class="nav-item nav-link" to="/settings">Settings</RouterLink>
-      </div>
-    </div>
-  </nav>
+  <div class="d-flex">
+    <TheSidebar />
+    <div class="flex-grow-1 container-fluid pt-2">
+      <ConnectionsPage v-if="applicationStore.page === 'connections'" />
+      <SettingsPage v-if="applicationStore.page === 'settings'" />
 
-  <div class="container-fluid my-4">
-    <h1>{{ route.name ?? 'Home' }}</h1>
-    <RouterView />
+      <!-- Example for now, a standard log viewer page -->
+      <LogViewerPage v-if="applicationStore.page === `log-viewer`" />
+
+      <div class="container-fluid my-4">
+        <LogViewerPage v-for="connection in applicationStore.connections" :key="connection.uid" :connection="connection"
+          v-if="applicationStore.page === `connections.view`" />
+      </div>
+
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { RouterLink, RouterView, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/useUserStore";
+import { useApplicationStore } from "@/stores/useApplicationStore";
+import LogViewerPage from "@/pages/LogViewerPage.vue";
+import ConnectionsPage from "@/pages/ConnectionsPage.vue";
+import TheSidebar from "@/components/TheSidebar.vue";
+import SettingsPage from "./pages/SettingsPage.vue";
 
-const route = useRoute();
 const userStore = useUserStore();
+const applicationStore = useApplicationStore();
 
 onMounted(() => {
   userStore.init();
+  applicationStore.init();
 });
 </script>

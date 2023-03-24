@@ -1,4 +1,7 @@
 import { defineStore } from "pinia";
+import Store from 'electron-store';
+
+const persistentStore = new Store({ name: 'user' });
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -9,7 +12,7 @@ export const useUserStore = defineStore("user", {
       this.initTheme(); // Light or dark mode
     },
     initTheme() {
-      this.theme = window.localStorage.getItem("theme") ?? this.theme;
+      this.theme = persistentStore.get("theme", this.theme) as string;
       this.setTheme();
     },
     toggleTheme() {
@@ -19,7 +22,7 @@ export const useUserStore = defineStore("user", {
       this.setTheme();
     },
     setTheme() {
-      window.localStorage.setItem("theme", this.theme);
+      persistentStore.set("theme", this.theme);
       if (this.theme === "dark") {
         document.documentElement.setAttribute("data-bs-theme", "dark");
       } else {
