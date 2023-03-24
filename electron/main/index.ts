@@ -60,6 +60,10 @@ async function createWindow() {
     win.loadURL(url);
     // Open devTool if the app is not packaged
     win.webContents.openDevTools();
+    // Install vue
+    installExtension(VUEJS_DEVTOOLS)
+      .then((name) => console.log(`Added Extension:  ${name}`))
+      .catch((err) => console.log("An error occurred: ", err));
   } else {
     win.loadFile(indexHtml);
   }
@@ -75,9 +79,6 @@ async function createWindow() {
     return { action: "deny" };
   });
   // win.webContents.on('will-navigate', (event, url) => { }) #344
-  installExtension(VUEJS_DEVTOOLS)
-    .then((name) => console.log(`Added Extension:  ${name}`))
-    .catch((err) => console.log("An error occurred: ", err));
 }
 
 app.whenReady().then(createWindow);
