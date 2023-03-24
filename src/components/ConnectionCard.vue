@@ -1,5 +1,5 @@
 <template>
-    <div class="col-lg-4 col-6">
+    <div class="col-lg-4 col-6 mb-2">
         <div class="connection-card card shadow" role="button">
             <div class="d-flex justify-content-between">
                 <span>{{ connection.name ?? '?' }}</span>

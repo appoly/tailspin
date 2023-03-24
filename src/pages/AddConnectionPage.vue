@@ -6,35 +6,37 @@
                 <div class="alert alert-danger" role="alert" v-if="error">
                     {{ error }}
                 </div>
-                <div class="form-group">
-                    <label for="connectionName">Connection name</label>
-                    <input type="text" class="form-control" id="connectionName" placeholder="Connection name"
-                        v-model="formFields.connectionName" />
-                </div>
-                <div class="form-group">
-                    <label for="icon">Icon</label>
-                    <input type="text" class="form-control" id="icon" placeholder="Icon" v-model="formFields.icon" />
-                </div>
-                <div class="form-group">
-                    <label for="path">Path</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Path" v-model="formFields.path"
-                            aria-label="Path" aria-describedby="browseBtn">
-                        <button @click.prevent="handlePathSelection" class="btn btn-secondary" type="button"
-                            id="browseBtn">Browse</button>
+                <form @submit="saveConnection">
+                    <div class="form-group">
+                        <label for="connectionName">Connection name</label>
+                        <input type="text" class="form-control" id="connectionName" placeholder="Connection name"
+                            v-model="formFields.connectionName" />
                     </div>
-                    <small>This can be a folder or a file.</small>
-                </div>
-                <div class="form-group">
-                    <label for="type">Type</label>
-                    <select class="form-select" id="type" v-model="formFields.type">
-                        <option value="remote">Remote</option>
-                        <option value="local">Local</option>
-                    </select>
-                </div>
-                <div class="text-end">
-                    <button class="mt-3 btn btn-primary" @click="saveConnection">Save</button>
-                </div>
+                    <div class="form-group">
+                        <label for="icon">Icon</label>
+                        <input type="text" class="form-control" id="icon" placeholder="Icon" v-model="formFields.icon" />
+                    </div>
+                    <div class="form-group">
+                        <label for="path">Path</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Path" v-model="formFields.path"
+                                aria-label="Path" aria-describedby="browseBtn">
+                            <button @click.prevent="handlePathSelection" class="btn btn-secondary" type="button"
+                                id="browseBtn">Browse</button>
+                        </div>
+                        <small>This can be a folder or a file.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <select class="form-select" id="type" v-model="formFields.type">
+                            <option value="remote">Remote</option>
+                            <option value="local">Local</option>
+                        </select>
+                    </div>
+                    <div class="text-end">
+                        <button class="mt-3 btn btn-primary" type="submit">Save</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
