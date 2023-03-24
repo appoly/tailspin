@@ -103,6 +103,7 @@ import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
+import Application from "@/ipc-api/Application";
 
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
@@ -184,7 +185,7 @@ async function readLog(path: string) {
 }
 
 async function content(path: string): Promise<string> {
-    return await readFile(path, "utf8");
+    return await Application.readFromPath(path);
 }
 
 function changePage(type: string) {
