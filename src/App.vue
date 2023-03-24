@@ -1,8 +1,16 @@
 <template>
-  <TheSidebar />
+  <div class="d-flex">
+    <TheSidebar />
+    <div class="flex-grow-1 container-fluid">
+      <ConnectionsPage v-if="applicationStore.page === 'connections'" />
+      <SettingsPage v-if="applicationStore.page === 'settings'" />
 
-  <div class="container-fluid my-4">
-    <LogViewerPage v-for="connection in applicationStore.connections" :key="connection.uid" :connection="connection" />
+      <div class="container-fluid my-4">
+        <LogViewerPage v-for="connection in applicationStore.connections" :key="connection.uid" :connection="connection"
+          v-if="applicationStore.page === `connections.view`" />
+      </div>
+
+    </div>
   </div>
 </template>
 
@@ -11,7 +19,9 @@ import { onMounted } from "vue";
 import { useUserStore } from "@/stores/useUserStore";
 import { useApplicationStore } from "@/stores/useApplicationStore";
 import LogViewerPage from "@/pages/LogViewerPage.vue";
+import ConnectionsPage from "@/pages/ConnectionsPage.vue";
 import TheSidebar from "@/components/TheSidebar.vue";
+import SettingsPage from "./pages/SettingsPage.vue";
 
 const userStore = useUserStore();
 const applicationStore = useApplicationStore();

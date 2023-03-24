@@ -10,9 +10,10 @@ interface Connection {
   type: "local" | "remote";
 }
 
-export const useApplicationStore = defineStore("user", {
+export const useApplicationStore = defineStore("application", {
   state: () => ({
     connections: [] as Connection[],
+    page: "connections",
   }),
   actions: {
     init() {
@@ -20,6 +21,9 @@ export const useApplicationStore = defineStore("user", {
     },
     initConnections() {
       this.connections = persistentStore.get("connections", this.connections) as Connection[];
+    },
+    changePage(page: string) {
+      this.page = page;
     },
   },
 });
