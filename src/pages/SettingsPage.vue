@@ -1,5 +1,6 @@
 <template>
     <div>
+        <h1>Settings</h1>
         <button @click="userStore.toggleTheme" class="btn btn-primary">Toggle Theme</button>
     </div>
 </template>
