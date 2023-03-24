@@ -34,7 +34,9 @@
             Message
         </div>
     </div>
-
+    <div class="mt-2 alert alert-danger">
+        {{ errorMsg }}
+    </div>
     <template v-if="isLoading">
         <div v-for="row in 25" class="row p-2 my-2 cursor-none">
             <div class="col-2 log-item-severity placeholder-glow">
@@ -92,7 +94,6 @@
 </template>
   
 <script setup lang="ts">
-import { readFile } from "fs/promises";
 import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
@@ -113,6 +114,7 @@ onMounted(() => {
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
+const errorMsg = ref('');
 const selectedSeverity = ref('');
 const logInput = ref<HTMLInputElement | null>(null);
 
@@ -174,9 +176,15 @@ const severityFilters = computed(() => {
 
 async function readLog(path: string) {
     isLoading.value = true;
-    const fileContent = await content(path);
-    logEntries.value = await useLogParser(fileContent);
-    isLoading.value = false;
+    errorMsg.value = '';
+    try {
+        const fileContent = await content(path);
+        logEntries.value = await useLogParser(fileContent);
+    } catch (error: any) {
+        errorMsg.value = error?.message ?? "Error reading log file";
+    } finally {
+        isLoading.value = false;
+    }
 }
 
 async function content(path: string): Promise<string> {
