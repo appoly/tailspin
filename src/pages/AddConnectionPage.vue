@@ -3,6 +3,9 @@
         <h1>Add Connection</h1>
         <div class="row">
             <div class="col-12 p-5">
+                <div class="alert alert-danger" role="alert" v-if="error">
+                    {{ error }}
+                </div>
                 <div class="form-group">
                     <label for="connectionName">Connection name</label>
                     <input type="text" class="form-control" id="connectionName" placeholder="Connection name"
@@ -33,24 +36,34 @@
 
 <script setup lang="ts">
 import { useApplicationStore } from '@/stores/useApplicationStore';
+import { ref } from 'vue';
 
 const applicationStore = useApplicationStore();
 
-const formFields = {
+const formFields = ref({
     connectionName: '',
     icon: '',
     path: '',
     type: 'local' as 'remote' | 'local',
-}
+})
+const error = ref('');
 
 function saveConnection() {
     let uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    error.value = '';
+
+    // If any formfield is empty, return
+    if (Object.values(formFields.value).some((value) => value === '')) {
+        error.value = 'Please fill in all fields';
+        return;
+    }
+
     applicationStore.addConnection({
         uid,
-        name: formFields.connectionName,
-        icon: formFields.icon,
-        path: formFields.path,
-        type: formFields.type,
+        name: formFields.value.connectionName,
+        icon: formFields.value.icon,
+        path: formFields.value.path,
+        type: formFields.value.type,
         isOpen: false
     });
     applicationStore.changePage('connections');
