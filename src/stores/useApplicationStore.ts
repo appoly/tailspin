@@ -1,29 +1,26 @@
 import { defineStore } from "pinia";
-import Store from "electron-store";
-
-const persistentStore = new Store({ name: "application" });
-
-interface Connection {
-  uid: string;
-  name: string;
-  path: string;
-  type: "local" | "remote";
-}
 
 export const useApplicationStore = defineStore("application", {
   state: () => ({
-    connections: [] as Connection[],
+    openConnections: [] as string[],
     page: "connections",
   }),
   actions: {
-    init() {
-      this.initConnections();
-    },
-    initConnections() {
-      this.connections = persistentStore.get("connections", this.connections) as Connection[];
-    },
     changePage(page: string) {
       this.page = page;
+    },
+    addOpenConnection(connectionId: string) {
+      this.openConnections.push(connectionId);
+    },
+    removeOpenConnection(connectionId: String) {
+      this.openConnections = this.openConnections.filter((c) => c !== connectionId);
+    },
+    goToConnection(connectionId: string) {
+      this.page = "connections.page." + connectionId;
+      this.setOpen(connectionId);
+    },
+    setOpen(connectionId: string) {
+      this.openConnections.push(connectionId);
     },
   },
 });
