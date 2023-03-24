@@ -3,6 +3,7 @@
 body,
 #app {
     min-height: 100vh;
+    overflow: hidden;
 }
 
 .log-item {
@@ -53,4 +54,6 @@ body,
 
 .main-content {
     width: calc(100vw - 4.5rem); // Account for the sidebar
+    overflow-y: auto;
+    height: 100vh;
 }

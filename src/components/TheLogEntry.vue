@@ -14,14 +14,13 @@
             </div>
             <div class="col">
                 <div class="log-item-text">
-                    <span class="text-muted">
+                    <span class="text-muted" style="overflow-wrap: anywhere;">
                         {{ getEllipsis(logItem.text, 200) }}
                     </span>
                 </div>
             </div>
         </div>
     </div>
-
     <div :class="['container-fluid expanded', { 'show': showAll }]">
         <span>
             {{ logItem.text }}
