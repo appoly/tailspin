@@ -3,6 +3,7 @@ import { release } from "node:os";
 import { join } from "node:path";
 import Store from "electron-store";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
+import ipcHandlers from "./ipc-handlers";
 
 // The built directory structure
 //
@@ -121,5 +122,8 @@ ipcMain.handle("open-win", (_, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg });
   }
 });
+
+// Initialize ipcHandlers
+ipcHandlers();
 
 Store.initRenderer();
