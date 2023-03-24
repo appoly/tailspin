@@ -26,13 +26,6 @@
         </div>
     </div>
 
-
-    <!-- Filter by severity -->
-    <div class="d-flex mb-4 ">
-        <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity" :count="filter.count"
-            :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
-    </div>
-
     <div class="row">
         <div class="col-2 log-item-severity">
             Severity
