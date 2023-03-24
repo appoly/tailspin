@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { release } from "node:os";
 import { join } from "node:path";
 import Store from "electron-store";
+import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 
 // The built directory structure
 //
@@ -74,6 +75,9 @@ async function createWindow() {
     return { action: "deny" };
   });
   // win.webContents.on('will-navigate', (event, url) => { }) #344
+  installExtension(VUEJS_DEVTOOLS)
+    .then((name) => console.log(`Added Extension:  ${name}`))
+    .catch((err) => console.log("An error occurred: ", err));
 }
 
 app.whenReady().then(createWindow);

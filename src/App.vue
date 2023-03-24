@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <TheSidebar />
-    <div class="flex-grow-1 container-fluid">
+    <div class="flex-grow-1 container-fluid pt-2">
       <ConnectionsPage v-if="applicationStore.page === 'connections'" />
       <SettingsPage v-if="applicationStore.page === 'settings'" />
 

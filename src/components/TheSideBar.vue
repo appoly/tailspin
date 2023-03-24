@@ -5,27 +5,21 @@
                 <a href="javascript://" @click="() => applicationStore.changePage('settings')"
                     class="nav-link py-3 border-bottom rounded-0" :class="{
                         'active': applicationStore.page === 'connections'
-                    }" aria-current="page" data-bs-toggle="tooltip" data-bs-placement="right" :aria-label="connection.name"
-                    :data-bs-original-title="connection.name">
+                    }" aria-current="page" data-bs-toggle="tooltip" data-bs-placement="right"
+                    :aria-label="connection.name" :data-bs-original-title="connection.name">
                     <i class="bi bi-plus-square h2"></i>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link active py-3 border-bottom rounded-0" aria-current="page"
-                    data-bs-toggle="tooltip" data-bs-placement="right" aria-label="View Connections"
-                    data-bs-original-title="View Connections">
-                    <i class="bi bi-hdd-network h2"></i>
-                </a>
+                <SidebarItem key="connections" label="View Connections" icon="bi bi-hdd-network" tooltip="View Connections"
+                    :active="applicationStore.page === 'connections'" pageId="connections"
+                    @setPage="() => applicationStore.changePage('connections')" />
             </li>
         </ul>
-        <div class="dropdown border-top">
-            <a href="javascript://" @click="() => applicationStore.changePage('settings')"
-                class="nav-link text-center py-3 border-bottom rounded-0" :class="{
-                    'active': applicationStore.page === 'settings'
-                }" aria-current="page" data-bs-toggle="tooltip" data-bs-placement="right" aria-label="Settings"
-                data-bs-original-title="Settings">
-                <i class="bi bi-gear-wide-connected h2"></i>
-            </a>
+        <div class="nav nav-pills nav-flush flex-column text-center border-top">
+            <SidebarItem key="settings" label="Settings" icon="bi bi-gear-wide-connected" tooltip="Settings"
+                :active="applicationStore.page === 'settings'" pageId="settings"
+                @setPage="() => applicationStore.changePage('settings')" />
         </div>
     </div>
 </template>
@@ -34,6 +28,7 @@
 import { Tooltip } from 'bootstrap'
 import { onMounted } from 'vue';
 import { useApplicationStore } from '@/stores/useApplicationStore';
+import SidebarItem from './SidebarItem.vue';
 
 const applicationStore = useApplicationStore();
 
