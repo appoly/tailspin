@@ -1,18 +1,21 @@
-@import "bootstrap";
+@import 'bootstrap';
 
+body,
+#app {
+    min-height: 100vh;
+}
 
-.log-item{
+.log-item {
     max-width: 100% !important;
 }
 
 .log-item-time {
-    font-size: .9rem;
+    font-size: 0.9rem;
 }
 
 .log-item-text {
     width: 100%;
 }
-
 
 .expanded {
     max-height: 0;
@@ -28,11 +31,12 @@
     cursor: pointer;
 }
 
-.filter.badge{
+.filter.badge {
     opacity: 0.5;
     cursor: pointer;
     transition: all 0.2s;
-    &:hover, &.selected{
+    &:hover,
+    &.selected {
         opacity: 1;
     }
 }
