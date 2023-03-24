@@ -6,6 +6,14 @@ export default class {
   }
 
   static readFromPath(path: string): Promise<string> {
-    return ipcRenderer.invoke("read-from-path", path);
+    return ipcRenderer.invoke("read-file-from-path", path);
+  }
+
+  static isFileOrDirectory(path: string): Promise<"file" | "directory" | null> {
+    return ipcRenderer.invoke("is-file-or-directory", path);
+  }
+
+  static getFilesInDirectory(path: string): Promise<string[]> {
+    return ipcRenderer.invoke("get-files-in-directory", path);
   }
 }

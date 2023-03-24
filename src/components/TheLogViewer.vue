@@ -1,7 +1,25 @@
 <template>
     <div class="mt-2 mb-4">
         <div class="d-flex mb-3">
-            <div class="flex-grow-1"><input class="form-control" type="text" :value="connection.path" readonly disabled />
+            <div class="flex-grow-1">
+                <template v-if="isLoading">
+                    <input class="form-control" type="text" value="Loading..." readonly disabled />
+                </template>
+                <template v-else>
+                    <input v-if="!isDirectory" class="form-control" type="text" :value="currentPath" readonly disabled />
+                    <template v-else>
+                        <div v-if="!paths.length">
+                            <div class="alert alert-warning" role="alert">
+                                No log files found in this directory.
+                            </div>
+                        </div>
+                        <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
+                            <option readonly value=''>Please select an option...</option>
+                            <option v-for="path in paths" :value="connection.path + '/' + path">{{ path }}</option>
+                        </select>
+
+                    </template>
+                </template>
             </div>
             <div class="ms-2">
                 <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="isLoading">
@@ -34,7 +52,9 @@
             Message
         </div>
     </div>
-
+    <div v-if="errorMsg" class="mt-2 alert alert-danger">
+        {{ errorMsg }}
+    </div>
     <template v-if="isLoading">
         <div v-for="row in 25" class="row p-2 my-2 cursor-none">
             <div class="col-2 log-item-severity placeholder-glow">
@@ -90,10 +110,9 @@
         </div>
     </template>
 </template>
-  
+
 <script setup lang="ts">
-import { readFile } from "fs/promises";
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, nextTick } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
 import SeverityFilter from "@/components/SeverityFilter.vue";
@@ -113,6 +132,7 @@ onMounted(() => {
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
+const errorMsg = ref('');
 const selectedSeverity = ref('');
 const logInput = ref<HTMLInputElement | null>(null);
 
@@ -172,11 +192,37 @@ const severityFilters = computed(() => {
     return filters;
 });
 
+const paths = ref<string[]>([]);
+const isDirectory = ref<boolean>(false);
+const currentPath = ref('');
+
+async function handlePathDropdown() {
+    nextTick(() => readLog(currentPath.value));
+}
+
 async function readLog(path: string) {
     isLoading.value = true;
-    const fileContent = await content(path);
-    logEntries.value = await useLogParser(fileContent);
-    isLoading.value = false;
+    errorMsg.value = '';
+    try {
+        const contentType = await Application.isFileOrDirectory(path);
+        if (!contentType) {
+            throw new Error("File not found");
+        }
+
+        if (contentType === 'directory') {
+            isDirectory.value = true;
+            paths.value = await Application.getFilesInDirectory(path);
+            return;
+        }
+
+        currentPath.value = path;
+        const fileContent = await content(path);
+        logEntries.value = await useLogParser(fileContent);
+    } catch (error: any) {
+        errorMsg.value = error?.message ?? "Error reading log file";
+    } finally {
+        isLoading.value = false;
+    }
 }
 
 async function content(path: string): Promise<string> {
