@@ -26,3 +26,9 @@ body,
     max-height: 1000px;
   }
 }
+
+.log-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
