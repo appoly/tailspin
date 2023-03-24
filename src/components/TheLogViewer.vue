@@ -1,7 +1,8 @@
 <template>
     <div class="mt-2 mb-4">
-        <div class="d-flex">
-            <div>{{ connection.path }}</div>
+        <div class="d-flex mb-3">
+            <div class="flex-grow-1"><input class="form-control" type="text" :value="connection.path" readonly disabled />
+            </div>
             <div class="ms-2">
                 <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="isLoading">
                     <i class="bi bi-arrow-clockwise"></i>
@@ -92,17 +93,22 @@
   
 <script setup lang="ts">
 import { readFile } from "fs/promises";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
 import SeverityFilter from "@/components/SeverityFilter.vue";
 import { Connection, LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
+import Application from "@/ipc-api/Application";
 
 const props = defineProps<{
     connection: Connection;
 }>();
+
+onMounted(() => {
+    readLog(props.connection.path);
+});
 
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
@@ -167,7 +173,6 @@ const severityFilters = computed(() => {
 });
 
 async function readLog(path: string) {
-    console.log('readLog', path);
     isLoading.value = true;
     const fileContent = await content(path);
     logEntries.value = await useLogParser(fileContent);
@@ -175,7 +180,7 @@ async function readLog(path: string) {
 }
 
 async function content(path: string): Promise<string> {
-    return await readFile(path, "utf8");
+    return await Application.readFromPath(path);
 }
 
 function changePage(type: string) {
@@ -205,7 +210,6 @@ function refreshLog() {
 }
 
 </script>
-  
 <style lang="scss" scoped>
 #pagination {
     // center pagination
@@ -215,4 +219,3 @@ function refreshLog() {
 
 }
 </style>
-  
