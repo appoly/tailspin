@@ -11,10 +11,12 @@
                 @setPage="() => applicationStore.changePage('connections')" />
 
             <li v-for="connection in connectionStore.openConnections" :key="connection.uid" class="nav-item">
-                <SidebarItem :key="connection.uid" :label="connection.name" icon="bi bi-book" :tooltip="connection.name"
-                    :active="applicationStore.page === 'connections.page.' + connection.uid" :pageId="connection.uid"
+                <SidebarItem :key="connection.uid" :label="connection.name" :icon="`bi bi-${connection.icon}`"
+                    :tooltip="connection.name" :active="applicationStore.page === 'connections.page.' + connection.uid"
+                    :pageId="connection.uid"
                     @setPage="() => applicationStore.changePage('connections.page.' + connection.uid)" />
             </li>
+            ah
         </ul>
         <div class="nav nav-pills nav-flush flex-column text-center border-top">
             <SidebarItem key="settings" label="Settings" icon="bi bi-gear-wide-connected" tooltip="Settings"
