@@ -10,7 +10,7 @@
       <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
 
       <div class="container-fluid my-4">
-        <template v-for="connection in applicationStore.openConnections">
+        <template v-for="connection in connectionStore.openConnections">
           <ViewConnection :key="connection.uid" :connection="connection"
             v-if="applicationStore.page === 'connections.page.' + connection.uid" />
         </template>
@@ -30,12 +30,14 @@ import TheSidebar from "@/components/TheSidebar.vue";
 import SettingsPage from "./pages/SettingsPage.vue";
 import AddConnectionPage from "./pages/AddConnectionPage.vue";
 import ViewConnection from "./pages/ViewConnection.vue";
+import { useConnectionStore } from "./stores/useConnectionStore";
 
 const userStore = useUserStore();
 const applicationStore = useApplicationStore();
+const connectionStore = useConnectionStore();
 
 onMounted(() => {
   userStore.init();
-  applicationStore.init();
+  connectionStore.init();
 });
 </script>
