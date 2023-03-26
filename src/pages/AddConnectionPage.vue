@@ -6,7 +6,7 @@
                 <div class="alert alert-danger" role="alert" v-if="error">
                     {{ error }}
                 </div>
-                <form @submit="saveConnection">
+                <form @submit.prevent="saveConnection">
                     <div class="form-group">
                         <label for="connectionName">Connection name</label>
                         <input type="text" class="form-control" id="connectionName" placeholder="Connection name"
@@ -19,12 +19,14 @@
                     <div class="form-group">
                         <label for="path">Path</label>
                         <div class="input-group">
+                            <button @click.prevent="() => handlePathSelection('file')" class="btn btn-secondary" type="button">Browse
+                                File</button>
                             <input type="text" class="form-control" placeholder="Path" v-model="formFields.path"
-                                aria-label="Path" aria-describedby="browseBtn">
-                            <button @click.prevent="handlePathSelection" class="btn btn-secondary" type="button"
-                                id="browseBtn">Browse</button>
+                                aria-label="Path">
+                            <button @click.prevent="() => handlePathSelection('folder')" class="btn btn-outline-secondary"
+                                type="button">Browse
+                                Folder</button>
                         </div>
-                        <small>This can be a folder or a file.</small>
                     </div>
                     <div class="form-group">
                         <label for="type">Type</label>
@@ -79,8 +81,9 @@ function saveConnection() {
     applicationStore.changePage('connections');
 }
 
-async function handlePathSelection() {
-    const result = await api.openFileDialogue({ properties: ['openDirectory', 'openFile'] });
+async function handlePathSelection(type: 'file' | 'folder') {
+    const properties = type === 'file' ? ['openFile'] : ['openDirectory'];
+    const result = await api.Application.openFileDialogue({ properties });
     if (result.filePaths[0]) {
         formFields.value.path = result.filePaths[0];
     }

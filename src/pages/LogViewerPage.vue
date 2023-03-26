@@ -183,7 +183,7 @@ async function readLog(path: string) {
 }
 
 async function content(path: string): Promise<string> {
-    return await api.readFromPath(path);
+    return await api.Application.readFromPath(path);
 }
 
 function changePage(type: string) {
