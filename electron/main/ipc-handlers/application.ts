@@ -14,7 +14,6 @@ export default () => {
     }
     return fs.lstatSync(path).isDirectory() ? "directory" : "file";
   });
-
   ipcMain.handle("get-files-in-directory", (event, path) => {
     return fs.readdirSync(path)?.filter((file) => file.endsWith(".log"));
   });
