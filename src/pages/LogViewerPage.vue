@@ -202,11 +202,15 @@ function filterBySeverity(severity: string) {
     }
 }
 
+interface FileWithPath extends File {
+    path: string
+}
+
 function refreshLog() {
     // get log file path from input field using ref
     const files = logInput.value?.files;
     const file = files ? files[0] : null;
-    const filePath = file ? file.path : null;
+    const filePath = file ? (file as FileWithPath).path : null;
     if (filePath !== null) {
         readLog(filePath);
     }

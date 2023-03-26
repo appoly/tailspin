@@ -245,12 +245,8 @@ function filterBySeverity(severity: string) {
 }
 
 function refreshLog() {
-    // get log file path from input field using ref
-    const files = logInput.value?.files;
-    const file = files ? files[0] : null;
-    const filePath = file ? file.path : null;
-    if (filePath !== null) {
-        readLog(filePath);
+    if (currentPath.value) {
+        readLog(currentPath.value);
     }
 }
 
