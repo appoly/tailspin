@@ -1,4 +1,4 @@
-import { app, ipcMain, dialog } from "electron";
+import { ipcMain, dialog } from "electron";
 import * as fs from "fs";
 
 export default () => {

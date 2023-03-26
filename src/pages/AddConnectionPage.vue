@@ -46,7 +46,6 @@
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { ref } from 'vue';
-import Application from '@/ipc-api/Application'
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 
 const applicationStore = useApplicationStore();
@@ -81,7 +80,7 @@ function saveConnection() {
 }
 
 async function handlePathSelection() {
-    const result = await Application.openFileDialogue({ properties: ['openDirectory', 'openFile'] });
+    const result = await api.openFileDialogue({ properties: ['openDirectory', 'openFile'] });
     if (result.filePaths[0]) {
         formFields.value.path = result.filePaths[0];
     }
