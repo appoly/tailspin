@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { Connection } from "@/interfaces";
 import { useApplicationStore } from "./useApplicationStore";
+import { unproxify } from "@/helpers";
 
 export const useConnectionStore = defineStore("connection", {
   state: () => ({
@@ -17,7 +18,7 @@ export const useConnectionStore = defineStore("connection", {
       this.initConnections();
     },
     async initConnections() {
-      this.connections = await api.Store.get("connections", []) as Connection[];
+      this.connections = (await api.Store.get("connections", unproxify(this.connections))) as Connection[];
     },
     getById(connectionId: string) {
       return this.connections.find((c) => c.uid === connectionId);
