@@ -25,11 +25,11 @@ export const useConnectionStore = defineStore("connection", {
     },
     async addConnection(connection: Connection) {
       this.connections.push(connection);
-      await api.Store.set("connections", this.connections);
+      await api.Store.set("connections", unproxify(this.connections));
     },
     removeConnection(connectionId: string) {
       this.connections = this.connections.filter((c) => c.uid !== connectionId);
-      api.set("connections", this.connections);
+      api.Store.set("connections", unproxify(this.connections));
       const applicationStore = useApplicationStore();
       applicationStore.closeConnection(connectionId);
     },

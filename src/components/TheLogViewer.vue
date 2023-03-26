@@ -119,7 +119,6 @@ import SeverityFilter from "@/components/SeverityFilter.vue";
 import { Connection, LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
-import Application from "@/ipc-api/Application";
 
 const props = defineProps<{
     connection: Connection;
@@ -204,14 +203,14 @@ async function readLog(path: string) {
     isLoading.value = true;
     errorMsg.value = '';
     try {
-        const contentType = await Application.isFileOrDirectory(path);
+        const contentType = await api.Application.isFileOrDirectory(path);
         if (!contentType) {
             throw new Error("File not found");
         }
 
         if (contentType === 'directory') {
             isDirectory.value = true;
-            paths.value = await Application.getFilesInDirectory(path);
+            paths.value = await api.Application.getFilesInDirectory(path);
             return;
         }
 
@@ -226,7 +225,7 @@ async function readLog(path: string) {
 }
 
 async function content(path: string): Promise<string> {
-    return await Application.readFromPath(path);
+    return await api.Application.readFromPath(path);
 }
 
 function changePage(type: string) {

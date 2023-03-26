@@ -47,9 +47,6 @@ async function createWindow() {
     icon: join(process.env.PUBLIC, "favicon.ico"),
     webPreferences: {
       preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: false,
       contextIsolation: true,
     },
@@ -61,10 +58,10 @@ async function createWindow() {
     win.loadURL(url);
     // Open devTool if the app is not packaged
     win.webContents.openDevTools();
-    // Install vue
-    // installExtension(VUEJS_DEVTOOLS)
-    //   .then((name) => console.log(`Added Extension:  ${name}`))
-    //   .catch((err) => console.log("An error occurred: ", err));
+    // Install vue devtools
+    installExtension(VUEJS_DEVTOOLS)
+      .then((name) => console.log(`Added Extension:  ${name}`))
+      .catch((err) => console.log("An error occurred: ", err));
   } else {
     win.loadFile(indexHtml);
   }
@@ -111,8 +108,8 @@ ipcMain.handle("open-win", (_, arg) => {
   const childWindow = new BrowserWindow({
     webPreferences: {
       preload,
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
     },
   });
 
