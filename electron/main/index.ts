@@ -50,8 +50,8 @@ async function createWindow() {
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
     },
     autoHideMenuBar: true,
   });
@@ -62,9 +62,9 @@ async function createWindow() {
     // Open devTool if the app is not packaged
     win.webContents.openDevTools();
     // Install vue
-    installExtension(VUEJS_DEVTOOLS)
-      .then((name) => console.log(`Added Extension:  ${name}`))
-      .catch((err) => console.log("An error occurred: ", err));
+    // installExtension(VUEJS_DEVTOOLS)
+    //   .then((name) => console.log(`Added Extension:  ${name}`))
+    //   .catch((err) => console.log("An error occurred: ", err));
   } else {
     win.loadFile(indexHtml);
   }
@@ -125,5 +125,3 @@ ipcMain.handle("open-win", (_, arg) => {
 
 // Initialize ipcHandlers
 ipcHandlers();
-
-Store.initRenderer();
