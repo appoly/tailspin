@@ -19,7 +19,8 @@
                     <div class="form-group">
                         <label for="path">Path</label>
                         <div class="input-group">
-                            <button @click.prevent="() => handlePathSelection('file')" class="btn btn-secondary" type="button">Browse
+                            <button @click.prevent="() => handlePathSelection('file')" class="btn btn-secondary"
+                                type="button">Browse
                                 File</button>
                             <input type="text" class="form-control" placeholder="Path" v-model="formFields.path"
                                 aria-label="Path">
@@ -82,8 +83,7 @@ function saveConnection() {
 }
 
 async function handlePathSelection(type: 'file' | 'folder') {
-    const properties = type === 'file' ? ['openFile'] : ['openDirectory'];
-    const result = await api.Application.openFileDialogue({ properties });
+    const result = await api.Application.openFileDialogue({ properties: [type === 'file' ? 'openFile' : 'openDirectory'] });
     if (result.filePaths[0]) {
         formFields.value.path = result.filePaths[0];
     }
