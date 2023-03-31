@@ -11,6 +11,6 @@ interface SshDetails {
   password: string;
 }
 
-export function testSshCredentials(options: SshDetails): Promise<boolean> {
+export function testSshCredentials(options: SshDetails): Promise<{ success: boolean; error?: any }> {
   return ipcRenderer.invoke("test-ssh-credentials", options);
 }
