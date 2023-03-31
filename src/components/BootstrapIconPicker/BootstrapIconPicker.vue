@@ -1,6 +1,6 @@
 <template>
     <div ref="iconPicker" class="icon-picker">
-        <button type="button" :class="[buttonClass, 'icon-button']" @click="selectorOpen = !selectorOpen">
+        <button type="button" :class="[buttonClass, 'icon-button']" @click="openIconBox">
             <template v-if="selectedIcon">
                 <i :class="[iconClass + selectedIcon]"></i>
             </template>
@@ -93,6 +93,9 @@ export default {
                 this.selectorOpen = false;
                 this.selectedIcon = '';
             }
+        },
+        openIconBox(): void {
+            this.selectorOpen = true;
         }
     },
 }
@@ -114,9 +117,10 @@ export default {
 .icon-selector {
     max-height: 400px;
     max-width: 300px;
+    min-width: 300px;
     overflow: hidden;
+    z-index: 1000;
     position: absolute;
-    z-index: 10;
 }
 
 

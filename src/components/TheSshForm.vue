@@ -1,19 +1,18 @@
 <template>
     <div v-if="modelValue">
         <div class="card p-2">
-            <div class="form-group">
-                <label for="host">Host</label>
+            <h4>Connection Details</h4>
+            <div class="form-group mb-2">
+                <label class="form-label" for="host">Host</label>
                 <input class="form-control" type="text" v-model="modelValue.host" required />
             </div>
-            <div class="form-group">
-                <label for="port">Port</label>
+            <div class="form-group mb-2">
+                <label class="form-label" for="port">Port</label>
                 <input class="form-control" type="text" v-model="modelValue.port" required />
             </div>
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input class="form-control" type="text" v-model="modelValue.username" required />
-            </div>
-            <div class="btn-group mt-2" role="group" aria-label="Basic radio toggle button group">
+            <hr>
+            <h4>Authentication</h4>
+            <div class="btn-group my-4" role="group" aria-label="Basic radio toggle button group">
                 <input type="radio" class="btn-check" id="radio-password" autocomplete="off" value="password"
                     v-model="modelValue.passwordType">
                 <label class="btn btn-outline-primary" for="radio-password">Password</label>
@@ -21,12 +20,16 @@
                     v-model="modelValue.passwordType" />
                 <label class="btn btn-outline-primary" for="radio-key">Private Key</label>
             </div>
-            <div v-if="modelValue.passwordType === 'password'" class="form-group">
-                <label for="password">Password</label>
+            <div class="form-group mb-2">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-control" type="text" v-model="modelValue.username" required />
+            </div>
+            <div v-if="modelValue.passwordType === 'password'" class="form-group mb-2">
+                <label class="form-label" for="password">Password</label>
                 <input class="form-control" type="password" v-model="modelValue.password" required />
             </div>
-            <div v-else-if="modelValue.passwordType === 'key'" class="form-group">
-                <label for="privateKeyPath">Private Key Path</label>
+            <div v-else-if="modelValue.passwordType === 'key'" class="form-group mb-2">
+                <label class="form-label" for="privateKeyPath">Private Key Path</label>
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="Path" v-model="modelValue.password" required
                         aria-label="Path">
@@ -34,7 +37,7 @@
                         type="button">Browse</button>
                 </div>
             </div>
-            <div class="text-end mt-2">
+            <div class="text-end my-2">
                 <button class="btn btn-secondary" type="button" @click="testConnection" :disabled="!isReady || isTesting">
                     <span v-if="isTesting">Testing...</span>
                     <span v-else>Test Connection</span>
@@ -96,12 +99,15 @@ async function testConnection() {
         let response = await api.Ssh.testSshCredentials(unproxify(props.modelValue!));
         if (response.success) {
             testSuccess.value = true;
+            alert('Connection successful');
         } else {
             errorMsg.value = "Connection failed."
             errorMsg.value += response.error ? ` Error: ${response.error}` : '';
+            alert(errorMsg.value);
         }
     } catch (err: any) {
         errorMsg.value = err?.message ?? 'An unexpected error has occurred';
+        alert(errorMsg.value);
     } finally {
         isTesting.value = false;
     }
