@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from "electron";
+import { ipcMain, dialog, safeStorage } from "electron";
 import * as fs from "fs";
 
 export default () => {
@@ -16,5 +16,8 @@ export default () => {
   });
   ipcMain.handle("get-files-in-directory", (event, path) => {
     return fs.readdirSync(path)?.filter((file) => file.endsWith(".log"));
+  });
+  ipcMain.handle("encrypt-string", (event, string) => {
+    return safeStorage.encryptString(string).toString("base64");
   });
 };

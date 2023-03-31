@@ -6,17 +6,19 @@
                 <button @click="() => closeConnection(connection.uid)" class="btn btn-outline-danger btn-sm">Close</button>
             </span>
         </div>
-        <TheLogViewer :connection="connection" />
+        <LocalLogViewer v-if="props.connection.type === 'local'" :connection="connection" />
+        <SshLogViewer v-else :connection="connection" />
     </div>
 </template>
 
 <script setup lang="ts">
-import TheLogViewer from '@/components/TheLogViewer.vue';
+import LocalLogViewer from '@/components/LocalLogViewer.vue';
+import SshLogViewer from '@/components/SshLogViewer.vue';
 import { Connection } from '@/interfaces';
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { nextTick } from 'vue';
 
-defineProps<{
+const props = defineProps<{
     connection: Connection;
 }>();
 
@@ -28,5 +30,3 @@ function closeConnection(uid: string) {
 }
 
 </script>
-
-<style scoped></style>
