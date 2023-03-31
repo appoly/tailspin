@@ -42,14 +42,11 @@ import { ref, onMounted, nextTick } from "vue";
 import { Connection, LogEntry } from "@/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
 import TheLogViewer from "./TheLogViewer.vue";
+import { unproxify } from "@/helpers";
 
 const props = defineProps<{
     connection: Connection;
 }>();
-
-onMounted(() => {
-    readLog(props.connection.path);
-});
 
 const logEntries = ref<LogEntry[]>([]);
 const isLoading = ref(false);
@@ -59,33 +56,54 @@ const paths = ref<string[]>([]);
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
 
-async function handlePathDropdown() {
-    nextTick(() => readLog(currentPath.value));
-}
+onMounted(async () => {
+    readLog(props.connection.path);
+});
 
 async function readLog(path: string) {
+    console.log(path);
+
     isLoading.value = true;
     errorMsg.value = '';
     try {
-        const contentType = await api.Application.isFileOrDirectory(path);
-        if (!contentType) {
-            throw new Error("File not found");
+        const contentType: { success: boolean, message?: string } = await api.Ssh.isFileOrDirectory(unproxify(props.connection.ssh), path);
+
+        if (!contentType.success) {
+            throw new Error(contentType.message);
         }
 
-        if (contentType === 'directory') {
-            isDirectory.value = true;
-            paths.value = await api.Application.getFilesInDirectory(path);
-            return;
+        if (!contentType.message) {
+            throw new Error("Path not valid");
         }
+
+        let data: { success: boolean, message?: string };
+
+        if (contentType.message.trim() === 'directory') {
+            isDirectory.value = true;
+            data = await api.Ssh.getFilesInDirectory(unproxify(props.connection.ssh), path);
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+            paths.value = (data.message as string).trim().split('\n');
+            return;
+        };
 
         currentPath.value = path;
-        const fileContent = await api.Application.readFromPath(path);
-        logEntries.value = await useLogParser(fileContent);
+        data = await api.Ssh.readFromPath(unproxify(props.connection.ssh), path)
+        if (!data.success) {
+            throw new Error(data.message);
+        }
+        logEntries.value = await useLogParser(data.message as string);
+        return;
     } catch (error: any) {
         errorMsg.value = error?.message ?? "Error reading log file";
     } finally {
         isLoading.value = false;
     }
+}
+
+async function handlePathDropdown() {
+    nextTick(() => readLog(currentPath.value));
 }
 
 function refreshLog() {

@@ -37,8 +37,10 @@ export default () => {
     const ssh = buildConnection(options);
     try {
       await ssh.connect();
-      // Output one file per line:
-      let response = await ssh.exec(`ls`, ["-1", path + "/*.log"]);
+      // Output one file per line, only .log files:
+      // Only look for .log files
+      path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
+      let response = await ssh.exec(`ls`, ["-1", path]);
       return { success: true, message: response };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
