@@ -1,63 +1,62 @@
 <template>
     <div>
         <h1>Add Connection</h1>
-        <div class="row">
-            <div class="col-12 p-5">
-                <div class="alert alert-danger" role="alert" v-if="error">
-                    {{ error }}
-                </div>
-                <form @submit.prevent="saveConnection">
-                    <div class="form-group mb-2">
-                        <label for="connectionName">Connection name</label>
-                        <input type="text" class="form-control" id="connectionName" placeholder="Connection name" required
-                            v-model="formFields.name" />
-                    </div>
-                    <div class="form-group mb-2">
-                        <label for="icon">Icon</label>
-                        <BootstrapIconPicker v-model="formFields.icon" />
-                    </div>
-                    <div class="form-group mb-2">
-                        <div>Connection Type</div>
-                        <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-                            <input type="radio" class="btn-check" id="radio-local" autocomplete="off" value="local"
-                                v-model="formFields.type">
-                            <label class="btn btn-outline-primary" for="radio-local">Local</label>
-                            <input type="radio" class="btn-check" id="radio-remote" autocomplete="off" value="remote"
-                                v-model="formFields.type" />
-                            <label class="btn btn-outline-primary" for="radio-remote">Remote (SSH)</label>
-                        </div>
-                    </div>
-                    <template v-if="formFields.type === 'local'">
-                        <div class="form-group mb-2">
-                            <label for="path">Path</label>
-                            <div class="input-group">
-                                <button @click.prevent="() => handlePathSelection('file')" class="btn btn-secondary"
-                                    type="button">Browse
-                                    File</button>
-                                <input type="text" class="form-control" placeholder="Path" v-model="formFields.path"
-                                    required aria-label="Path">
-                                <button @click.prevent="() => handlePathSelection('folder')"
-                                    class="btn btn-outline-secondary" type="button">Browse
-                                    Folder</button>
-                            </div>
-                        </div>
-                    </template>
-                    <template v-else>
-                        <TheSshForm v-model="formFields.ssh" />
-                        <div class="form-group mb-2">
-                            <label for="path">Path</label>
-                            <input type="text" class="form-control" v-model="formFields.path" required>
-                            <small>Not sure what to put? Try
-                                <pre class="d-inline">/var/www/storage/logs/laravel.log</pre>
-                            </small>
-                        </div>
-                    </template>
-                    <div class="text-end">
-                        <button class="mt-3 btn btn-primary" type="submit">Save</button>
-                    </div>
-                </form>
-            </div>
+        <div class="alert alert-danger" role="alert" v-if="error">
+            {{ error }}
         </div>
+        <form @submit.prevent="saveConnection">
+            <div class="form-group mb-2">
+                <label for="connectionName" class="form-label">Connection name</label>
+                <input type="text" class="form-control" id="connectionName" placeholder="Connection name" required
+                    v-model="formFields.name" />
+            </div>
+            <div class="form-group mb-2">
+                <label class="form-label" for="icon">Icon</label>
+                <BootstrapIconPicker v-model="formFields.icon" />
+            </div>
+            <div class="form-group my-4">
+                <h4>Connection Type</h4>
+                <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                    <input type="radio" class="btn-check" id="radio-local" autocomplete="off" value="local"
+                        v-model="formFields.type">
+                    <label class="btn btn-outline-primary" for="radio-local">Local</label>
+                    <input type="radio" class="btn-check" id="radio-remote" autocomplete="off" value="remote"
+                        v-model="formFields.type" />
+                    <label class="btn btn-outline-primary" for="radio-remote">Remote (SSH)</label>
+                </div>
+            </div>
+            <template v-if="formFields.type === 'local'">
+                <h4 class="my-2">Log File Details</h4>
+                <div class="form-group mb-2">
+                    <label class="form-label" for="path">Path</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Path" v-model="formFields.path" required
+                            aria-label="Path">
+                        <button @click.prevent="() => handlePathSelection('file')" class="btn btn-secondary"
+                            type="button">Browse
+                            File</button>
+                        <button @click.prevent="() => handlePathSelection('folder')" class="btn btn-outline-secondary"
+                            type="button">Browse
+                            Folder</button>
+                    </div>
+                </div>
+            </template>
+            <template v-else>
+                <TheSshForm v-model="formFields.ssh" />
+
+                <h4 class="my-2">Log File Details</h4>
+                <div class="form-group mb-2">
+                    <label class="form-label" for="path">Path</label>
+                    <input type="text" class="form-control" v-model="formFields.path" required>
+                    <small>Not sure what to put? Try
+                        <pre class="d-inline">/var/www/storage/logs/laravel.log</pre>
+                    </small>
+                </div>
+            </template>
+            <div class="text-end">
+                <button class="mt-3 btn btn-primary" type="submit">Save</button>
+            </div>
+        </form>
     </div>
 </template>
 
