@@ -15,7 +15,6 @@
             v-show="applicationStore.page === 'connections.page.' + connection.uid" />
         </template>
       </div>
-
     </div>
   </div>
 </template>
@@ -27,7 +26,7 @@ import { useApplicationStore } from "@/stores/useApplicationStore";
 import LogViewerPage from "@/pages/LogViewerPage.vue";
 import ConnectionsPage from "@/pages/ConnectionsPage.vue";
 import TheSidebar from "@/components/TheSidebar.vue";
-import SettingsPage from "./pages/SettingsPage.vue";
+import SettingsPage from "@/pages/SettingsPage.vue";
 import AddConnectionPage from "./pages/AddConnectionPage.vue";
 import ViewConnection from "./pages/ViewConnection.vue";
 import { useConnectionStore } from "./stores/useConnectionStore";

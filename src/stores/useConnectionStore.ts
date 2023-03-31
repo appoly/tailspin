@@ -1,9 +1,7 @@
 import { defineStore } from "pinia";
-import Store from "electron-store";
 import { Connection } from "@/interfaces";
 import { useApplicationStore } from "./useApplicationStore";
-
-const persistentStore = new Store({ name: "connection" });
+import { unproxify } from "@/helpers";
 
 export const useConnectionStore = defineStore("connection", {
   state: () => ({
@@ -19,19 +17,19 @@ export const useConnectionStore = defineStore("connection", {
     init() {
       this.initConnections();
     },
-    initConnections() {
-      this.connections = persistentStore.get("connections", this.connections) as Connection[];
+    async initConnections() {
+      this.connections = (await api.Store.get("connections", unproxify(this.connections))) as Connection[];
     },
     getById(connectionId: string) {
       return this.connections.find((c) => c.uid === connectionId);
     },
-    addConnection(connection: Connection) {
+    async addConnection(connection: Connection) {
       this.connections.push(connection);
-      persistentStore.set("connections", this.connections);
+      await api.Store.set("connections", unproxify(this.connections));
     },
     removeConnection(connectionId: string) {
       this.connections = this.connections.filter((c) => c.uid !== connectionId);
-      persistentStore.set("connections", this.connections);
+      api.Store.set("connections", unproxify(this.connections));
       const applicationStore = useApplicationStore();
       applicationStore.closeConnection(connectionId);
     },

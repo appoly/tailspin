@@ -22,9 +22,7 @@
         </div>
     </div>
     <div :class="['container-fluid expanded', { 'show': showAll }]">
-        <span>
-            {{ logItem.text }}
-        </span>
+        <pre class="code-card bg-body-tertiary">{{ logItem.text }}</pre>
     </div>
 </template>
 
@@ -73,3 +71,12 @@ const severityIcon = (severity: string) => {
 };
 
 </script>
+
+<style scoped lang="scss">
+.code-card {
+    max-height: 500px;
+    padding: 0.5rem;
+    border-radius: 0 0 0.5rem 0.5rem;
+    overflow-y: auto;
+}
+</style>
