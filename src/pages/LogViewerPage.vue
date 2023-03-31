@@ -54,7 +54,7 @@
     </template>
     <template v-else>
         <div class="log-container">
-            <TheLogEntry v-for="logItem in filteredLogItems" :logItem="logItem" />
+            <TheLogEntry v-for="logItem in currentPageItems" :logItem="logItem" />
         </div>
 
         <!-- pagination -->
@@ -102,6 +102,8 @@ import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
+import { getPaginationData } from "@/composables/LogViewer/pagination";
+import { filterLogs } from "@/composables/LogViewer/filterLogs";
 
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
@@ -111,43 +113,19 @@ const logInput = ref<HTMLInputElement | null>(null);
 
 const page = ref(1);
 const itemsPerPage = 20;
-const totalItems = computed(() => logEntries.value.length);
-const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage));
-const hasPreviousPage = computed(() => page.value > 1);
-const hasNextPage = computed(() => page.value < totalPages.value);
-const paginationLinks = computed(() => {
-    // two pages before and after the current page but not beyond the start or end
-    const start = Math.max(1, page.value - 2);
-    const end = Math.min(totalPages.value, page.value + 2);
-    const links = [];
-    for (let i = start; i <= end; i++) {
-        links.push(i);
-    }
-    return links;
-});
-
-
-// computed filteredLogItems
 const filteredLogItems = computed(() => {
     const search = searchTerm.value.toLowerCase();
     let items = logEntries.value;
 
-    if (selectedSeverity.value) {
-        items = items.filter((logItem) => logItem.severity === selectedSeverity.value);
-    }
-
-    if (search.length > 0) {
-        items = logEntries.value.filter((logItem) => {
-            return (
-                logItem.text.toLowerCase().includes(search) ||
-                logItem.severity.toLowerCase().includes(search) ||
-                logItem.timestamp.includes(search)
-            );
-        })
-    }
-
-    return items.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
+    return filterLogs(items, search, selectedSeverity.value);
 });
+const totalItems = computed(() => filteredLogItems.value.length);
+
+const currentPageItems = computed(() => {
+    return filteredLogItems.value.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
+});
+
+let { totalPages, hasPreviousPage, hasNextPage, paginationLinks } = getPaginationData(page.value, itemsPerPage, totalItems.value);
 
 const severityFilters = computed(() => {
     const filters = [];
@@ -165,7 +143,6 @@ const severityFilters = computed(() => {
     return filters;
 });
 
-
 async function handleFileSelect(evt: any) {
     const files = evt.target.files; // FileList object
     const file = files[0];
@@ -180,6 +157,7 @@ async function readLog(path: string) {
     const fileContent = await content(path);
     logEntries.value = await useLogParser(fileContent);
     isLoading.value = false;
+    loadPaginationData();
 }
 
 async function content(path: string): Promise<string> {
@@ -192,6 +170,7 @@ function changePage(type: string) {
     } else if (type === 'previous' && hasPreviousPage.value) {
         page.value--;
     }
+    loadPaginationData();
 }
 
 function filterBySeverity(severity: string) {
@@ -214,6 +193,10 @@ function refreshLog() {
     if (filePath !== null) {
         readLog(filePath);
     }
+}
+
+function loadPaginationData() {
+    ({ totalPages, hasPreviousPage, hasNextPage, paginationLinks } = getPaginationData(page.value, itemsPerPage, totalItems.value));
 }
 
 </script>
