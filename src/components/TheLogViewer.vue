@@ -119,8 +119,8 @@ import SeverityFilter from "@/components/SeverityFilter.vue";
 import { Connection, LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
-import { getPaginationData } from "@/composables/LogViewer/pagination";
-import { filterLogs } from "@/composables/LogViewer/filterLogs";
+import { usePaginationData } from "@/composables/LogViewer/pagination";
+import { useFilterLogs } from "@/composables/LogViewer/filterLogs";
 
 const props = defineProps<{
     connection: Connection;
@@ -145,7 +145,7 @@ const filteredLogItems = computed(() => {
     const search = searchTerm.value.toLowerCase();
     let items = logEntries.value;
 
-    return filterLogs(items, search, selectedSeverity.value);
+    return useFilterLogs(items, search, selectedSeverity.value);
 });
 
 const totalItems = computed(() => filteredLogItems.value.length);
@@ -154,7 +154,7 @@ const currentPageItems = computed(() => {
     return filteredLogItems.value.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
 });
 
-let { totalPages, hasPreviousPage, hasNextPage, paginationLinks } = getPaginationData(page.value, itemsPerPage, totalItems.value);
+let { totalPages, hasPreviousPage, hasNextPage, paginationLinks } = usePaginationData(page.value, itemsPerPage, totalItems.value);
 
 const severityFilters = computed(() => {
     const filters = [];
@@ -235,7 +235,7 @@ function refreshLog() {
 }
 
 function loadPaginationData() {
-    ({ totalPages, hasPreviousPage, hasNextPage, paginationLinks } = getPaginationData(page.value, itemsPerPage, totalItems.value));
+    ({ totalPages, hasPreviousPage, hasNextPage, paginationLinks } = usePaginationData(page.value, itemsPerPage, totalItems.value));
 }
 
 </script>
