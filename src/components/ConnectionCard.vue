@@ -66,7 +66,7 @@ const menuOptions: ComputedRef<Option[]> = computed(() => {
 });
 
 // We need a custom right click menu for the connection card
-const isMenuVisible: Ref<boolean> = ref(false);
+const isMenuVisible = ref<boolean>(false);
 
 function showMenu(event: MouseEvent): void {
     event.preventDefault();
