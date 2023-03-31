@@ -23,7 +23,7 @@
             </div>
             <div v-if="passwordType === 'password'" class="form-group">
                 <label for="password">Password</label>
-                <input class="form-control" type="text" v-model="modelValue.password" required />
+                <input class="form-control" type="password" v-model="modelValue.password" required />
             </div>
             <div v-else-if="passwordType === 'key'" class="form-group">
                 <label for="privateKeyPath">Private Key Path</label>
@@ -95,13 +95,12 @@ async function testConnection() {
     testSuccess.value = false;
     errorMsg.value = '';
     try {
-        let success = await api.Ssh.testSshCredentials(unproxify(props.modelValue!));
-        console.log(success);
-
-        if (success) {
+        let response = await api.Ssh.testSshCredentials(unproxify(props.modelValue!));
+        if (response.success) {
             testSuccess.value = true;
         } else {
-            errorMsg.value = "Connection failed"
+            errorMsg.value = "Connection failed."
+            errorMsg.value += response.error ? ` Error: ${response.error}` : '';
         }
     } catch (err: any) {
         errorMsg.value = err?.message ?? 'An unexpected error has occurred';
