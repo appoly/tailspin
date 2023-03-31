@@ -35,8 +35,10 @@
                 </div>
             </div>
             <div class="text-end mt-2">
-                <button class="btn btn-secondary" type="button" @click="testConnection" :disabled="isTesting">Test
-                    Connection</button>
+                <button class="btn btn-secondary" type="button" @click="testConnection" :disabled="!isReady || isTesting">
+                    <span v-if="isTesting">Testing...</span>
+                    <span v-else>Test Connection</span>
+                </button>
                 <small v-if="errorMsg" class="text-danger d-block">{{ errorMsg }}</small>
                 <small v-if="testSuccess" class="text-success d-block">Connection successful</small>
             </div>

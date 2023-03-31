@@ -1,7 +1,6 @@
 import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { release } from "node:os";
 import { join } from "node:path";
-import Store from "electron-store";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 import ipcHandlers from "./ipc-handlers";
 
