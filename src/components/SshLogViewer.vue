@@ -17,7 +17,7 @@
                             </div>
                             <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
                                 <option readonly value=''>Please select an option...</option>
-                                <option v-for="path in paths" :value="connection.path + '/' + path">{{ path }}</option>
+                                <option v-for="path in paths" :value="path">{{ path }}</option>
                             </select>
 
                         </template>
