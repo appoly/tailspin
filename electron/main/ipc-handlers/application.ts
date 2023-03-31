@@ -18,9 +18,6 @@ export default () => {
     return fs.readdirSync(path)?.filter((file) => file.endsWith(".log"));
   });
   ipcMain.handle("encrypt-string", (event, string) => {
-    return safeStorage.encryptString(string);
-  });
-  ipcMain.handle("decrypt-string", (event, string) => {
-    return safeStorage.decryptString(string);
+    return safeStorage.encryptString(string).toString("base64");
   });
 };

@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { ipcMain, safeStorage } from "electron";
 import SSH2Promise from "ssh2-promise";
 
 export default () => {
@@ -21,3 +21,10 @@ export default () => {
     }
   });
 };
+
+function decryptString(event, string) {
+  let buffer = Buffer.from(string, "base64");
+  console.log(buffer);
+
+  return safeStorage.decryptString(buffer);
+}
