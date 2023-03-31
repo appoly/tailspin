@@ -52,16 +52,15 @@ body,
         min-height: 5rem;
         padding: 0.5rem;
         min-width: 10rem;
-    }
-
-    .main-content {
-        width: calc(100vw - 4.5rem); // Account for the sidebar
-        overflow-y: auto;
-        height: 100vh;
-    }
-
-    
+    }    
 }
+
+.main-content {
+    width: calc(100vw - 4.5rem); // Account for the sidebar
+    overflow-y: auto;
+    height: 100vh;
+}
+
 .menu {
     position: fixed;
     z-index: 999;
