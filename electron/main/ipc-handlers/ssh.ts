@@ -45,8 +45,8 @@ export default () => {
     const ssh = buildConnection(options);
     try {
       await ssh.connect();
-      // Read the last 100 lines of the file:
-      let response = await ssh.exec(`tail -n 100`, [path]);
+      // Read the last 1000 lines of the file:
+      let response = await ssh.exec(`tail -n 1000`, [path]);
       return { success: true, message: response };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
