@@ -81,8 +81,8 @@ const formFields = ref<BaseConnection>({
         host: '',
         port: 22,
         username: '',
+        passwordType: 'password',
         password: '',
-        privateKeyPath: '',
     }
 })
 const error = ref('');
