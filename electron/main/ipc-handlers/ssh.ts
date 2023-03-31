@@ -7,14 +7,17 @@ export default () => {
       host: options.host,
       port: options.port,
       username: options.username,
-      readyTimeout: 2000,
+      [options.passwordType === "password" ? "password" : "privateKey"]: options.password,
+      readyTimeout: 4000,
       reconnect: false,
     });
     try {
-      await ssh.connect();
+      let res = await ssh.connect();
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message ?? "Error has occurred" };
+    } finally {
+      ssh.close(); // I think this is fine to do even when it fails to connect. This is safer because it will ensure the connection is always closed.
     }
   });
 };
