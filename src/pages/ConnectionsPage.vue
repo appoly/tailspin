@@ -15,7 +15,7 @@
         <!-- Buttons to toggle between list and grid view -->
         <div class="d-flex justify-content-end">
             <i role="button" :class="['h3 bi bi-list', { 'selected': viewMode === 'list' }]" @click="() => viewMode = 'list'"></i>
-            <i :class="['h3 bi bi-grid', { 'selected': viewMode === 'grid' }]" @click="() => viewMode = 'grid'"></i>
+            <i role="button" :class="['h3 bi bi-grid', { 'selected': viewMode === 'grid' }]" @click="() => viewMode = 'grid'"></i>
         </div>
 
         <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]">
