@@ -47,13 +47,28 @@ body,
     }
 }
 
-.connection-card {
-  min-height: 5rem;
-  padding: 0.5rem;
-}
+.connection {
+    .connection-card {
+        min-height: 5rem;
+        padding: 0.5rem;
+        min-width: 10rem;
+    }
 
-.main-content {
-    width: calc(100vw - 4.5rem); // Account for the sidebar
-    overflow-y: auto;
-    height: 100vh;
+    .main-content {
+        width: calc(100vw - 4.5rem); // Account for the sidebar
+        overflow-y: auto;
+        height: 100vh;
+    }
+
+    
+}
+.menu {
+    position: fixed;
+    z-index: 999;
+    .list-group-item.selectable {
+        cursor: pointer;
+        &:hover {
+            background-color: #f5f5f5;
+        }
+    }
 }
