@@ -15,17 +15,17 @@
             </div>
             <div class="btn-group mt-2" role="group" aria-label="Basic radio toggle button group">
                 <input type="radio" class="btn-check" id="radio-password" autocomplete="off" value="password"
-                    v-model="passwordType">
+                    v-model="modelValue.passwordType">
                 <label class="btn btn-outline-primary" for="radio-password">Password</label>
                 <input type="radio" class="btn-check" id="radio-key" autocomplete="off" value="key"
-                    v-model="passwordType" />
+                    v-model="modelValue.passwordType" />
                 <label class="btn btn-outline-primary" for="radio-key">Private Key</label>
             </div>
-            <div v-if="passwordType === 'password'" class="form-group">
+            <div v-if="modelValue.passwordType === 'password'" class="form-group">
                 <label for="password">Password</label>
                 <input class="form-control" type="password" v-model="modelValue.password" required />
             </div>
-            <div v-else-if="passwordType === 'key'" class="form-group">
+            <div v-else-if="modelValue.passwordType === 'key'" class="form-group">
                 <label for="privateKeyPath">Private Key Path</label>
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="Path" v-model="modelValue.password" required
@@ -66,11 +66,9 @@ computed({
     }
 })
 
-const passwordType = ref<'password' | 'key'>('password');
-
 async function handlePathSelection() {
     const result = await api.Application.openFileDialogue({ properties: ['openFile'] });
-    if (result.filePaths[0] && passwordType.value === 'key') {
+    if (result.filePaths[0] && props.modelValue!.passwordType === 'key') {
         props.modelValue!.password = result.filePaths[0];
     }
 }
