@@ -38,5 +38,11 @@ export const useConnectionStore = defineStore("connection", {
       const applicationStore = useApplicationStore();
       applicationStore.closeConnection(connectionId);
     },
+    deleteAllConnections() {
+      this.connections = [];
+      api.Store.set("connections", unproxify(this.connections));
+      const applicationStore = useApplicationStore();
+      applicationStore.closeAllConnections();
+    }
   },
 });
