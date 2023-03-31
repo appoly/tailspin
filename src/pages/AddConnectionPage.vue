@@ -34,8 +34,8 @@
                                 <button @click.prevent="() => handlePathSelection('file')" class="btn btn-secondary"
                                     type="button">Browse
                                     File</button>
-                                <input type="text" class="form-control" placeholder="Path" v-model="formFields.path" required
-                                    aria-label="Path">
+                                <input type="text" class="form-control" placeholder="Path" v-model="formFields.path"
+                                    required aria-label="Path">
                                 <button @click.prevent="() => handlePathSelection('folder')"
                                     class="btn btn-outline-secondary" type="button">Browse
                                     Folder</button>
@@ -43,7 +43,14 @@
                         </div>
                     </template>
                     <template v-else>
-                        REMOTE FIELDS HERE!!
+                        <TheSshForm v-model="formFields.ssh" />
+                        <div class="form-group mb-2">
+                            <label for="path">Path</label>
+                            <input type="text" class="form-control" v-model="formFields.path" required>
+                            <small>Not sure what to put? Try
+                                <pre class="d-inline">/var/www/storage/logs/laravel.log</pre>
+                            </small>
+                        </div>
                     </template>
                     <div class="text-end">
                         <button class="mt-3 btn btn-primary" type="submit">Save</button>
@@ -60,6 +67,7 @@ import { useConnectionStore } from '@/stores/useConnectionStore';
 import { BaseConnection, Connection } from "@/interfaces";
 import { ref } from 'vue';
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
+import TheSshForm from '@/components/TheSshForm.vue';
 
 const applicationStore = useApplicationStore();
 const connectionStore = useConnectionStore();
