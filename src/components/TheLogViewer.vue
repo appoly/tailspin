@@ -1,33 +1,5 @@
 <template>
     <div class="mt-2 mb-4">
-        <div class="d-flex mb-3">
-            <div class="flex-grow-1">
-                <template v-if="isLoading">
-                    <input class="form-control" type="text" value="Loading..." readonly disabled />
-                </template>
-                <template v-else>
-                    <input v-if="!isDirectory" class="form-control" type="text" :value="currentPath" readonly disabled />
-                    <template v-else>
-                        <div v-if="!paths.length">
-                            <div class="alert alert-warning" role="alert">
-                                No log files found in this directory.
-                            </div>
-                        </div>
-                        <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
-                            <option readonly value=''>Please select an option...</option>
-                            <option v-for="path in paths" :value="connection.path + '/' + path">{{ path }}</option>
-                        </select>
-
-                    </template>
-                </template>
-            </div>
-            <div class="ms-2">
-                <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="isLoading">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </button>
-            </div>
-        </div>
-
         <!-- Search Bar -->
         <div class="input-group mb-3">
             <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
@@ -112,38 +84,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from "vue";
+import { computed, ref } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
 import SeverityFilter from "@/components/SeverityFilter.vue";
-import { Connection, LogEntry } from "@/interfaces";
+import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
-import { useLogParser } from "@/composables/useLogParser";
 import { usePaginationData } from "@/composables/LogViewer/pagination";
 import { useFilterLogs } from "@/composables/LogViewer/filterLogs";
 
 const props = defineProps<{
-    connection: Connection;
+    logEntries: LogEntry[];
+    isLoading: boolean;
+    errorMsg: string;
 }>();
 
-onMounted(() => {
-    readLog(props.connection.path);
-    loadPaginationData();
-});
-
-const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
 const isLoading = ref(false);
 const errorMsg = ref('');
 const selectedSeverity = ref('');
-const logInput = ref<HTMLInputElement | null>(null);
 
 const page = ref(1);
 const itemsPerPage = 20;
 
 const filteredLogItems = computed(() => {
     const search = searchTerm.value.toLowerCase();
-    let items = logEntries.value;
+    let items = props.logEntries;
 
     return useFilterLogs(items, search, selectedSeverity.value);
 });
@@ -160,7 +126,7 @@ const severityFilters = computed(() => {
     const filters = [];
     for (const severity of LogStatuses) {
         const upperCaseSeverity = severity.toUpperCase();
-        const count = logEntries.value.filter((logItem) => logItem.severity === upperCaseSeverity).length;
+        const count = props.logEntries.filter((logItem) => logItem.severity === upperCaseSeverity).length;
         if (count > 0) {
             filters.push({
                 severity: upperCaseSeverity,
@@ -171,44 +137,6 @@ const severityFilters = computed(() => {
     }
     return filters;
 });
-
-const paths = ref<string[]>([]);
-const isDirectory = ref<boolean>(false);
-const currentPath = ref('');
-
-async function handlePathDropdown() {
-    nextTick(() => readLog(currentPath.value));
-}
-
-async function readLog(path: string) {
-    isLoading.value = true;
-    errorMsg.value = '';
-    try {
-        const contentType = await api.Application.isFileOrDirectory(path);
-        if (!contentType) {
-            throw new Error("File not found");
-        }
-
-        if (contentType === 'directory') {
-            isDirectory.value = true;
-            paths.value = await api.Application.getFilesInDirectory(path);
-            return;
-        }
-
-        currentPath.value = path;
-        const fileContent = await content(path);
-        logEntries.value = await useLogParser(fileContent);
-    } catch (error: any) {
-        errorMsg.value = error?.message ?? "Error reading log file";
-    } finally {
-        isLoading.value = false;
-        loadPaginationData();
-    }
-}
-
-async function content(path: string): Promise<string> {
-    return await api.Application.readFromPath(path);
-}
 
 function changePage(type: string) {
     if (type === 'next' && hasNextPage.value) {
@@ -228,17 +156,11 @@ function filterBySeverity(severity: string) {
     }
 }
 
-function refreshLog() {
-    if (currentPath.value) {
-        readLog(currentPath.value);
-    }
-}
-
 function loadPaginationData() {
     ({ totalPages, hasPreviousPage, hasNextPage, paginationLinks } = usePaginationData(page.value, itemsPerPage, totalItems.value));
 }
-
 </script>
+
 <style lang="scss" scoped>
 #pagination {
     // center pagination
