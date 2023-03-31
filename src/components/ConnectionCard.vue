@@ -47,6 +47,7 @@ defineProps<{
 }>();
 
 const emit = defineEmits(["delete"]);
+const menu = ref<HTMLElement>();
 
 // We need a custom right click menu for the connection card
 const isMenuVisible: Ref<boolean> = ref(false);
@@ -59,9 +60,8 @@ function showMenu(event: MouseEvent): void {
     event.preventDefault();
     isMenuVisible.value = true;
     // Set the position of the menu
-    const menu = document.querySelector('.menu') as HTMLElement;
-    menu.style.left = `${event.clientX}px`;
-    menu.style.top = `${event.clientY}px`;
+    menu.value!.style.left = `${event.clientX}px`;
+    menu.value!.style.top = `${event.clientY}px`;
 }
 
 function selectOption(option: Option): void {
@@ -75,23 +75,20 @@ function selectOption(option: Option): void {
             alert('Edit coming soon! :)');
         }
     }, 0);
-
-
 }
 
 function handleClickOutside(event: MouseEvent): void {
-    const menu = document.querySelector('.menu') as HTMLElement;
-    if (menu && !menu.contains(event.target as HTMLElement)) {
+    if (!menu.value!.contains(event.target as HTMLElement)) {
         isMenuVisible.value = false;
     }
 }
 
 onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
+    document.body.addEventListener("mousedown", handleClickOutside);
 });
 
 onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('mousedown', handleClickOutside);
 });
 
 </script>
