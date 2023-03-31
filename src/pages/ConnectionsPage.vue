@@ -3,7 +3,7 @@
         <div class="d-flex">
             <h1>Connections</h1>
             <span class="ms-2 align-self-center">
-                <i @click="() => applicationStore.changePage('connections.add')" class="bi bi-plus-circle-fill"></i>
+                <i role="button" @click="() => applicationStore.changePage('connections.add')" class="bi bi-plus-circle-fill"></i>
             </span>
         </div>
 
