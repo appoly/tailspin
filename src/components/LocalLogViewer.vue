@@ -1,31 +1,34 @@
 <template>
-    <div class="mt-2 mb-4">
-        <div class="d-flex mb-3">
-            <div class="flex-grow-1">
-                <template v-if="isLoading">
-                    <input class="form-control" type="text" value="Loading..." readonly disabled />
-                </template>
-                <template v-else>
-                    <input v-if="!isDirectory" class="form-control" type="text" :value="currentPath" readonly disabled />
-                    <template v-else>
-                        <div v-if="!paths.length">
-                            <div class="alert alert-warning" role="alert">
-                                No log files found in this directory.
-                            </div>
-                        </div>
-                        <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
-                            <option readonly value=''>Please select an option...</option>
-                            <option v-for="path in paths" :value="connection.path + '/' + path">{{ path }}</option>
-                        </select>
-
+    <div>
+        <div class="mt-2 mb-4">
+            <div class="d-flex mb-3">
+                <div class="flex-grow-1">
+                    <template v-if="isLoading">
+                        <input class="form-control" type="text" value="Loading..." readonly disabled />
                     </template>
-                </template>
-            </div>
-            <div class="ms-2">
-                <button class="btn btn-outline-secondary" type="button" @click="refreshLog"
-                    :disabled="isLoading || !currentPath">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </button>
+                    <template v-else>
+                        <input v-if="!isDirectory" class="form-control" type="text" :value="currentPath" readonly
+                            disabled />
+                        <template v-else>
+                            <div v-if="!paths.length">
+                                <div class="alert alert-warning" role="alert">
+                                    No log files found in this directory.
+                                </div>
+                            </div>
+                            <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
+                                <option readonly value=''>Please select an option...</option>
+                                <option v-for="path in paths" :value="connection.path + '/' + path">{{ path }}</option>
+                            </select>
+
+                        </template>
+                    </template>
+                </div>
+                <div class="ms-2">
+                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog"
+                        :disabled="isLoading || !currentPath">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
             </div>
         </div>
         <div>
