@@ -19,12 +19,15 @@
                     {{ file }}
                 </div>
             </div>
+            <LocalLogViewer v-if="!isSsh" :connection="connection" />
+            <!-- <SshLogViewer v-else :connection="connection" /> -->
             <!-- <TheLogViewer :connection="connection" /> -->
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import LocalLogViewer from '@/components/LocalLogViewer.vue';
 import TheLogViewer from '@/components/TheLogViewer.vue';
 import { unproxify } from '@/helpers';
 import { Connection } from '@/interfaces';
