@@ -15,6 +15,9 @@ export const useApplicationStore = defineStore("application", {
     closeConnection(connectionId: string) {
       this.openConnections = this.openConnections.filter((c) => c !== connectionId);
     },
+    closeAllConnections() {
+      this.openConnections = [];
+    },
     goToConnection(connectionId: string) {
       this.page = "connections.page." + connectionId;
       this.setOpen(connectionId);

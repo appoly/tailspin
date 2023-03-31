@@ -1,6 +1,6 @@
 {
   "name": "laravel-log-viewer",
-  "version": "1.0.0",
+  "version": "0.0.1-alpha",
   "main": "dist-electron/main/index.js",
   "license": "MIT",
   "private": true,

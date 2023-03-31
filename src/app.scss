@@ -52,7 +52,7 @@ body,
         min-height: 5rem;
         padding: 0.5rem;
         min-width: 10rem;
-    }    
+    }
 }
 
 .main-content {
@@ -69,5 +69,50 @@ body,
         &:hover {
             background-color: #f5f5f5;
         }
+    }
+}
+
+.add-new-button {
+    // round button with a plus sign
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    i {
+        transition: all 0.5s ease;
+        display: inline-block;
+        animation: spin-icon-half-reverse 0.5s;
+        color : #000;
+    }
+    &:hover {
+        i {
+            animation: spin-icon-half 0.5s;
+            color : #fff;
+        }
+        background-color: $primary;
+    }
+}
+@keyframes spin-icon-half {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(190deg);
+    }
+}
+
+@keyframes spin-icon-half-reverse {
+    from {
+        transform: rotate(190deg);
+    }
+    to {
+        transform: rotate(0deg);
     }
 }
