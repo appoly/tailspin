@@ -33,15 +33,18 @@
 <script setup lang="ts">
 import { Connection } from "@/interfaces"
 import { useApplicationStore } from '@/stores/useApplicationStore';
-import { ref, Ref, onMounted, onUnmounted } from 'vue';
+import { useConnectionStore } from '@/stores/useConnectionStore';
+
+import { ref, Ref, computed, onMounted, onUnmounted } from 'vue';
 
 interface Option {
     label: string;
     value: string;
 }
 const applicationStore = useApplicationStore();
+const connectionStore = useConnectionStore();
 
-defineProps<{
+const props = defineProps<{
     connection: Connection;
     viewMode: string;
 }>();
@@ -49,12 +52,21 @@ defineProps<{
 const emit = defineEmits(["delete"]);
 const menu = ref<HTMLElement>();
 
+const isFavoriteMenuOption: Ref = computed(() => {
+    return props.connection.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'
+
+});
+
+const menuOptions: Ref<Option[]> = computed(() => {
+    return [
+        { label: isFavoriteMenuOption.value, value: 'favorite' },
+        { label: 'Delete Connection', value: 'delete' },
+        { label: 'Edit Connection', value: 'edit' },
+    ];
+});
+
 // We need a custom right click menu for the connection card
 const isMenuVisible: Ref<boolean> = ref(false);
-const menuOptions: Option[] = [
-    { label: 'Delete Connection', value: 'delete' },
-    { label: 'Edit Connection', value: 'edit' },
-];
 
 function showMenu(event: MouseEvent): void {
     event.preventDefault();
@@ -73,6 +85,10 @@ function selectOption(option: Option): void {
         }
         if (option.value === 'edit') {
             alert('Edit coming soon! :)');
+        }
+        if (option.value === 'favorite') {
+            props.connection.isFavorite = !props.connection.isFavorite;
+            connectionStore.updateConnection(props.connection);
         }
     }, 0);
 }
