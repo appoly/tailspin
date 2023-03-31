@@ -27,6 +27,11 @@ export const useConnectionStore = defineStore("connection", {
       this.connections.push(connection);
       await api.Store.set("connections", unproxify(this.connections));
     },
+    async updateConnection(connection: Connection) {
+      const index = this.connections.findIndex((c) => c.uid === connection.uid);
+      this.connections[index] = connection;
+      await api.Store.set("connections", unproxify(this.connections));
+    },
     removeConnection(connectionId: string) {
       this.connections = this.connections.filter((c) => c.uid !== connectionId);
       api.Store.set("connections", unproxify(this.connections));
