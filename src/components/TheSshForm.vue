@@ -4,11 +4,11 @@
             <h4>Connection Details</h4>
             <div class="form-group mb-2">
                 <label class="form-label" for="host">Host</label>
-                <input class="form-control" type="text" v-model="modelValue.host" required />
+                <input class="form-control" type="text" v-model="modelValue.host" required placeholder="127.0.0.1" />
             </div>
             <div class="form-group mb-2">
                 <label class="form-label" for="port">Port</label>
-                <input class="form-control" type="text" v-model="modelValue.port" required />
+                <input class="form-control" type="text" v-model="modelValue.port" required placeholder="22" />
             </div>
             <hr>
             <h4>Authentication</h4>
