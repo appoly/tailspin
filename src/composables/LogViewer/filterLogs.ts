@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-export const filterLogs = (logs: any, search?: string, severity?: string) => {
+export const useFilterLogs = (logs: any, search?: string, severity?: string) => {
     
     let items = logs;
 

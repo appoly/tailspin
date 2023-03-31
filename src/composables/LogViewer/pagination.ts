@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-export const getPaginationData = (page: number, perPage: number, totalItems: number) => {
+export const usePaginationData = (page: number, perPage: number, totalItems: number) => {
     const totalPages = computed(() => Math.ceil(totalItems / perPage))
     const hasPreviousPage = computed(() => page > 1)
     const hasNextPage = computed(() => page < totalPages.value)
