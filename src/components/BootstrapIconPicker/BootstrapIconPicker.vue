@@ -116,7 +116,7 @@ export default {
     max-width: 300px;
     overflow: hidden;
     position: absolute;
-    z-index: 1;
+    z-index: 10;
 }
 
 
