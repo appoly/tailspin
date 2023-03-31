@@ -87,7 +87,7 @@ const formFields = ref<BaseConnection>({
 })
 const error = ref('');
 
-function saveConnection() {
+async function saveConnection() {
     let uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     error.value = '';
 
@@ -107,6 +107,8 @@ function saveConnection() {
 
     if (formFields.value.type === 'remote') {
         newConnection.ssh = formFields.value.ssh;
+        // Handle encryption of password field:
+        newConnection.ssh!.password = await api.Application.encryptString(newConnection.ssh!.password);
     }
 
     connectionStore.addConnection(newConnection);

@@ -15,3 +15,11 @@ export function isFileOrDirectory(path: string): Promise<"file" | "directory" | 
 export function getFilesInDirectory(path: string): Promise<string[]> {
   return ipcRenderer.invoke("get-files-in-directory", path);
 }
+
+export function encryptString(string: string): Promise<string> {
+  return ipcRenderer.invoke("encrypt-string", string);
+}
+
+export function decryptString(string: string): Promise<string> {
+  return ipcRenderer.invoke("decrypt-string", string);
+}
