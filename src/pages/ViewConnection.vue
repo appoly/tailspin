@@ -6,6 +6,7 @@
                 <button @click="() => closeConnection(connection.uid)" class="btn btn-outline-danger btn-sm">Close</button>
             </span>
         </div>
+        <pre>{{ connection }}</pre>
         <TheLogViewer :connection="connection" />
     </div>
 </template>
@@ -28,5 +29,3 @@ function closeConnection(uid: string) {
 }
 
 </script>
-
-<style scoped></style>

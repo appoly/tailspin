@@ -105,12 +105,11 @@ async function saveConnection() {
         path: formFields.value.path,
     };
 
+    //  If it is remote connection, handle assigning of the ssh object, and handle encryption of password field
     if (formFields.value.type === 'remote') {
         newConnection.ssh = formFields.value.ssh;
-        // Handle encryption of password field:
         newConnection.ssh!.password = await api.Application.encryptString(newConnection.ssh!.password);
     }
-
     connectionStore.addConnection(newConnection);
     applicationStore.changePage('connections');
 }
