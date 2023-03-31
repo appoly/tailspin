@@ -113,12 +113,3 @@ function refreshLog() {
 }
 
 </script>
-<style lang="scss" scoped>
-#pagination {
-    // center pagination
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-}
-</style>
