@@ -94,7 +94,7 @@ function selectOption(option: Option): void {
 }
 
 function handleClickOutside(event: MouseEvent): void {
-    if (!menu.value!.contains(event.target as HTMLElement)) {
+    if (menu.value && !menu.value!.contains(event.target as HTMLElement)) {
         isMenuVisible.value = false;
     }
 }
