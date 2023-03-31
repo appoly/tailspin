@@ -102,7 +102,6 @@ import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useLogParser } from "@/composables/useLogParser";
-import Application from "@/ipc-api/Application";
 
 const logEntries = ref<LogEntry[]>([]);
 const searchTerm = ref('');
@@ -184,7 +183,7 @@ async function readLog(path: string) {
 }
 
 async function content(path: string): Promise<string> {
-    return await Application.readFromPath(path);
+    return await api.Application.readFromPath(path);
 }
 
 function changePage(type: string) {
@@ -203,11 +202,15 @@ function filterBySeverity(severity: string) {
     }
 }
 
+interface FileWithPath extends File {
+    path: string
+}
+
 function refreshLog() {
     // get log file path from input field using ref
     const files = logInput.value?.files;
     const file = files ? files[0] : null;
-    const filePath = file ? file.path : null;
+    const filePath = file ? (file as FileWithPath).path : null;
     if (filePath !== null) {
         readLog(filePath);
     }

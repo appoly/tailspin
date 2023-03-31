@@ -17,6 +17,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src", "electron/preload/ipc-api", "index.d.ts",],
+  "references": [{ "path": "./tsconfig.node.json" }],
 }
