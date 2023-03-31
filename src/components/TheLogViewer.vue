@@ -100,8 +100,6 @@ const props = defineProps<{
 }>();
 
 const searchTerm = ref('');
-const isLoading = ref(false);
-const errorMsg = ref('');
 const selectedSeverity = ref('');
 
 const page = ref(1);
