@@ -9,8 +9,8 @@ export interface SshDetails {
   host: string;
   port: number;
   username: string;
-  password?: string;
-  privateKeyPath?: string;
+  passwordType: "password" | "key";
+  password: string;
 }
 
 export interface BaseConnection {

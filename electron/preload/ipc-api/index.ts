@@ -1,5 +1,6 @@
 import * as Application from "./Application";
 import * as Store from "./Store";
+import * as Ssh from "./Ssh";
 
 // api exports functions that make up the frontend api, ie that in
 // turn either do IPC calls to main for db communication or use
@@ -10,4 +11,5 @@ import * as Store from "./Store";
 export default {
   Application,
   Store,
+  Ssh
 };
