@@ -84,7 +84,7 @@ function handleClickOutside(event: MouseEvent): void {
 }
 
 onMounted(() => {
-    document.body.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 });
 
 onUnmounted(() => {
