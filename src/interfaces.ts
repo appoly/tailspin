@@ -19,6 +19,7 @@ export interface BaseConnection {
   path: string;
   type: "local" | "remote";
   ssh?: SshDetails;
+  isFavorite?: boolean;
 }
 
 export interface Connection extends BaseConnection {
