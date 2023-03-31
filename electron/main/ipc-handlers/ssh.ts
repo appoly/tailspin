@@ -3,16 +3,9 @@ import SSH2Promise from "ssh2-promise";
 
 export default () => {
   ipcMain.handle("test-ssh-credentials", async (event, options) => {
-    const ssh = new SSH2Promise({
-      host: options.host,
-      port: options.port,
-      username: options.username,
-      [options.passwordType === "password" ? "password" : "privateKey"]: options.password,
-      readyTimeout: 4000,
-      reconnect: false,
-    });
+    const ssh = buildConnection(options, false);
     try {
-      let res = await ssh.connect();
+      await ssh.connect();
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message ?? "Error has occurred" };
@@ -71,13 +64,18 @@ function decryptString(string: string) {
   return safeStorage.decryptString(buffer);
 }
 
-function buildConnection(options: any) {
-  return new SSH2Promise({
-    host: options.host,
-    port: options.port,
-    username: options.username,
-    [options.passwordType === "password" ? "password" : "privateKey"]: decryptString(options.password),
+function buildConnection({ host, port, username, password, passwordType }, decryptNeeded = true) {
+  const config = {
+    host,
+    port,
+    username,
     readyTimeout: 4000,
     reconnect: false,
-  });
+  };
+
+  const decryptedPassword = decryptNeeded ? decryptString(password) : password;
+
+  config[passwordType === "password" ? "password" : "identity"] = decryptedPassword;
+
+  return new SSH2Promise(config);
 }
