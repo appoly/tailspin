@@ -35,7 +35,7 @@ import { Connection } from "@/interfaces"
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 
-import { ref, Ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, Ref, ComputedRef, computed, onMounted, onUnmounted } from 'vue';
 
 interface Option {
     label: string;
@@ -57,7 +57,7 @@ const isFavoriteMenuOption: Ref = computed(() => {
 
 });
 
-const menuOptions: Ref<Option[]> = computed(() => {
+const menuOptions: ComputedRef<Option[]> = computed(() => {
     return [
         { label: isFavoriteMenuOption.value, value: 'favorite' },
         { label: 'Delete Connection', value: 'delete' },
