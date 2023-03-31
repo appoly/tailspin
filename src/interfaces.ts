@@ -11,4 +11,5 @@ export interface Connection {
   icon: string;
   path: string;
   type: "local" | "remote";
+  isFavorite?: boolean;
 }
