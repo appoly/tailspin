@@ -61,8 +61,6 @@ onMounted(async () => {
 });
 
 async function readLog(path: string) {
-    console.log(path);
-
     isLoading.value = true;
     errorMsg.value = '';
     try {
