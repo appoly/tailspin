@@ -66,12 +66,16 @@ function showMenu(event: MouseEvent): void {
 
 function selectOption(option: Option): void {
     isMenuVisible.value = false;
-    if (option.value === 'delete' && confirm('Are you sure you want to delete this connection?')) {
-        emit('delete');
-    }
-    if (option.value === 'edit') {
-        alert('Edit coming soon! :)');
-    }
+    // on next tick, so the menu can be hidden before the alert is shown
+    setTimeout(() => {
+        if (option.value === 'delete' && confirm('Are you sure you want to delete this connection?')) {
+            emit('delete');
+        }
+        if (option.value === 'edit') {
+            alert('Edit coming soon! :)');
+        }
+    }, 0);
+
 
 }
 
