@@ -3,8 +3,9 @@
         <div class="d-flex">
             <h1>Connections</h1>
             <span class="ms-2 align-self-center">
-                <i role="button" @click="() => applicationStore.changePage('connections.add')"
-                    class="bi bi-plus-circle-fill"></i>
+                <div class="add-new-button" @click="() => applicationStore.changePage('connections.add')">
+                    <i class="bi bi-plus-lg hoverable"></i>
+                </div>
             </span>
         </div>
 
