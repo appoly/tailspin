@@ -14,8 +14,6 @@ export const useUserStore = defineStore("user", {
     },
     toggleTheme() {
       this.theme = this.theme === "light" ? "dark" : "light";
-      console.log(this.theme);
-
       this.setTheme();
     },
     async setTheme() {

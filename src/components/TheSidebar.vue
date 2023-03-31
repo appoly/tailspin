@@ -38,6 +38,7 @@ const connectionStore = useConnectionStore();
 onMounted(() => {
     new Tooltip(document.body, {
         selector: "[data-bs-toggle='tooltip']",
+        trigger: 'hover',
     });
 })
 </script>
