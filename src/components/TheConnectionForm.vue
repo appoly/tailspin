@@ -1,6 +1,5 @@
 <template>
     <div>
-        <h1>Add Connection</h1>
         <div class="alert alert-danger" role="alert" v-if="error">
             {{ error }}
         </div>
@@ -42,7 +41,8 @@
                 </div>
             </template>
             <template v-else>
-                <TheSshForm v-model="formFields.ssh" />
+                <TheSshForm v-model="formFields.ssh" :isEdit="isEdit" :passwordIsChanged="passwordIsChanged"
+                    @changePassword="handlePasswordChange" />
 
                 <h4 class="my-2">Log File Details</h4>
                 <div class="form-group mb-2">
@@ -61,21 +61,21 @@
 </template>
 
 <script setup lang="ts">
-import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { BaseConnection, Connection } from "@/interfaces";
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 import TheSshForm from '@/components/TheSshForm.vue';
 
+const connectionStore = useConnectionStore();
 const props = defineProps<{
     connection?: Connection;
 }>();
 
+const passwordIsChanged = ref(false);
+const isEdit = computed(() => props.connection !== undefined);
 const emit = defineEmits(['saved']);
 
-const applicationStore = useApplicationStore();
-const connectionStore = useConnectionStore();
 
 const formFields = ref<BaseConnection>({
     name: '',
@@ -90,8 +90,28 @@ const formFields = ref<BaseConnection>({
         password: '',
     }
 })
-const error = ref('');
 
+onMounted(() => {
+    if (isEdit.value) {
+        formFields.value = {
+            name: props.connection!.name,
+            icon: props.connection!.icon,
+            path: props.connection!.path,
+            type: props.connection!.type,
+            ...(props.connection!.type === 'remote' && {
+                ssh: {
+                    host: props.connection!.ssh?.host || '',
+                    port: props.connection!.ssh?.port || 22,
+                    username: props.connection!.ssh?.username || '',
+                    passwordType: props.connection!.ssh?.passwordType || 'password',
+                    password: props.connection!.ssh?.password || '',
+                }
+            })
+        }
+    }
+});
+
+const error = ref('');
 async function saveConnection() {
     let uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     error.value = '';
@@ -113,9 +133,17 @@ async function saveConnection() {
     //  If it is remote connection, handle assigning of the ssh object, and handle encryption of password field
     if (formFields.value.type === 'remote') {
         newConnection.ssh = formFields.value.ssh;
-        newConnection.ssh!.password = await api.Application.encryptString(newConnection.ssh!.password);
+        // If this is an edit form, we need to check if the password is changed, and only assign it if it has
+        if (!isEdit.value || passwordIsChanged.value) {
+            newConnection.ssh!.password = await api.Application.encryptString(newConnection.ssh!.password);
+        }
     }
-    connectionStore.addConnection(newConnection);
+
+    if (isEdit.value) {
+        connectionStore.updateConnection({ ...newConnection, uid: props.connection!.uid });
+    } else {
+        connectionStore.addConnection(newConnection);
+    }
     emit('saved');
 }
 
@@ -124,6 +152,11 @@ async function handlePathSelection(type: 'file' | 'folder') {
     if (result.filePaths[0]) {
         formFields.value.path = result.filePaths[0];
     }
+}
+
+function handlePasswordChange() {
+    passwordIsChanged.value = true;
+    formFields.value.ssh!.password = '';
 }
 
 </script>

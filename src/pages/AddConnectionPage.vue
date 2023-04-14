@@ -1,5 +1,7 @@
 <template>
     <div>
+        <h1>Edit Connection</h1>
+
         <TheConnectionForm @saved="handleSave" />
     </div>
 </template>
