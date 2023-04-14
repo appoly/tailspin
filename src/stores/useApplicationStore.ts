@@ -4,9 +4,11 @@ export const useApplicationStore = defineStore("application", {
   state: () => ({
     openConnections: [] as string[],
     page: "connections",
+    routeParams: {} as { [key: string]: string },
   }),
   actions: {
-    changePage(page: string) {
+    changePage(page: string, params = {}) {
+      this.routeParams = params;
       this.page = page;
     },
     addOpenConnection(connectionId: string) {
@@ -19,8 +21,8 @@ export const useApplicationStore = defineStore("application", {
       this.openConnections = [];
     },
     goToConnection(connectionId: string) {
-      this.page = "connections.page." + connectionId;
       this.setOpen(connectionId);
+      this.changePage("connections.page." + connectionId);
     },
     setOpen(connectionId: string) {
       this.openConnections.push(connectionId);

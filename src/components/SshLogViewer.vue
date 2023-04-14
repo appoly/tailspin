@@ -16,7 +16,7 @@
                                 </div>
                             </div>
                             <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
-                                <option readonly value=''>Please select an option...</option>
+                                <option disabled value=''>Please select an option...</option>
                                 <option v-for="path in paths" :value="path">{{ path }}</option>
                             </select>
 
