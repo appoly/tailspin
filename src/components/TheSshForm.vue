@@ -14,29 +14,37 @@
             <h4>Authentication</h4>
             <div class="btn-group my-4" role="group" aria-label="Basic radio toggle button group">
                 <input type="radio" class="btn-check" id="radio-password" autocomplete="off" value="password"
-                    v-model="modelValue.passwordType">
+                    :disabled="isEdit && !passwordIsChanged" v-model="modelValue.passwordType">
                 <label class="btn btn-outline-primary" for="radio-password">Password</label>
                 <input type="radio" class="btn-check" id="radio-key" autocomplete="off" value="key"
-                    v-model="modelValue.passwordType" />
+                    :disabled="isEdit && !passwordIsChanged" v-model="modelValue.passwordType" />
                 <label class="btn btn-outline-primary" for="radio-key">Private Key</label>
             </div>
             <div class="form-group mb-2">
                 <label class="form-label" for="username">Username</label>
                 <input class="form-control" type="text" v-model="modelValue.username" required />
             </div>
-            <div v-if="modelValue.passwordType === 'password'" class="form-group mb-2">
-                <label class="form-label" for="password">Password</label>
-                <input class="form-control" type="password" v-model="modelValue.password" required />
-            </div>
-            <div v-else-if="modelValue.passwordType === 'key'" class="form-group mb-2">
-                <label class="form-label" for="privateKeyPath">Private Key Path</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Path" v-model="modelValue.password" required
-                        aria-label="Path">
-                    <button @click.prevent="() => handlePathSelection()" class="btn btn-outline-secondary"
-                        type="button">Browse</button>
+            <template v-if="isEdit && !passwordIsChanged">
+                <button @click.prevent="changePassword" class="btn btn-outline-danger" type="button">Change
+                    Password/Private Key Path</button>
+                <small>Clicking this will override the current value for the Password/Private Key
+                    Path</small>
+            </template>
+            <template v-else>
+                <div v-if="modelValue.passwordType === 'password'" class="form-group mb-2">
+                    <label class="form-label" for="password">Password</label>
+                    <input class="form-control" type="password" v-model="modelValue.password" required />
                 </div>
-            </div>
+                <div v-else-if="modelValue.passwordType === 'key'" class="form-group mb-2">
+                    <label class="form-label" for="privateKeyPath">Private Key Path</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Path" v-model="modelValue.password" required
+                            aria-label="Path">
+                        <button @click.prevent="() => handlePathSelection()" class="btn btn-outline-secondary"
+                            type="button">Browse</button>
+                    </div>
+                </div>
+            </template>
             <div class="text-end my-2">
                 <button class="btn btn-secondary" type="button" @click="testConnection" :disabled="!isReady || isTesting">
                     <span v-if="isTesting">Testing...</span>
@@ -57,8 +65,11 @@ import { unproxify } from '@/helpers';
 import { SshDetails } from '@/interfaces';
 import { computed, ref } from 'vue';
 
-const props = defineProps<{ modelValue?: SshDetails }>();
-const emit = defineEmits(['update:modelValue']);
+const props = withDefaults(defineProps<{ modelValue?: SshDetails, isEdit: boolean, passwordIsChanged: boolean }>(), {
+    isEdit: false,
+    passwordIsChanged: false,
+});
+const emit = defineEmits(['update:modelValue', 'changePassword']);
 
 computed({
     get() {
@@ -111,5 +122,9 @@ async function testConnection() {
     } finally {
         isTesting.value = false;
     }
+}
+
+function changePassword() {
+    window.confirm('Are you sure you want to change the password/private key path?') && emit('changePassword');
 }
 </script>
