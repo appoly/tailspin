@@ -5,23 +5,33 @@
                 <nav id="pagination">
                     <ul class="pagination">
                         <!-- pagination buttons -->
+                        <li v-if="page !== 1" class="page-item">
+                            <button class="page-link" @click="() => changePage(1)">
+                                First
+                            </button>
+                        </li>
                         <li class="page-item">
-                            <button class="page-link" @click="changePage(page - 1)" :disabled="!hasPreviousPage">
-                                Previous
+                            <button class="page-link" @click="() => changePage(page - 1)" :disabled="!hasPreviousPage">
+                                <i class="bi bi-chevron-left"></i>
                             </button>
                         </li>
                         <!-- paginationLinks -->
                         <li class="page-item" v-for="pageNumber in paginationLinks"
                             :class="{ 'active': pageNumber === page }">
-                            <button class="page-link" @click="changePage(pageNumber)">
+                            <button class="page-link" @click="() => changePage(pageNumber)">
                                 {{ pageNumber }}
                             </button>
                         </li>
 
                         <!-- next -->
                         <li class="page-item">
-                            <button class="page-link" @click="changePage(page + 1)" :disabled="!hasNextPage">
-                                Next
+                            <button class="page-link" @click="() => changePage(page + 1)" :disabled="!hasNextPage">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </li>
+                        <li v-if="page !== totalPages" class="page-item">
+                            <button class="page-link" @click="() => changePage(totalPages)">
+                                Last
                             </button>
                         </li>
                     </ul>
