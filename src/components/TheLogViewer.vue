@@ -7,9 +7,19 @@
         </div>
 
         <!-- Filter by severity -->
-        <div class="d-flex mb-4 ">
-            <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity" :count="filter.count"
-                :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
+        <div class="d-flex mb-4 justify-content-between">
+            <div class="d-flex">
+                <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity"
+                    :count="filter.count" :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
+            </div>
+            <div>
+                <select v-model="itemsPerPage" class="form-select w-fit" :disabled="isLoading">
+                    <option value="20">20 Per Page</option>
+                    <option value="50">50 Per Page</option>
+                    <option value="100">100 Per Page</option>
+                    <option value="200">200 Per Page</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -72,7 +82,7 @@ const searchTerm = ref('');
 const selectedSeverity = ref('');
 
 const page = ref(1);
-const itemsPerPage = 20;
+const itemsPerPage = ref(20);
 
 const filteredLogItems = computed(() => {
     const search = searchTerm.value.toLowerCase();
@@ -82,7 +92,7 @@ const filteredLogItems = computed(() => {
 });
 
 const currentPageItems = computed(() => {
-    return filteredLogItems.value.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
+    return filteredLogItems.value.slice((page.value - 1) * itemsPerPage.value, page.value * itemsPerPage.value);
 });
 
 const severityFilters = computed(() => {
