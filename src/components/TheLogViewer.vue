@@ -47,39 +47,8 @@
         </div>
 
         <!-- pagination -->
-        <div class="my-5" v-if="totalItems">
-
-            <div class="row justify-content-center">
-                <div class="col-8 text-center align-content-center">
-                    <nav id="pagination">
-                        <ul class="pagination">
-                            <!-- pagination buttons -->
-                            <li class="page-item">
-                                <button href="#" class="page-link" @click="changePage('previous')" :disabled="page === 1">
-                                    Previous
-                                </button>
-                            </li>
-                            <!-- paginationLinks -->
-                            <li class="page-item" v-for="pageNumber in paginationLinks"
-                                :class="{ 'active': pageNumber === page }">
-                                <button href="#" class="page-link" @click="page = pageNumber">
-                                    {{ pageNumber }}
-                                </button>
-                            </li>
-
-                            <!-- next -->
-                            <li class="page-item">
-                                <button href="#" class="page-link" @click="changePage('next')"
-                                    :disabled="page === totalPages">
-                                    Next
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
-                    Showing {{ (page - 1) * itemsPerPage + 1 }} - {{ page * itemsPerPage }} of {{ totalItems }}
-                </div>
-            </div>
-        </div>
+        <TheLogPaginator :totalItems="filteredLogItems.length" :itemsPerPage="itemsPerPage" :page="page"
+            @changePage="changePage" />
     </template>
 </template>
 
@@ -87,10 +56,10 @@
 import { computed, ref } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
+import TheLogPaginator from "@/components/TheLogPaginator.vue";
 import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
-import { usePaginationData } from "@/composables/LogViewer/pagination";
 import { useFilterLogs } from "@/composables/LogViewer/filterLogs";
 
 const props = defineProps<{
@@ -112,13 +81,9 @@ const filteredLogItems = computed(() => {
     return useFilterLogs(items, search, selectedSeverity.value);
 });
 
-const totalItems = computed(() => filteredLogItems.value.length);
-
 const currentPageItems = computed(() => {
     return filteredLogItems.value.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
 });
-
-let { totalPages, hasPreviousPage, hasNextPage, paginationLinks } = usePaginationData(page.value, itemsPerPage, totalItems.value);
 
 const severityFilters = computed(() => {
     const filters = [];
@@ -136,14 +101,8 @@ const severityFilters = computed(() => {
     return filters;
 });
 
-function changePage(type: string) {
-    if (type === 'next' && hasNextPage.value) {
-        page.value++;
-    } else if (type === 'previous' && hasPreviousPage.value) {
-        page.value--;
-    }
-
-    loadPaginationData();
+function changePage(pageNumber: number) {
+    page.value = pageNumber;
 }
 
 function filterBySeverity(severity: string) {
@@ -154,17 +113,4 @@ function filterBySeverity(severity: string) {
     }
 }
 
-function loadPaginationData() {
-    ({ totalPages, hasPreviousPage, hasNextPage, paginationLinks } = usePaginationData(page.value, itemsPerPage, totalItems.value));
-}
 </script>
-
-<style lang="scss" scoped>
-#pagination {
-    // center pagination
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-}
-</style>
