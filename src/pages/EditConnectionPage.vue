@@ -14,7 +14,7 @@
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
-        <div v-else>
+        <TheConnectionForm v-else :connection="connection">
             <form @submit.prevent="saveConnection">
                 <div class="form-group mb-2">
                     <label for="connectionName" class="form-label">Connection name</label>
@@ -69,7 +69,7 @@
                     <button class="mt-3 btn btn-primary" type="submit">Save</button>
                 </div>
             </form>
-        </div>
+        </TheConnectionForm>
     </div>
 </template>
 
@@ -80,37 +80,23 @@ import { BaseConnection, Connection } from "@/interfaces";
 import { onMounted, ref } from 'vue';
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 import TheSshForm from '@/components/TheSshForm.vue';
+import TheConnectionForm from '@/components/TheConnectionForm.vue';
 
 const applicationStore = useApplicationStore();
 const connectionStore = useConnectionStore();
 
 const isLoading = ref(false);
 const passwordIsChanged = ref(false);
+const connection = ref<Connection>();
 
 onMounted(() => {
     isLoading.value = true;
-    const connection = connectionStore.getById(applicationStore.routeParams.connectionUid);
+    connection.value = connectionStore.getById(applicationStore.routeParams.connectionUid);
 
     if (!connection) {
         applicationStore.changePage('connections', { error: 'Connection not found' });
         return;
     }
-
-    formFields.value = {
-        name: connection.name,
-        icon: connection.icon,
-        path: connection.path,
-        type: connection.type,
-        ssh: {
-            host: connection.ssh?.host || '',
-            port: connection.ssh?.port || 22,
-            username: connection.ssh?.username || '',
-            passwordType: connection.ssh?.passwordType || 'password',
-            password: connection.ssh?.password || '',
-        }
-    }
-
-    isLoading.value = false;
 })
 
 const formFields = ref<BaseConnection>({

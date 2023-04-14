@@ -5,6 +5,9 @@
       <div v-if="applicationStore.routeParams.error" class="alert alert-danger my-2" role="alert">
         {{ applicationStore.routeParams.error }}
       </div>
+      <div v-if="applicationStore.routeParams.success" class="alert alert-success my-2" role="alert">
+        {{ applicationStore.routeParams.success }}
+      </div>
       <ConnectionsPage v-if="applicationStore.page === 'connections'" />
       <AddConnectionPage v-if="applicationStore.page === 'connections.add'" />
       <EditConnectionPage v-if="applicationStore.page === 'connections.edit'" />

@@ -21,8 +21,8 @@ export const useApplicationStore = defineStore("application", {
       this.openConnections = [];
     },
     goToConnection(connectionId: string) {
-      this.page = "connections.page." + connectionId;
       this.setOpen(connectionId);
+      this.changePage("connections.page." + connectionId);
     },
     setOpen(connectionId: string) {
       this.openConnections.push(connectionId);
