@@ -14,10 +14,10 @@
             </div>
             <div>
                 <select v-model="itemsPerPage" class="form-select w-fit" :disabled="isLoading">
-                    <option value="20">20 Per Page</option>
-                    <option value="50">50 Per Page</option>
-                    <option value="100">100 Per Page</option>
-                    <option value="200">200 Per Page</option>
+                    <option :value="20">20 Per Page</option>
+                    <option :value="50">50 Per Page</option>
+                    <option :value="100">100 Per Page</option>
+                    <option :value="200">200 Per Page</option>
                 </select>
             </div>
         </div>
