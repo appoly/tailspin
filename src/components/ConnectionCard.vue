@@ -84,7 +84,7 @@ function selectOption(option: Option): void {
             emit('delete');
         }
         if (option.value === 'edit') {
-            alert('Edit coming soon! :)');
+            applicationStore.changePage('connections.edit', { connectionUid: props.connection.uid });
         }
         if (option.value === 'favorite') {
             props.connection.isFavorite = !props.connection.isFavorite;
