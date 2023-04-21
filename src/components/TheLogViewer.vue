@@ -59,6 +59,13 @@
         <!-- pagination -->
         <TheLogPaginator :totalItems="filteredLogItems.length" :itemsPerPage="itemsPerPage" :page="page"
             @changePage="changePage" />
+
+        <div class="d-flex justify-content-end" v-if="filteredLogItems.length > 0">
+            <button class="btn btn-outline-secondary" type="button" @click="jumpToTop">
+                <i class="bi bi-arrow-up"></i>
+            </button>
+        </div>
+
     </template>
 </template>
 
@@ -122,6 +129,10 @@ function filterBySeverity(severity: string) {
     } else {
         selectedSeverity.value = severity;
     }
+}
+
+function jumpToTop() {
+    document.getElementById('logViewerHeader')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 </script>
