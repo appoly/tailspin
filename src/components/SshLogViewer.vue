@@ -33,6 +33,15 @@
         </div>
         <div>
             <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg" />
+            <div v-if="!isLoading && !errorMsg && !logEntries.length && !paths.length" class="my-2">
+                <div class="alert alert-info" role="alert">
+                    <div class="d-flex justify-content-between align-items-center">
+                        No log entries found.
+                        <button class="btn btn-outline-light" type="button"
+                            @click="retryConnection">Reload?</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <Teleport to="body">
             <TheSshPassphraseModal v-model="passphrase" ref="passphraseModal" @submit="handlePassphraseSubmit" />
@@ -126,6 +135,10 @@ function refreshLog() {
 }
 
 function handlePassphraseSubmit() {
+    readLog(currentPath.value || props.connection.path);
+}
+
+function retryConnection() {
     readLog(currentPath.value || props.connection.path);
 }
 
