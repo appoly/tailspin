@@ -9,6 +9,7 @@ interface SshDetails {
   username: string;
   passwordType: "password" | "key";
   password: string;
+  passphrase?: string;
 }
 
 interface SshResponse {
@@ -16,7 +17,12 @@ interface SshResponse {
   message?: string;
 }
 
-export function testSshCredentials(options: SshDetails): Promise<{ success: boolean; error?: any }> {
+export function testSshCredentials(
+  options: SshDetails,
+  passwordIsEncrypted: boolean
+): Promise<{ success: boolean; error?: any }> {
+  console.log({ options });
+
   return ipcRenderer.invoke("test-ssh-credentials", options);
 }
 
