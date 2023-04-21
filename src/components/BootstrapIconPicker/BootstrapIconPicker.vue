@@ -110,7 +110,7 @@ export default {
 
     // nice scrollbar
     &::-webkit-scrollbar {
-        width: 10px;
+        scrollbar-width: thin;
     }
 }
 </style>
