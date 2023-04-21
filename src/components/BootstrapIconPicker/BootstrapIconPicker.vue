@@ -11,8 +11,7 @@
                     <input type="text" class="form-control" placeholder="Search" v-model="search">
                 </div>
                 <div class="input-group mt-2 mb-3">
-                    <input type="color" class="form-control" :value="color"
-                        @change="$emit('update:color', $event.target!.value)">
+                    <input type="color" class="form-control" :value="color" @change="handleColorChange">
                 </div>
                 <div class="icon-container">
                     <div class="d-flex flex-wrap">
@@ -59,6 +58,9 @@ export default {
             this.selectorOpen = false;
             this.search = '';
             this.$emit('update:modelValue', icon);
+        },
+        handleColorChange(event: Event): void {
+            this.$emit('update:color', (event.target as HTMLInputElement).value);
         },
         mouseEventListener(e: MouseEvent): void {
             // if e.target is not inside the icon picker, close the selector
