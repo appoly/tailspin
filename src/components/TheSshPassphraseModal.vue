@@ -4,7 +4,7 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <form @submit.prevent="handleSubmit">
-                        <label class="mb-2">Enter Passphrase</label>
+                        <label class="mb-2">Enter SSH Passphrase</label>
                         <div class="input-group">
                             <input type="password" class="form-control" placeholder="Passphrase" :value="modelValue"
                                 @input="handleInputChange" required aria-label="Passphrase" id="passphraseInput" />

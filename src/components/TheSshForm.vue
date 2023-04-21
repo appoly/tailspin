@@ -128,6 +128,18 @@ const needPassphraseInput = computed(() => (
     !passphrase.value
 ));
 
+const sshCredentials = computed(() => ({
+    host: props.modelValue?.host,
+    port: props.modelValue?.port,
+    username: props.modelValue?.username,
+    password: props.modelValue?.password,
+    passwordType: props.modelValue?.passwordType,
+    ...(props.modelValue?.passwordType === 'key' && props.modelValue?.passphraseRequired
+        ? { passphrase: passphrase.value }
+        : {}
+    ),
+}))
+
 async function testConnection() {
     if (!isReady.value) {
         errorMsg.value = 'Please fill out all fields';
@@ -138,20 +150,12 @@ async function testConnection() {
     errorMsg.value = '';
 
     try {
-        let options = unproxify(props.modelValue!);
         if (needPassphraseInput.value) {
             passphraseModal.value!.open();
             return;
         }
-        let credentials = {
-            host: options.host,
-            port: options.port,
-            username: options.username,
-            password: options.password,
-            ...(options.passphraseRequired && passphrase.value ? { passphrase: passphrase.value } : {}),
-        };
         let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged; // Password is only encrypted if it's not changed.
-        let response = await api.Ssh.testSshCredentials(unproxify(credentials), passwordIsEncrypted);
+        let response = await api.Ssh.testSshCredentials(unproxify(sshCredentials.value), passwordIsEncrypted);
         if (response.success) {
             testSuccess.value = true;
             alert('Connection successful');
