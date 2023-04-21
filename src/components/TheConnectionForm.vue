@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { BaseConnection, Connection } from "@/interfaces";
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 import TheSshForm from '@/components/TheSshForm.vue';
 
@@ -113,6 +113,24 @@ onMounted(() => {
             iconColor: props.connection!.iconColor || '#12345'
         }
     }
+});
+
+// Reset the ssh object when switching between local and remote
+watch(() => formFields.value.type, () => {
+    if (formFields.value.type === 'local') {
+        formFields.value.ssh = {
+            host: '',
+            port: 22,
+            username: '',
+            passwordType: 'password',
+            password: '',
+        }
+    }
+});
+
+// Reset the password field when switching between password and key
+watch(() => formFields.value.ssh?.passwordType, () => {
+    formFields.value.ssh!.password = '';
 });
 
 const error = ref('');
