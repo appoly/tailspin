@@ -7,7 +7,7 @@
                         <label class="mb-2">Enter Passphrase</label>
                         <div class="input-group">
                             <input type="password" class="form-control" placeholder="Passphrase" :value="modelValue"
-                                @input="handleInputChange" required aria-label="Passphrase" id="passphraseInput">
+                                @input="handleInputChange" required aria-label="Passphrase" id="passphraseInput" />
                             <button class="btn btn-secondary">Go</button>
                         </div>
                     </form>
@@ -33,13 +33,10 @@ onMounted(() => {
 
 onUnmounted(() => {
     sshPassphraseModal.value?.dispose();
-    document.querySelector('#sshPassphraseModal')!.removeEventListener('shown.bs.modal', focusOnInput)
 });
 
 function handleInputChange(event: Event) {
     emit('update:modelValue', (event.target as HTMLInputElement).value);
-    console.log('input change');
-
 }
 
 function handleSubmit() {

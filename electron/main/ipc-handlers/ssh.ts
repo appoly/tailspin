@@ -3,7 +3,7 @@ import SSH2Promise from "ssh2-promise";
 
 export default () => {
   ipcMain.handle("test-ssh-credentials", async (event, options, passwordIsEncrypted: boolean) => {
-    const ssh = buildConnection(options, false);
+    const ssh = buildConnection(options, passwordIsEncrypted);
     try {
       await ssh.connect();
       return { success: true };
