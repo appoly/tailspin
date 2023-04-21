@@ -4,15 +4,13 @@
             {{ error }}
         </div>
         <form @submit.prevent="saveConnection">
-            <div class="row">
-                <div class="col-8 form-group mb-2">
-                    <label for="connectionName" class="form-label">Connection name</label>
-                    <input type="text" class="form-control" id="connectionName" placeholder="Connection name" required
-                        v-model="formFields.name" />
-                </div>
-                <div class="form-group col">
-                    <label class="form-label" for="icon">Icon</label>
+            <div class="d-flex gap-2">
+                <div class="form-group">
                     <BootstrapIconPicker v-model="formFields.icon" v-model:color="formFields.iconColor" />
+                </div>
+                <div class="flex-grow w-100 form-group">
+                    <input type="text" class="form-control" id="connectionName" placeholder="Connection Name" required
+                        v-model="formFields.name" />
                 </div>
             </div>
             <div class="form-group my-4">
@@ -81,7 +79,7 @@ const emit = defineEmits(['saved']);
 
 const formFields = ref<BaseConnection>({
     name: '',
-    icon: 'book',
+    icon: 'plus',
     path: '',
     type: 'local' as 'remote' | 'local',
     ssh: {
@@ -130,7 +128,9 @@ watch(() => formFields.value.type, () => {
 
 // Reset the password field when switching between password and key
 watch(() => formFields.value.ssh?.passwordType, () => {
-    formFields.value.ssh!.password = '';
+    if (formFields.value?.ssh?.password) {
+        formFields.value.ssh!.password = '';
+    }
 });
 
 const error = ref('');
