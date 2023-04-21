@@ -74,23 +74,9 @@
         <div v-else>
             <p>Error: Model value is undefined - how did you get here?</p>
         </div>
-        <div id="myModal" class="modal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Enter Passphrase</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="input-group">
-                            <input type="password" class="form-control" placeholder="Passphrase" v-model="passphrase"
-                                required aria-label="Passphrase">
-                            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Go</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <Teleport to="body">
+            <TheSshPassphraseModal v-model="passphrase" ref="passphraseModal" @submit="testConnection" />
+        </Teleport>
 
     </div>
 </template>
@@ -98,8 +84,8 @@
 <script setup lang="ts">
 import { unproxify } from '@/helpers';
 import { SshDetails } from '@/interfaces';
-import { computed, ref } from 'vue';
-import { Modal } from 'bootstrap';
+import { computed, onMounted, ref } from 'vue';
+import TheSshPassphraseModal from '@/components/TheSshPassphraseModal.vue';
 
 const props = withDefaults(defineProps<{ modelValue?: SshDetails, isEdit: boolean, passwordIsChanged: boolean }>(), {
     isEdit: false,
@@ -129,8 +115,9 @@ const isReady = computed(() => (
     props.modelValue.port &&
     props.modelValue.username &&
     props.modelValue.password
-))
+));
 
+const passphraseModal = ref();
 const isTesting = ref(false);
 const testSuccess = ref(false);
 const passphrase = ref('');
@@ -143,20 +130,22 @@ async function testConnection() {
     isTesting.value = true;
     testSuccess.value = false;
     errorMsg.value = '';
+
     try {
         let options = unproxify(props.modelValue!);
-        if (props.modelValue!.passphraseRequired  && !passphrase.value) {
-            const myModalAlternative = new Modal('#myModal', options)
-            myModalAlternative.show()
+        if (props.modelValue!.passphraseRequired && !passphrase.value) {
+            passphraseModal.value!.open();
             return;
-            // Ask here with a modal?
-            const passphrase = window.prompt('Please enter the passphrase for the private key');
-            if (!passphrase) {
-                return;
-            }
-            options.passphrase = passphrase;
         }
-        let response = await api.Ssh.testSshCredentials(unproxify(props.modelValue!));
+        let credentials = {
+            host: options.host,
+            port: options.port,
+            username: options.username,
+            password: options.password,
+            ...(options.passphraseRequired ? { passphrase: passphrase.value } : {}),
+        };
+        let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged; // Password is only encrypted if it's not changed.
+        let response = await api.Ssh.testSshCredentials(unproxify(credentials), passwordIsEncrypted);
         if (response.success) {
             testSuccess.value = true;
             alert('Connection successful');
@@ -170,6 +159,7 @@ async function testConnection() {
         alert(errorMsg.value);
     } finally {
         isTesting.value = false;
+        passphrase.value = '';
     }
 }
 
