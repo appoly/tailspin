@@ -169,9 +169,9 @@ function unregisterEventListeners() {
 }
 
 function keyDownEvents(event: KeyboardEvent) {
-    // Open command palette
+    // Close command palette
     if (event.key === 'p' && (event.ctrlKey || event.metaKey)) {
-        isActive.value = true;
+        isActive.value = false;
     }
     // Close command palette
     if (event.key === 'Escape') {
@@ -203,6 +203,7 @@ function keyDownEvents(event: KeyboardEvent) {
     if (event.key === 'Enter') {
         event.preventDefault();
         filteredActions.value[focusedAction.value].action();
+        searchTerm.value = '';
     }
 }
 
