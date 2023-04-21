@@ -11,6 +11,7 @@ export interface SshDetails {
   username: string;
   passwordType: "password" | "key";
   password: string;
+  passphraseRequired?: boolean;
 }
 
 export interface BaseConnection {

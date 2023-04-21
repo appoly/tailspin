@@ -34,20 +34,41 @@
         <div>
             <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
                 :key="`log_viewer_${currentPath}`" />
+
+            <div v-if="!isLoading && !errorMsg && !logEntries.length && !paths.length" class="my-2">
+                <div class="alert alert-info" role="alert">
+                    <div class="d-flex justify-content-between align-items-center">
+                        No log entries found.
+                        <button class="btn btn-outline-light" type="button"
+                            @click="retryConnection">Reload?</button>
+                    </div>
+                </div>
+            </div>
         </div>
+        <Teleport to="body">
+            <TheSshPassphraseModal v-model="passphrase" ref="passphraseModal" @submit="handlePassphraseSubmit" />
+        </Teleport>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted, nextTick, computed } from "vue";
 import { Connection, LogEntry } from "@/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
 import TheLogViewer from "./TheLogViewer.vue";
 import { unproxify } from "@/helpers";
+import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
 
 const props = defineProps<{
     connection: Connection;
 }>();
+
+const passphrase = ref<string | null>(null);
+const passphraseModal = ref();
+const sshConfig = computed(() => ({
+    ...props.connection.ssh,
+    ...(props.connection.ssh?.passphraseRequired ? { passphrase: passphrase.value } : {})
+}))
 
 const logEntries = ref<LogEntry[]>([]);
 const isLoading = ref(false);
@@ -65,7 +86,11 @@ async function readLog(path: string) {
     isLoading.value = true;
     errorMsg.value = '';
     try {
-        const contentType: { success: boolean, message?: string } = await api.Ssh.isFileOrDirectory(unproxify(props.connection.ssh), path);
+        if (props.connection.ssh?.passphraseRequired && !passphrase.value) {
+            passphraseModal.value!.open();
+            return;
+        }
+        const contentType: { success: boolean, message?: string } = await api.Ssh.isFileOrDirectory(unproxify(sshConfig.value), path);
 
         if (!contentType.success) {
             throw new Error(contentType.message);
@@ -79,7 +104,7 @@ async function readLog(path: string) {
 
         if (contentType.message.trim() === 'directory') {
             isDirectory.value = true;
-            data = await api.Ssh.getFilesInDirectory(unproxify(props.connection.ssh), path);
+            data = await api.Ssh.getFilesInDirectory(unproxify(sshConfig.value), path);
             if (!data.success) {
                 throw new Error(data.message);
             }
@@ -88,7 +113,7 @@ async function readLog(path: string) {
         };
 
         currentPath.value = path;
-        data = await api.Ssh.readFromPath(unproxify(props.connection.ssh), path)
+        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path)
         if (!data.success) {
             throw new Error(data.message);
         }
@@ -109,6 +134,14 @@ function refreshLog() {
     if (currentPath.value) {
         readLog(currentPath.value);
     }
+}
+
+function handlePassphraseSubmit() {
+    readLog(currentPath.value || props.connection.path);
+}
+
+function retryConnection() {
+    readLog(currentPath.value || props.connection.path);
 }
 
 </script>

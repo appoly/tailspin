@@ -2,8 +2,8 @@ import { ipcMain, safeStorage } from "electron";
 import SSH2Promise from "ssh2-promise";
 
 export default () => {
-  ipcMain.handle("test-ssh-credentials", async (event, options) => {
-    const ssh = buildConnection(options, false);
+  ipcMain.handle("test-ssh-credentials", async (event, options, passwordIsEncrypted: boolean) => {
+    const ssh = buildConnection(options, passwordIsEncrypted);
     try {
       await ssh.connect();
       return { success: true };
@@ -64,13 +64,14 @@ function decryptString(string: string) {
   return safeStorage.decryptString(buffer);
 }
 
-function buildConnection({ host, port, username, password, passwordType }, decryptNeeded = true) {
+function buildConnection({ host, port, username, password, passwordType, passphrase = null }, decryptNeeded = true) {
   const config = {
     host,
     port,
     username,
     readyTimeout: 4000,
     reconnect: false,
+    ...(passphrase && { passphrase }),
   };
 
   const decryptedPassword = decryptNeeded ? decryptString(password) : password;
