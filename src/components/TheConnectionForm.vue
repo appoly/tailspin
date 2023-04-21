@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { BaseConnection, Connection } from "@/interfaces";
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 import TheSshForm from '@/components/TheSshForm.vue';
 

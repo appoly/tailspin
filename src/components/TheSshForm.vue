@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { unproxify } from '@/helpers';
 import { SshDetails } from '@/interfaces';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import TheSshPassphraseModal from '@/components/TheSshPassphraseModal.vue';
 
 const props = withDefaults(defineProps<{ modelValue?: SshDetails, isEdit: boolean, passwordIsChanged: boolean }>(), {
@@ -122,6 +122,12 @@ const isTesting = ref(false);
 const testSuccess = ref(false);
 const passphrase = ref('');
 const errorMsg = ref('');
+const needPassphraseInput = computed(() => (
+    props.modelValue?.passwordType === 'key' &&
+    props.modelValue?.passphraseRequired &&
+    !passphrase.value
+));
+
 async function testConnection() {
     if (!isReady.value) {
         errorMsg.value = 'Please fill out all fields';
@@ -133,7 +139,7 @@ async function testConnection() {
 
     try {
         let options = unproxify(props.modelValue!);
-        if (props.modelValue!.passphraseRequired && !passphrase.value) {
+        if (needPassphraseInput.value) {
             passphraseModal.value!.open();
             return;
         }
@@ -142,7 +148,7 @@ async function testConnection() {
             port: options.port,
             username: options.username,
             password: options.password,
-            ...(options.passphraseRequired ? { passphrase: passphrase.value } : {}),
+            ...(options.passphraseRequired && passphrase.value ? { passphrase: passphrase.value } : {}),
         };
         let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged; // Password is only encrypted if it's not changed.
         let response = await api.Ssh.testSshCredentials(unproxify(credentials), passwordIsEncrypted);
