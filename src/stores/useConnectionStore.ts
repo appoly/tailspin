@@ -43,6 +43,10 @@ export const useConnectionStore = defineStore("connection", {
       api.Store.set("connections", unproxify(this.connections));
       const applicationStore = useApplicationStore();
       applicationStore.closeAllConnections();
+    },
+    reorderConnections(newArray: Connection[]) {
+      this.connections = newArray;
+      api.Store.set("connections", unproxify(this.connections));
     }
   },
 });
