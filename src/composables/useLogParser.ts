@@ -2,7 +2,16 @@ import { LogStatuses } from "@/constants/LogStatuses";
 import { LogEntry } from "@/interfaces";
 import { unref } from "vue";
 
-const dateTimestampRegex = new RegExp(/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\]/);
+// Match on the date, optionally with a space or T, and the time, and optionally the microseconds and timezone offset.
+//  ie. [2021-01-01 00:00:00.000000+00:00] or a simple match [2021-01-01 00:00:00]
+const dateTimestampRegex = /^\[(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})\.?(\d{6})?([\+\-]\d\d:\d\d)?\]/;
+// Match on the environment and the severity, ie. local.INFO:
+const environmentRegex = /(.*?(\\w+)\\.|.*?)/;
+// The severities and the colon, done as a group ie: /(INFO|DEBUG|ERROR|WARNING):/
+const severityRegex = "(" + LogStatuses.join("|") + ")?: ";
+// The log text, ie: "This is the log text"
+const logTextRegex = /(.*?)$/;
+
 /**
  * This pattern, used for processing Laravel logs, returns these results:
  * $matches[0] - the full log line being tested.
@@ -15,9 +24,7 @@ const dateTimestampRegex = new RegExp(/^\[(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})
  * $matches[7] - the log text, the rest of the text.
  */
 const logParsingRegex = new RegExp(
-  `^\\[(\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.?(\\d{6}([\\+-]\\d\\d:\\d\\d)?)?)\\](.*?(\\w+)\\.|.*?)(` +
-    LogStatuses.join("|") +
-    `)?: (.*?)( in [\\/].*?:[0-9]+)?$`,
+  dateTimestampRegex.source + environmentRegex.source + severityRegex + logTextRegex.source,
   "i"
 );
 
@@ -25,8 +32,8 @@ export async function useLogParser(logData: string): Promise<LogEntry[]> {
   let logDataNew = unref(logData);
   return new Promise((resolve, reject) => {
     try {
-      // First split by new lines. A lot of logs are on one line, but some are not. This is much more efficient than splitting by the date.
-      const logEntries = logDataNew.split("\n").filter((line) => line.trim() !== "");
+      // First split by new lines. A lot of logs are on one line, but some are not.
+      const logEntries = logDataNew.split(/[\r\n]+/).filter((line) => line.trim() !== "");
       const parsedEntries: LogEntry[] = [];
 
       let entryIndex = 0; // Track this outside of the loop - we have split by line, but below we are splitting by date (ie. by log).
