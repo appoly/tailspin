@@ -4,7 +4,7 @@
         <div class="connection-card card m-1" role="button" v-if="viewMode === 'grid'">
             <div class="text-center font-weight-bold">
                 <div class="icon">
-                    <i :class="['h3 bi', `bi-${connection.icon}`]"></i>
+                    <i :class="['h3 bi', `bi-${connection.icon}`]" :style="{ 'color': connection.iconColor ?? '' }"></i>
                 </div>
 
                 <span class="d-block fs-5">{{ connection.name ?? '?' }}</span>
