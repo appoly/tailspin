@@ -3,7 +3,10 @@
         <!-- grid -->
         <div class="connection-card card m-1" role="button" v-if="viewMode === 'grid'">
             <div class="text-center font-weight-bold">
-                <i :class="['h3 bi', `bi-${connection.icon}`]"></i>
+                <div class="icon">
+                    <i :class="['h3 bi', `bi-${connection.icon}`]"></i>
+                </div>
+
                 <span class="d-block fs-5">{{ connection.name ?? '?' }}</span>
             </div>
         </div>
@@ -11,7 +14,7 @@
         <!-- list -->
         <div class="list-group-item my-1" role="button" v-if="viewMode === 'list'">
             <div class="d-flex w-100 align-items-center">
-                <i :class="['h3 bi', `bi-${connection.icon}`]"></i>
+                <i :class="['h3 bi', `bi-${connection.icon}`]" :style="{ 'color': connection.iconColor ?? '' }"></i>
                 <h5 class="ms-3">{{ connection.name ?? '?' }}</h5>
             </div>
             <small class="text-muted">

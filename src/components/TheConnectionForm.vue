@@ -4,14 +4,16 @@
             {{ error }}
         </div>
         <form @submit.prevent="saveConnection">
-            <div class="form-group mb-2">
-                <label for="connectionName" class="form-label">Connection name</label>
-                <input type="text" class="form-control" id="connectionName" placeholder="Connection name" required
-                    v-model="formFields.name" />
-            </div>
-            <div class="form-group mb-2">
-                <label class="form-label" for="icon">Icon</label>
-                <BootstrapIconPicker v-model="formFields.icon" />
+            <div class="row">
+                <div class="col-8 form-group mb-2">
+                    <label for="connectionName" class="form-label">Connection name</label>
+                    <input type="text" class="form-control" id="connectionName" placeholder="Connection name" required
+                        v-model="formFields.name" />
+                </div>
+                <div class="form-group col">
+                    <label class="form-label" for="icon">Icon</label>
+                    <BootstrapIconPicker v-model="formFields.icon" v-model:color="formFields.iconColor" />
+                </div>
             </div>
             <div class="form-group my-4">
                 <h4>Connection Type</h4>
@@ -88,7 +90,8 @@ const formFields = ref<BaseConnection>({
         username: '',
         passwordType: 'password',
         password: '',
-    }
+    },
+    iconColor: '#ffffff'
 })
 
 onMounted(() => {
@@ -106,7 +109,8 @@ onMounted(() => {
                     passwordType: props.connection!.ssh?.passwordType || 'password',
                     password: props.connection!.ssh?.password || '',
                 }
-            })
+            }),
+            iconColor: props.connection!.iconColor || '#12345'
         }
     }
 });
@@ -146,6 +150,7 @@ async function saveConnection() {
         icon: formFields.value.icon,
         type: formFields.value.type,
         path: formFields.value.path,
+        iconColor: formFields.value.iconColor,
     };
 
     //  If it is remote connection, handle assigning of the ssh object, and handle encryption of password field

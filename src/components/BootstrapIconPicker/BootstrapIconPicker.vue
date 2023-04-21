@@ -2,7 +2,7 @@
     <div ref="iconPicker" class="icon-picker">
         <button type="button" :class="[buttonClass, 'icon-button']" @click="openIconBox">
             <template v-if="selectedIcon">
-                <i :class="[iconClass + selectedIcon]"></i>
+                <i :class="[iconClass + selectedIcon]" :style="{ color: color }"></i>
             </template>
 
             <template v-else>
@@ -13,13 +13,16 @@
         <!-- icon selection grid -->
         <div class="card icon-selector" v-show="selectorOpen">
             <div class="card-body">
-                <div class="input-group mb-3">
+                <div class="input-group ">
                     <input type="text" class="form-control" placeholder="Search" v-model="search">
+                </div>
+                <div class="input-group mt-2 mb-3">
+                    <input type="color" class="form-control" v-model="color">
                 </div>
                 <div class="icon-container">
                     <div class="d-flex flex-wrap">
                         <i v-for="icon in filteredIcons" :class="[iconClass + icon, 'mx-2']" :key="icon"
-                            @click="selectIcon(icon)"></i>
+                            @click="selectIcon(icon)" :style="{ color: color }"></i>
                     </div>
                 </div>
             </div>
@@ -37,7 +40,8 @@ export default {
             search: '',
             selectedIcon: '',
             selectorOpen: false,
-            iconClass: 'bi bi-' // bootstrap icons class prefix
+            iconClass: 'bi bi-', // bootstrap icons class prefix
+            color: '#ffffff',
         }
     },
     props: {
@@ -47,7 +51,7 @@ export default {
         },
         buttonClass: {
             type: String,
-            default: 'btn btn-primary'
+            default: 'btn btn-outline-secondary'
         }
     },
     computed: {
@@ -69,6 +73,11 @@ export default {
     unmounted() {
         document.removeEventListener('click', this.mouseEventListener);
         document.removeEventListener('keydown', this.keydownEventListener);
+    },
+    watch: {
+        color() {
+            this.$emit('update:color', this.color);
+        }
     },
     methods: {
         selectIcon(icon: string): void {

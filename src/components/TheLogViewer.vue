@@ -2,14 +2,24 @@
     <div class="mt-2 mb-4">
         <!-- Search Bar -->
         <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
-                :disabled="isLoading" />
+            <SearchBar placeholder="Filter by level, time or message" :disabled="isLoading"
+                v-model:search-term="searchTerm" />
         </div>
 
         <!-- Filter by severity -->
-        <div class="d-flex mb-4 ">
-            <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity" :count="filter.count"
-                :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
+        <div class="d-flex mb-4 justify-content-between">
+            <div class="d-flex">
+                <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity"
+                    :count="filter.count" :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
+            </div>
+            <div>
+                <select v-model="itemsPerPage" class="form-select w-fit" :disabled="isLoading">
+                    <option :value="20">20 Per Page</option>
+                    <option :value="50">50 Per Page</option>
+                    <option :value="100">100 Per Page</option>
+                    <option :value="200">200 Per Page</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -49,6 +59,13 @@
         <!-- pagination -->
         <TheLogPaginator :totalItems="filteredLogItems.length" :itemsPerPage="itemsPerPage" :page="page"
             @changePage="changePage" />
+
+        <div class="d-flex justify-content-end" v-if="filteredLogItems.length > 0">
+            <button class="btn btn-outline-secondary" type="button" @click="jumpToTop">
+                <i class="bi bi-arrow-up"></i>
+            </button>
+        </div>
+
     </template>
 </template>
 
@@ -61,6 +78,7 @@ import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useFilterLogs } from "@/composables/LogViewer/filterLogs";
+import SearchBar from "./SearchBar.vue";
 
 const props = defineProps<{
     logEntries: LogEntry[];
@@ -72,7 +90,7 @@ const searchTerm = ref('');
 const selectedSeverity = ref('');
 
 const page = ref(1);
-const itemsPerPage = 20;
+const itemsPerPage = ref(20);
 
 const filteredLogItems = computed(() => {
     const search = searchTerm.value.toLowerCase();
@@ -82,7 +100,7 @@ const filteredLogItems = computed(() => {
 });
 
 const currentPageItems = computed(() => {
-    return filteredLogItems.value.slice((page.value - 1) * itemsPerPage, page.value * itemsPerPage);
+    return filteredLogItems.value.slice((page.value - 1) * itemsPerPage.value, page.value * itemsPerPage.value);
 });
 
 const severityFilters = computed(() => {
@@ -111,6 +129,10 @@ function filterBySeverity(severity: string) {
     } else {
         selectedSeverity.value = severity;
     }
+}
+
+function jumpToTop() {
+    document.getElementById('logViewerHeader')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 </script>

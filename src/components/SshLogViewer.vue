@@ -32,7 +32,9 @@
             </div>
         </div>
         <div>
-            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg" />
+            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
+                :key="`log_viewer_${currentPath}`" />
+
             <div v-if="!isLoading && !errorMsg && !logEntries.length && !paths.length" class="my-2">
                 <div class="alert alert-info" role="alert">
                     <div class="d-flex justify-content-between align-items-center">

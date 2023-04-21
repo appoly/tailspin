@@ -16,7 +16,7 @@
         <template v-else>
             <!-- search for a connection -->
             <div class="input-group mb-3">
-                <input type="text" class="form-control" placeholder="Search for a connection" v-model="searchTerm" />
+                <SearchBar placeholder="Search for a connection" v-model:search-term="searchTerm" />
             </div>
 
             <!-- Buttons to toggle between list and grid view -->
@@ -63,6 +63,7 @@ import ConnectionCard from '@/components/ConnectionCard.vue';
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { computed, ref } from "vue";
+import SearchBar from '@/components/SearchBar.vue';
 
 
 const connectionStore = useConnectionStore();
