@@ -7,10 +7,11 @@
             </div>
             <div class="suggestions my-2">
                 <TransitionGroup name="list" tag="ul" class="list-group">
-                    <li :class="['list-group-item', { focused: key === focusedAction }]"
+                    <button type="button"
+                        :class="['list-group-item list-group-item-action', { 'active': key === focusedAction }]"
                         v-for="(action, key) in filteredActions" :key="key" @click="action.action">
                         {{ action.label }}
-                    </li>
+                    </button>
                 </TransitionGroup>
             </div>
         </div>
@@ -208,16 +209,6 @@ function closePalette() {
     /* size */
     width: 50%;
     height: 50%;
-}
-
-.list-group-item {
-    cursor: pointer;
-}
-
-.list-group-item.focused,
-.list-group-item:hover {
-    /* invert */
-    filter: invert(1);
 }
 
 .list-enter-active,
