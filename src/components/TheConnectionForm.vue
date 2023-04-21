@@ -111,6 +111,24 @@ onMounted(() => {
     }
 });
 
+// Reset the ssh object when switching between local and remote
+watch(() => formFields.value.type, () => {
+    if (formFields.value.type === 'local') {
+        formFields.value.ssh = {
+            host: '',
+            port: 22,
+            username: '',
+            passwordType: 'password',
+            password: '',
+        }
+    }
+});
+
+// Reset the password field when switching between password and key
+watch(() => formFields.value.ssh?.passwordType, () => {
+    formFields.value.ssh!.password = '';
+});
+
 const error = ref('');
 async function saveConnection() {
     let uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
