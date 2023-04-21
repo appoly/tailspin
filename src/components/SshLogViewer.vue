@@ -17,7 +17,7 @@
                             </div>
                             <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
                                 <option disabled value=''>Please select an option...</option>
-                                <option v-for="path in paths" :value="path">{{ path }}</option>
+                                <option v-for="path in paths" :value="path">{{ getLastPathSegment(path) }}</option>
                             </select>
 
                         </template>
@@ -35,15 +35,23 @@
             <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
                 :key="`log_viewer_${currentPath}`" />
 
-            <div v-if="!isLoading && !errorMsg && !logEntries.length && !paths.length" class="my-2">
-                <div class="alert alert-info" role="alert">
-                    <div class="d-flex justify-content-between align-items-center">
-                        No log entries found.
-                        <button class="btn btn-outline-light" type="button"
-                            @click="retryConnection">Reload?</button>
+            <template v-if="!isLoading && !errorMsg && !logEntries.length">
+
+                <div v-if="paths.length && !currentPath" class="my-2">
+                    <div class="alert alert-info" role="alert">
+                        Please select a file from the dropdown above.
                     </div>
                 </div>
-            </div>
+                <div v-if="!paths.length" class="my-2">
+                    <div class="alert alert-info" role="alert">
+                        <div class="d-flex justify-content-between align-items-center">
+                            No log entries found.
+                            <button class="btn btn-outline-light" type="button" @click="retryConnection">Reload?</button>
+                        </div>
+                    </div>
+                </div>
+
+            </template>
         </div>
         <Teleport to="body">
             <TheSshPassphraseModal v-model="passphrase" ref="passphraseModal" @submit="handlePassphraseSubmit" />
@@ -108,7 +116,7 @@ async function readLog(path: string) {
             if (!data.success) {
                 throw new Error(data.message);
             }
-            paths.value = (data.message as string).trim().split('\n');
+            paths.value = (data.message as string).trim().split('\n').sort().reverse();
             return;
         };
 
@@ -142,6 +150,10 @@ function handlePassphraseSubmit() {
 
 function retryConnection() {
     readLog(currentPath.value || props.connection.path);
+}
+
+function getLastPathSegment(path: string) {
+    return path.split('/').pop();
 }
 
 </script>
