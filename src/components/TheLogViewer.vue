@@ -2,8 +2,8 @@
     <div class="mt-2 mb-4">
         <!-- Search Bar -->
         <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="Filter by level, time or message" v-model="searchTerm"
-                :disabled="isLoading" />
+            <SearchBar placeholder="Filter by level, time or message" :disabled="isLoading"
+                v-model:search-term="searchTerm" />
         </div>
 
         <!-- Filter by severity -->
@@ -71,6 +71,7 @@ import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "@/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useFilterLogs } from "@/composables/LogViewer/filterLogs";
+import SearchBar from "./SearchBar.vue";
 
 const props = defineProps<{
     logEntries: LogEntry[];
