@@ -125,9 +125,12 @@ const filteredActions = computed(() => {
 
 watch(isActive, (newIsActive) => {
     if (newIsActive) {
+        registerEventListeners();
         setTimeout(() => {
             commandPaletteInput.value?.focus();
         }, 100);
+    } else {
+        unregisterEventListeners();
     }
 });
 
@@ -137,36 +140,76 @@ watch(searchTerm, (newSearchTerm) => {
     }
 });
 
+function registerEventListeners() {
+    window.addEventListener('keydown', (event) => {
+        // Close command palette
+        if (event.key === 'Escape') {
+            isActive.value = false;
+            searchTerm.value = '';
+        }
+        // focus up and down
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            if (focusedAction.value === 0) {
+                focusedAction.value = filteredActions.value.length - 1;
+            } else {
+                focusedAction.value--;
+            }
+        }
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            if (focusedAction.value === filteredActions.value.length - 1) {
+                focusedAction.value = 0;
+            } else {
+                focusedAction.value++;
+            }
+        }
+        // select action
+        if (event.key === 'Enter') {
+            filteredActions.value[focusedAction.value].action();
+        }
+    });
+}
+
+function unregisterEventListeners() {
+    window.removeEventListener('keydown', (event) => {
+        // Open command palette
+        if (event.key === 'p' && (event.ctrlKey || event.metaKey)) {
+            isActive.value = true;
+        }
+        // Close command palette
+        if (event.key === 'Escape') {
+            isActive.value = false;
+            searchTerm.value = '';
+        }
+        // focus up and down
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            if (focusedAction.value === 0) {
+                focusedAction.value = filteredActions.value.length - 1;
+            } else {
+                focusedAction.value--;
+            }
+        }
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            if (focusedAction.value === filteredActions.value.length - 1) {
+                focusedAction.value = 0;
+            } else {
+                focusedAction.value++;
+            }
+        }
+        // select action
+        if (event.key === 'Enter') {
+            filteredActions.value[focusedAction.value].action();
+        }
+    });
+}
+
 window.addEventListener('keydown', (event) => {
     // Open command palette
     if (event.key === 'p' && (event.ctrlKey || event.metaKey)) {
         isActive.value = true;
-    }
-    // Close command palette
-    if (event.key === 'Escape') {
-        isActive.value = false;
-        searchTerm.value = '';
-    }
-    // focus up and down
-    if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        if (focusedAction.value === 0) {
-            focusedAction.value = filteredActions.value.length - 1;
-        } else {
-            focusedAction.value--;
-        }
-    }
-    if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        if (focusedAction.value === filteredActions.value.length - 1) {
-            focusedAction.value = 0;
-        } else {
-            focusedAction.value++;
-        }
-    }
-    // select action
-    if (event.key === 'Enter') {
-        filteredActions.value[focusedAction.value].action();
     }
 });
 
