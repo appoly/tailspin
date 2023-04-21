@@ -44,6 +44,9 @@ const actions = [
     {
         label: 'Open Connection',
         action: () => {
+            if (connectionStore.connections.length === 0) {
+                return;
+            }
             activeFolder.value = 'open-connections';
             focusedAction.value = 0;
         },
@@ -51,6 +54,9 @@ const actions = [
     {
         label: 'Close Connection',
         action: () => {
+            if (connectionStore.openConnections.length === 0) {
+                return;
+            }
             activeFolder.value = 'close-connections';
             focusedAction.value = 0;
         },
@@ -101,6 +107,20 @@ const closeConnectionsFolderActions = computed(() => {
 const filteredActions = computed(() => {
 
     let activeActions = actions;
+
+    // remove the open and close connection actions if there are no connections
+    if (connectionStore.connections.length === 0) {
+        activeActions = activeActions.filter((action) => {
+            return action.label !== 'Open Connection' && action.label !== 'Close Connection';
+        });
+    }
+
+    // remove close connections if there are no open connections
+    if (connectionStore.openConnections.length === 0) {
+        activeActions = activeActions.filter((action) => {
+            return action.label !== 'Close Connection';
+        });
+    }
 
     if (activeFolder.value === 'open-connections') {
         activeActions = openConnectionsFolderActions.value;
@@ -155,6 +175,10 @@ function keyDownEvents(event: KeyboardEvent) {
     }
     // Close command palette
     if (event.key === 'Escape') {
+        if (activeFolder.value !== '') {
+            activeFolder.value = '';
+            return;
+        }
         isActive.value = false;
         searchTerm.value = '';
     }
@@ -177,6 +201,7 @@ function keyDownEvents(event: KeyboardEvent) {
     }
     // select action
     if (event.key === 'Enter') {
+        event.preventDefault();
         filteredActions.value[focusedAction.value].action();
     }
 }
