@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="d-flex flex-wrap justify-content-between w-100">
+        <div class="d-flex flex-wrap justify-content-between w-100" id="logViewerHeader">
             <h1>{{ connection.name }}</h1>
             <span>
                 <button @click="() => closeConnection(connection.uid)" class="btn btn-outline-danger btn-sm">Close</button>
