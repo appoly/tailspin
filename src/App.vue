@@ -1,6 +1,7 @@
 <template>
   <div class="d-flex">
     <TheSidebar />
+    <CommandPalette />
     <div class="flex-grow-1 container-fluid pt-2 main-content">
       <div v-if="applicationStore.routeParams.error" class="alert alert-danger my-2" role="alert">
         {{ applicationStore.routeParams.error }}
@@ -38,6 +39,7 @@ import AddConnectionPage from "./pages/AddConnectionPage.vue";
 import ViewConnection from "./pages/ViewConnection.vue";
 import { useConnectionStore } from "./stores/useConnectionStore";
 import EditConnectionPage from "./pages/EditConnectionPage.vue";
+import CommandPalette from "./components/CommandPalette.vue";
 
 const userStore = useUserStore();
 const applicationStore = useApplicationStore();

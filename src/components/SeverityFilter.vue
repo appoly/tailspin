@@ -1,6 +1,6 @@
 <template>
     <!-- pill -->
-    <span :class="['filter', 'badge', 'rounded-pill', severityColour(severity), { 'selected': selected }]">
+    <span :class="['filter', 'badge', 'rounded-pill', 'h-fit', severityColour(severity), { 'selected': selected }]">
         {{ severity }} <span class="badge bg-light text-dark">{{ count }}</span>
     </span>
 </template>
@@ -25,3 +25,9 @@ const severityColour = (severity: string) => {
     }
 };
 </script>
+
+<style scoped>
+.h-fit {
+    height: fit-content;
+}
+</style>

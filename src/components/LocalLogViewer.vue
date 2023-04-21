@@ -32,7 +32,8 @@
             </div>
         </div>
         <div>
-            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg" />
+            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
+                :key="`log_viewer_${currentPath}`" />
         </div>
     </div>
 </template>
