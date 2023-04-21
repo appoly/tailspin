@@ -60,7 +60,6 @@ export default {
         }
     },
     mounted(): void {
-        console.log(this.modelValue);
         if (this.modelValue) {
             this.selectedIcon = this.modelValue;
         }
