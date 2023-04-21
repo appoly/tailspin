@@ -48,9 +48,7 @@ function handleInputChange(event: Event) {
 
 function handleSubmit() {
     // Give time for the modelValue to change, then emit submit
-    console.log('close');
     showInfoMessage.value = false;
-
     nextTick(() => {
         close();
         emit('submit');
@@ -63,8 +61,6 @@ function open() {
 }
 
 function close() {
-    console.log(sshPassphraseModal.value);
-
     sshPassphraseModal.value?.hide();
 }
 
