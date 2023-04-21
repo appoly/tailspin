@@ -79,7 +79,7 @@ const emit = defineEmits(['saved']);
 
 const formFields = ref<BaseConnection>({
     name: '',
-    icon: 'book',
+    icon: 'plus',
     path: '',
     type: 'local' as 'remote' | 'local',
     ssh: {
