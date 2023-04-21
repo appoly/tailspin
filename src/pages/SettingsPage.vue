@@ -1,7 +1,7 @@
 <template>
-    <div>
+    <div class="h-100">
         <h1>Settings</h1>
-        <div class="list-group h-100">
+        <div class="d-flex flex-column h-100">
             <label for="theme-select">Theme</label>
             <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
                 <input type="radio" name="theme-radio" class="btn-check" id="theme-auto" value="auto"
@@ -20,13 +20,37 @@
                 </label>
             </div>
 
-            <button @click="deleteAllConfirm" class="btn btn-danger my-4">Delete All Connections</button>
-        </div>
+            <div class="form-group my-4">
+                <label for="forge-api-key">
+                    Forge API Key
+                </label>
+                <textarea type="text" class="form-control" id="forge-api-key" placeholder="Forge API Key">  </textarea>
+                <small class="text-muted">
+                    We can pull your sites from Forge using an API key. You can create one <a
+                        href="https://forge.laravel.com/user-profile/api" target="_blank">here</a>.
+                </small>
+            </div>
 
-        <div class="d-flex justify-content-end">
-            <small class="text-muted">Version: {{ version }}</small>
+            <div class="form-group">
+                <label for="default-ssh-key-path">
+                    Default SSH Key Path
+                </label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="default-ssh-key-path" placeholder="Default SSH Key Path">
+                    <button @click.prevent="() => handlePathSelection('folder')" class="btn btn-outline-secondary"
+                        type="button">Browse Folder</button>
+                </div>
+            </div>
+            <!-- bottom -->
+            <div class="mt-auto">
+                <div class="d-grid gap-2 my-2">
+                    <button @click="deleteAllConfirm" class="btn btn-danger my-4">Delete All Connections</button>
+                </div>
+                <div class="d-flex justify-content-center">
+                    <small class="text-muted">Version: {{ version }}</small>
+                </div>
+            </div>
         </div>
-
     </div>
 </template>
 
@@ -51,6 +75,13 @@ const version = computed(() => {
 function deleteAllConfirm() {
     if (confirm('Are you sure you want to delete all connections?')) {
         connectionStore.deleteAllConnections();
+    }
+}
+
+async function handlePathSelection(type: 'file' | 'folder') {
+    const result = await api.Application.openFileDialogue({ properties: [type === 'file' ? 'openFile' : 'openDirectory'] });
+    if (result.filePaths[0]) {
+        console.log(result.filePaths[0]);
     }
 }
 
