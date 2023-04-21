@@ -1,6 +1,6 @@
 <template>
     <div ref="iconPicker" class="icon-picker">
-        <button type="button" :class="[buttonClass, 'icon-button']" @click="openIconBox">
+        <button type="button" :class="[buttonClass, 'icon-button']" @click.stop="() => selectorOpen = !selectorOpen">
             <template v-if="selectedIcon">
                 <i :class="[iconClass + selectedIcon]" :style="{ color: color }"></i>
             </template>
@@ -11,13 +11,13 @@
         </button>
 
         <!-- icon selection grid -->
-        <div class="card icon-selector" v-show="selectorOpen">
+        <div class="card icon-selector" v-show="selectorOpen" ref="iconPickerPopup">
             <div class="card-body">
                 <div class="input-group ">
                     <input type="text" class="form-control" placeholder="Search" v-model="search">
                 </div>
                 <div class="input-group mt-2 mb-3">
-                    <input type="color" class="form-control" v-model="color">
+                    <input type="color" class="form-control" v-model.lazy="color">
                 </div>
                 <div class="icon-container">
                     <div class="d-flex flex-wrap">
@@ -92,7 +92,7 @@ export default {
         },
         mouseEventListener(e: MouseEvent): void {
             // if e.target is not inside the icon picker, close the selector
-            if (!(this.$refs.iconPicker as HTMLElement).contains(e.target as HTMLElement)) {
+            if (!(this.$refs.iconPickerPopup as HTMLElement).contains(e.target as HTMLElement)) {
                 this.selectorOpen = false;
             }
         },
@@ -114,9 +114,8 @@ export default {
 .icon-button {
     padding: 0;
     border: none;
-    font-size: 2rem;
+    font-size: 1.75rem;
     width: 3rem;
-    height: 3rem;
 }
 
 .icon-picker {
