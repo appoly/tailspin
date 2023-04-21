@@ -34,6 +34,16 @@
         <div>
             <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
                 :key="`log_viewer_${currentPath}`" />
+
+            <template v-if="!isLoading && !errorMsg && !logEntries.length">
+
+                <div v-if="paths.length && !currentPath" class="my-2">
+                    <div class="alert alert-info" role="alert">
+                        Please select a file from the dropdown above.
+                    </div>
+                </div>
+
+            </template>
         </div>
     </div>
 </template>
@@ -75,7 +85,7 @@ async function readLog(path: string) {
 
         if (contentType === 'directory') {
             isDirectory.value = true;
-            paths.value = await api.Application.getFilesInDirectory(path);
+            paths.value = (await api.Application.getFilesInDirectory(path)).sort().reverse();
             return;
         }
 
