@@ -1,6 +1,6 @@
 {
   "name": "laravel-log-viewer",
-  "version": "0.0.2-alpha",
+  "version": "0.0.3-alpha",
   "main": "dist-electron/main/index.js",
   "license": "MIT",
   "private": true,
@@ -45,6 +45,7 @@
     "fs-extra": "^11.1.1",
     "open": "^9.1.0",
     "pinia": "^2.0.33",
-    "ssh2-promise": "^1.0.3"
+    "ssh2-promise": "^1.0.3",
+    "vuedraggable": "^4.1.0"
   }
 }

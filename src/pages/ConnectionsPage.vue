@@ -9,52 +9,63 @@
             </span>
         </div>
 
+        <div class="input-group mb-3">
+            <SearchBar placeholder="Search for a connection" v-model:search-term="searchTerm" />
+        </div>
+
         <small v-if="hasNoConnections" class="text-muted">
             You don't have any connections yet. Click the button above to add a new connection.
         </small>
 
-        <template v-else>
+        <template v-else-if="searchTerm == ''">
             <!-- search for a connection -->
-            <div class="input-group mb-3">
-                <SearchBar placeholder="Search for a connection" v-model:search-term="searchTerm" />
-            </div>
 
-            <!-- Buttons to toggle between list and grid view -->
-            <div class="d-flex justify-content-end">
-                <i role="button" :class="['h3 bi bi-list', { 'selected': viewMode === 'list' }]"
-                    @click="() => viewMode = 'list'"></i>
-                <i role="button" :class="['h3 bi bi-grid', { 'selected': viewMode === 'grid' }]"
-                    @click="() => viewMode = 'grid'"></i>
-            </div>
 
             <h2>Favorite Connections</h2>
             <small class="text-muted" v-if="favoriteConnections.length == 0">
                 You don't have any favorite connections yet. Right click on a connection to add it to your favorites.
             </small>
-            <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]">
-                <ConnectionCard v-for="connection in filteredFavoriteConnections" :key="connection.uid"
-                    :connection="connection" @delete="() => connectionStore.removeConnection(connection.uid)"
-                    :view-mode="viewMode" />
+            <div :class="['d-flex flex-wrap']">
+                <ConnectionCard v-for="connection in favoriteConnections" :connection="connection"
+                    @delete="() => connectionStore.removeConnection(connection.uid)" view-mode="grid" />
             </div>
 
             <hr />
+
+            <h2>All Connections</h2>
             <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]">
-                <ConnectionCard v-for="connection in filteredNonFavoriteConnections" :key="connection.uid"
-                    :connection="connection" @delete="() => connectionStore.removeConnection(connection.uid)"
-                    :view-mode="viewMode" />
+                <draggable v-model="allConnections" group="connections" @start="drag = true" @end="drag = false"
+                    item-key="uid">
+                    <template #item="{ element }">
+                        <span>
+                            <ConnectionCard :connection="element"
+                                @delete="() => connectionStore.removeConnection(element.uid)" view-mode="list" />
+                        </span>
+                    </template>
+                </draggable>
             </div>
 
-            <div class="row my-2">
-                <!-- Block button to add new connections -->
-                <div class="d-grid gap-2 my-2">
-                    <button class="btn btn-primary" type="button"
-                        @click="() => applicationStore.changePage('connections.add')">
-                        Add new connection
-                        <i class="bi bi-plus-circle-fill"></i>
-                    </button>
-                </div>
-            </div>
         </template>
+        <template v-else>
+            <!-- Search results -->
+            <h2>Search Results</h2>
+            <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]" v-if="filteredConnections.length > 0">
+                <ConnectionCard v-for="connection in filteredConnections" :connection="connection"
+                    @delete="() => connectionStore.removeConnection(connection.uid)" view-mode="list" />
+            </div>
+            <small v-else class="text-muted">
+                No connections found.
+            </small>
+        </template>
+        <div class="row my-2">
+            <!-- Block button to add new connections -->
+            <div class="d-grid gap-2 my-2">
+                <button class="btn btn-primary" type="button" @click="() => applicationStore.changePage('connections.add')">
+                    Add new connection
+                    <i class="bi bi-plus-circle-fill"></i>
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -64,6 +75,7 @@ import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { computed, ref } from "vue";
 import SearchBar from '@/components/SearchBar.vue';
+import draggable from 'vuedraggable'
 
 
 const connectionStore = useConnectionStore();
@@ -71,21 +83,28 @@ const applicationStore = useApplicationStore();
 
 const searchTerm = ref('');
 const viewMode = ref('list');
+const drag = ref(false);
+
+// all connections get and set from the store
+const allConnections = computed({
+    get: () => connectionStore.connections,
+    set: (val) => connectionStore.reorderConnections(val)
+});
 
 const favoriteConnections = computed(() => {
-    return connectionStore.connections.filter(connection => connection.isFavorite);
+    // filter and sort favorite connections
+    return connectionStore.connections.filter(connection => connection.isFavorite).sort((a, b) => {
+        if (a.name < b.name) {
+            return -1;
+        }
+    });
 });
 
-const nonFavoriteConnections = computed(() => {
-    return connectionStore.connections.filter(connection => !connection.isFavorite);
-});
-
-const filteredFavoriteConnections = computed(() => {
-    return favoriteConnections.value.filter(connection => connection.name.toLowerCase().includes(searchTerm.value.toLowerCase()));
-});
-
-const filteredNonFavoriteConnections = computed(() => {
-    return nonFavoriteConnections.value.filter(connection => connection.name.toLowerCase().includes(searchTerm.value.toLowerCase()));
+const filteredConnections = computed(() => {
+    // filter connections by search term
+    return connectionStore.connections.filter(connection => {
+        return connection.name.toLowerCase().includes(searchTerm.value.toLowerCase());
+    });
 });
 
 const hasNoConnections = computed(() => {
