@@ -38,12 +38,10 @@ import { computed, ref, watch } from 'vue';
 const userStore = useUserStore();
 const connectionStore = useConnectionStore();
 
-const selectedTheme = ref(userStore.theme);
-
-watch(selectedTheme, (newVal) => {
-    userStore.changeTheme(newVal);
+const selectedTheme = computed({
+    get: () => userStore.theme,
+    set: (val) => userStore.changeTheme(val),
 });
-
 // get the version from the package.json file
 const version = computed(() => {
     // APP_VERSION is defined in the vite config
