@@ -34,7 +34,7 @@
 
             <h2>All Connections</h2>
             <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]">
-                <draggable v-model="allConnections" group="connections" @start="drag = true" @end="drag = false"
+                <draggable v-model="allConnections" @start="drag = true" @end="drag = false"
                     item-key="uid">
                     <template #item="{ element }">
                         <span>
