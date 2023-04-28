@@ -6,6 +6,9 @@ export function get(key: string, defaultVal: any) {
 export function set(key: string, value: any) {
   return ipcRenderer.invoke("config-set", key, value);
 }
-export function has(key: string) {
+export function has(key: string): Promise<boolean> {
   return ipcRenderer.invoke("config-has", key);
+}
+export function deleteByKey(key: string) {
+  return ipcRenderer.invoke("config-delete", key);
 }

@@ -9,9 +9,11 @@
       <div v-if="applicationStore.routeParams.success" class="alert alert-success my-2" role="alert">
         {{ applicationStore.routeParams.success }}
       </div>
+
       <ConnectionsPage v-if="applicationStore.page === 'connections'" />
       <AddConnectionPage v-if="applicationStore.page === 'connections.add'" />
       <EditConnectionPage v-if="applicationStore.page === 'connections.edit'" />
+      <!-- <ForgeConnectionPage v-if="applicationStore.page === 'connections.forge'" /> -->
       <SettingsPage v-if="applicationStore.page === 'settings'" />
 
       <!-- Example for now, a standard log viewer page -->
