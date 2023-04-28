@@ -19,7 +19,3 @@ export function getFilesInDirectory(path: string): Promise<string[]> {
 export function encryptString(string: string): Promise<string> {
   return ipcRenderer.invoke("encrypt-string", string);
 }
-
-export function decryptString(string: string): Promise<string> {
-  return ipcRenderer.invoke("decrypt-string", string);
-}

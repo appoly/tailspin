@@ -2,37 +2,31 @@
     <div class="h-100 d-flex flex-column justify-content-between">
         <div>
             <h1>Settings</h1>
-            <div class="d-flex flex-column">
-                <label for="theme-select">Theme</label>
-                <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-                    <input type="radio" name="theme-radio" class="btn-check" id="theme-auto" value="auto"
-                        v-model="selectedTheme">
-                    <label class="btn btn-outline-primary" for="theme-auto">Auto (System)</label>
+            <div>
+                <div class="d-flex flex-column my-4">
+                    <label for="theme-select">Theme</label>
+                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                        <input type="radio" name="theme-radio" class="btn-check" id="theme-auto" value="auto"
+                            v-model="selectedTheme">
+                        <label class="btn btn-outline-primary" for="theme-auto">Auto (System)</label>
 
-                    <input type="radio" name="theme-radio" class="btn-check" id="theme-light" value="light"
-                        v-model="selectedTheme">
-                    <label class="btn btn-outline-primary" for="theme-light">
-                        <i class="bi bi-sun"></i> Light
-                    </label>
-                    <input type="radio" name="theme-radio" class="btn-check" id="theme-dark" value="dark"
-                        v-model="selectedTheme">
-                    <label class="btn btn-outline-primary" for="theme-dark">
-                        <i class="bi bi-moon"></i> Dark
-                    </label>
+                        <input type="radio" name="theme-radio" class="btn-check" id="theme-light" value="light"
+                            v-model="selectedTheme">
+                        <label class="btn btn-outline-primary" for="theme-light">
+                            <i class="bi bi-sun"></i> Light
+                        </label>
+                        <input type="radio" name="theme-radio" class="btn-check" id="theme-dark" value="dark"
+                            v-model="selectedTheme">
+                        <label class="btn btn-outline-primary" for="theme-dark">
+                            <i class="bi bi-moon"></i> Dark
+                        </label>
+                    </div>
                 </div>
-
-                <div class="form-group my-4">
-                    <label for="forge-api-key">
-                        Forge API Key
-                    </label>
-                    <textarea type="text" class="form-control" id="forge-api-key" placeholder="Forge API Key">  </textarea>
-                    <small class="text-muted">
-                        We can pull your sites from Forge using an API key. You can create one <a
-                            href="https://forge.laravel.com/user-profile/api" target="_blank">here</a>.
-                    </small>
-                </div>
-
+                <hr />
+                <TheForgeApiKeyForm />
+                <hr />
                 <TheDefaultKeyPathForm />
+                <hr />
             </div>
         </div>
         <!-- bottom -->
@@ -52,7 +46,7 @@ import { useUserStore } from '@/stores/useUserStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 import { computed } from 'vue';
 import TheDefaultKeyPathForm from '@/components/settings/TheDefaultKeyPathForm.vue';
-// import { app } from 'electron'
+import TheForgeApiKeyForm from '@/components/settings/TheForgeApiKeyForm.vue';
 const userStore = useUserStore();
 const connectionStore = useConnectionStore();
 

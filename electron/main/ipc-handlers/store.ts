@@ -12,4 +12,7 @@ export default () => {
   ipcMain.handle("config-has", (event, key) => {
     return store.has(key);
   });
+  ipcMain.handle("config-delete", (event, key) => {
+    store.delete(key);
+  });
 };
