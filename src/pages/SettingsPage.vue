@@ -63,7 +63,8 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/useUserStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
+import TheDefaultKeyPathForm from '@/components/settings/TheDefaultKeyPathForm.vue';
 // import { app } from 'electron'
 const userStore = useUserStore();
 const connectionStore = useConnectionStore();
@@ -84,13 +85,4 @@ function deleteAllConfirm() {
     }
 }
 
-async function handlePathSelection(type: 'file' | 'folder') {
-    const result = await api.Application.openFileDialogue({ properties: [type === 'file' ? 'openFile' : 'openDirectory'] });
-    if (result.filePaths[0]) {
-        console.log(result.filePaths[0]);
-    }
-}
-
 </script>
-
-<style scoped></style>

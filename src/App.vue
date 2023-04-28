@@ -17,12 +17,10 @@
       <!-- Example for now, a standard log viewer page -->
       <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
 
-      <div class="container-fluid my-4">
-        <template v-for="connection in connectionStore.openConnections" :key="connection.uid">
-          <ViewConnection :connection="connection"
-            v-show="applicationStore.page === 'connections.page.' + connection.uid" />
-        </template>
-      </div>
+      <template v-for="connection in connectionStore.openConnections" :key="connection.uid">
+        <ViewConnection :connection="connection"
+          v-show="applicationStore.page === 'connections.page.' + connection.uid" />
+      </template>
     </div>
   </div>
 </template>
