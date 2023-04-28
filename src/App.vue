@@ -13,7 +13,7 @@
       <ConnectionsPage v-if="applicationStore.page === 'connections'" />
       <AddConnectionPage v-if="applicationStore.page === 'connections.add'" />
       <EditConnectionPage v-if="applicationStore.page === 'connections.edit'" />
-      <!-- <ForgeConnectionPage v-if="applicationStore.page === 'connections.forge'" /> -->
+      <ForgeConnectionPage v-if="applicationStore.page === 'connections.forge'" />
       <SettingsPage v-if="applicationStore.page === 'settings'" />
 
       <!-- Example for now, a standard log viewer page -->
@@ -35,18 +35,22 @@ import LogViewerPage from "@/pages/LogViewerPage.vue";
 import ConnectionsPage from "@/pages/ConnectionsPage.vue";
 import TheSidebar from "@/components/TheSidebar.vue";
 import SettingsPage from "@/pages/SettingsPage.vue";
-import AddConnectionPage from "./pages/AddConnectionPage.vue";
-import ViewConnection from "./pages/ViewConnection.vue";
-import { useConnectionStore } from "./stores/useConnectionStore";
-import EditConnectionPage from "./pages/EditConnectionPage.vue";
-import CommandPalette from "./components/CommandPalette.vue";
+import AddConnectionPage from "@/pages/AddConnectionPage.vue";
+import ViewConnection from "@/pages/ViewConnection.vue";
+import { useConnectionStore } from "@/stores/useConnectionStore";
+import EditConnectionPage from "@/pages/EditConnectionPage.vue";
+import CommandPalette from "@/components/CommandPalette.vue";
+import ForgeConnectionPage from "@/pages/ForgeConnectionPage.vue";
+import { useForgeConnectionStore } from "./stores/useForgeConnectionStore";
 
 const userStore = useUserStore();
 const applicationStore = useApplicationStore();
 const connectionStore = useConnectionStore();
+const forgeStore = useForgeConnectionStore();
 
 onMounted(() => {
   userStore.init();
   connectionStore.init();
+  forgeStore.init();
 });
 </script>
