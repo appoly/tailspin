@@ -3,10 +3,15 @@
         <div v-if="errorMsg" class="alert alert-danger my-2" role="alert">
             {{ errorMsg }}
         </div>
-        <button @click="queryForge" class="btn btn-primary">
-            <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span v-else>Sync Forge Sites</span>
-        </button>
+        <div class="d-flex justify-content-between">
+            <button @click="queryForge" :disabled="isLoading" class="btn btn-primary">
+                <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span v-else>Sync Forge Sites</span>
+            </button>
+            <button @click="clearSites" :disabled="isLoading" class="btn btn-danger">
+                <span>Clear List</span>
+            </button>
+        </div>
         <pre>{{ test }}</pre>
     </div>
 </template>
@@ -70,6 +75,12 @@ function mapSites(sites: ForgeSiteResponse[]): ForgeSite[] {
         username: site.username,
         serverId: site.server_id,
     }));
+}
+
+function clearSites() {
+    if (confirm('This will clear all sites and servers from the Laravel Log Viewer. Are you sure?')) {
+        forgeStore.clearSitesAndServers();
+    }
 }
 
 interface ForgeServerResponse {

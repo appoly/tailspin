@@ -22,17 +22,19 @@
                 <SearchBar v-model:search-term="searchTerm" placeholder="Search for a Site" />
                 <div class="my-3">
                     <div v-for="server in forgeConnection.servers" :key="'server' + server.id">
-                        <h4>{{ server.name }}</h4>
-                        <ul>
-                            <li v-for="site in sitesByServerId[server.id]" :key="`site-${server.id}-${site.id}`"
-                                @click="() => selectSite(site, server)">
-                                <span>{{ site.name }}</span>
-                                <ul>
-                                    <li>{{ site.username }}</li>
-                                    <li>{{ server.ipAddress }}</li>
-                                </ul>
-                            </li>
-                        </ul>
+                        <template v-if="Object.keys(sitesByServerId[server.id] ?? {}).length">
+                            <h4>{{ server.name }}</h4>
+                            <ul>
+                                <li v-for="site in sitesByServerId[server.id]" :key="`site-${server.id}-${site.id}`"
+                                    @click="() => selectSite(site, server)">
+                                    <span>{{ site.name }}</span>
+                                    <ul>
+                                        <li>{{ site.username }}</li>
+                                        <li>{{ server.ipAddress }}</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </template>
                     </div>
                 </div>
             </div>
