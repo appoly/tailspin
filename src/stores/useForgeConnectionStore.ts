@@ -22,5 +22,12 @@ export const useForgeConnectionStore = defineStore("forgeConnection", {
       this.servers = servers;
       this.sites = sites;
     },
+    async clearSitesAndServers() {
+      // Update the store
+      api.Store.set("forge", { servers: [], sites: [] });
+      // Then update the state
+      this.servers = [];
+      this.sites = [];
+    },
   },
 });
