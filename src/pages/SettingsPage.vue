@@ -32,20 +32,7 @@
                     </small>
                 </div>
 
-                <div class="form-group">
-                    <label for="default-ssh-key-path">
-                        Default SSH Key Path
-                    </label>
-                    <form @submit.prevent="handleSshKeyPathSubmit">
-                        <div class="input-group">
-                            <button @click.prevent="() => handlePathSelection('file')" class="btn btn-outline-secondary"
-                                type="button">Browse</button>
-                            <input type="text" class="form-control" id="default-ssh-key-path" v-model="sshKeyPath"
-                                placeholder="Default SSH Key Path">
-                            <button class="btn btn-secondary" type="submit">Submit</button>
-                        </div>
-                    </form>
-                </div>
+                <TheDefaultKeyPathForm />
             </div>
         </div>
         <!-- bottom -->
