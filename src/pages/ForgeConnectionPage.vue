@@ -25,13 +25,10 @@
                         <template v-if="Object.keys(sitesByServerId[server.id] ?? {}).length">
                             <h4>{{ server.name }}</h4>
                             <ul>
-                                <li v-for="site in sitesByServerId[server.id]" :key="`site-${server.id}-${site.id}`"
-                                    @click="() => selectSite(site, server)">
-                                    <span>{{ site.name }}</span>
-                                    <ul>
-                                        <li>{{ site.username }}</li>
-                                        <li>{{ server.ipAddress }}</li>
-                                    </ul>
+                                <li v-for="site in sitesByServerId[server.id]" :key="`site-${server.id}-${site.id}`">
+                                    <button class="btn btn-link btn-sm" @click="() => selectSite(site, server)">
+                                        <span>{{ site.name }}</span>
+                                    </button>
                                 </li>
                             </ul>
                         </template>
