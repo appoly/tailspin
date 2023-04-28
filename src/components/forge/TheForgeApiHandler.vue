@@ -5,7 +5,7 @@
         </div>
         <button @click="queryForge" class="btn btn-primary">
             <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span v-else>Query Forge</span>
+            <span v-else>Sync Forge Sites</span>
         </button>
         <pre>{{ test }}</pre>
     </div>
