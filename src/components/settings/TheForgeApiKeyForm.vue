@@ -38,6 +38,8 @@ onMounted(async () => {
     currentKeyExists.value = await api.Store.has('forgeApiKey');
 })
 
+const emit = defineEmits(['submit']);
+
 async function clearKey() {
     await api.Store.deleteByKey('forgeApiKey');
     currentKeyExists.value = false;
@@ -46,9 +48,11 @@ async function clearKey() {
 async function submitKey() {
     isLoading.value = true;
     try {
-        await api.Application.encryptString(forgeApiKey.value);
-        await api.Store.set('forgeApiKey', forgeApiKey.value);
+        let encryptedKey = await api.Application.encryptString(forgeApiKey.value);
+        await api.Store.set('forgeApiKey', encryptedKey);
         currentKeyExists.value = true;
+        forgeApiKey.value = '';
+        emit('submit');
     } catch (error: any) {
         errorMsg.value = error.message;
     } finally {

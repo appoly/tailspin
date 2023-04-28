@@ -27,3 +27,16 @@ export interface BaseConnection {
 export interface Connection extends BaseConnection {
   uid: string;
 }
+
+export interface ForgeSite {
+  id: number;
+  name: string;
+  username: string;
+  serverId: number;
+}
+
+export interface ForgeServer {
+  id: number;
+  name: string;
+  ipAddress: string;
+}
