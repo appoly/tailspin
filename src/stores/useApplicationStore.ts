@@ -5,8 +5,13 @@ export const useApplicationStore = defineStore("application", {
     openConnections: [] as string[],
     page: "connections",
     routeParams: {} as { [key: string]: string },
+    canUseSafeStorage: false,
   }),
   actions: {
+    async init() {
+      this.canUseSafeStorage = await api.Application.canUseSafeStorage();
+      this.page = this.canUseSafeStorage ? "connections" : "log-viewer";
+    },
     changePage(page: string, params = {}) {
       this.routeParams = params;
       this.page = page;
