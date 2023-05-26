@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, safeStorage } from "electron";
+import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { release } from "node:os";
 import { join } from "node:path";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
