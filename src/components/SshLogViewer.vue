@@ -15,7 +15,8 @@
                                     No log files found in this directory.
                                 </div>
                             </div>
-                            <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
+                            <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown"
+                                :disabled="downloading || isLoading">
                                 <option disabled value=''>Please select an option...</option>
                                 <option v-for="path in paths" :value="path">{{ getLastPathSegment(path) }}</option>
                             </select>
@@ -24,9 +25,14 @@
                     </template>
                 </div>
                 <div class="ms-2">
-                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog"
-                        :disabled="isLoading || !currentPath">
-                        <i class="bi bi-arrow-clockwise"></i>
+                    <button class="btn btn-outline-secondary me-2" type="button" @click="() => downloadLog()"
+                        :disabled="!isReady">
+                        <i class="bi bi-download" aria-hidden="true"></i>
+                        <span class="visually-hidden">Download</span>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="!isReady">
+                        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                        <span class="visually-hidden">Refresh</span>
                     </button>
                 </div>
             </div>
@@ -35,13 +41,12 @@
             <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
                 :key="`log_viewer_${currentPath}`" />
 
-            <template v-if="!isLoading && !errorMsg && !logEntries.length">
-
-                <div v-if="paths.length && !currentPath" class="my-2">
-                    <div class="alert alert-info" role="alert">
-                        Please select a file from the dropdown above.
-                    </div>
+            <div v-if="paths.length && !currentPath" class="my-2">
+                <div class="alert alert-info" role="alert">
+                    Please select a file from the dropdown above.
                 </div>
+            </div>
+            <template v-if="isReady">
                 <div v-if="!paths.length" class="my-2">
                     <div class="alert alert-info" role="alert">
                         <div class="d-flex justify-content-between align-items-center">
@@ -85,6 +90,8 @@ const errorMsg = ref('');
 const paths = ref<string[]>([]);
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
+
+const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value);
 
 onMounted(async () => {
     readLog(props.connection.path);
@@ -133,6 +140,33 @@ async function readLog(path: string) {
         isLoading.value = false;
     }
 }
+
+const downloading = ref(false);
+
+async function downloadLog() {
+    /**
+     * TODO
+     * We either want to:
+     * 1. Block EVERYTHING whilst this is running, including changing pages
+     * 2. Send it to a queue instead of awaiting
+     */
+    downloading.value = true;
+    try {
+        let fileName = currentPath.value.split('/').pop();
+        const data = await api.Ssh.downloadFromPath(unproxify(sshConfig.value), currentPath.value, fileName ?? 'Log');
+        console.log(data);
+
+        if (!data.success) {
+            throw new Error(data.message);
+        }
+        alert("Downloaded");
+    } catch (error: any) {
+        alert(error?.message ?? "Error downloading log file");
+    } finally {
+        downloading.value = false;
+    }
+}
+
 
 async function handlePathDropdown() {
     nextTick(() => readLog(currentPath.value));

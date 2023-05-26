@@ -1,4 +1,4 @@
-import { ipcMain, safeStorage } from "electron";
+import { ipcMain, safeStorage, app } from "electron";
 import SSH2Promise from "ssh2-promise";
 
 export default () => {
@@ -50,6 +50,20 @@ export default () => {
       }
       let response = await ssh.exec(`tail -n`, [numberOfLines, path]);
       return { success: true, message: response };
+    } catch (err) {
+      return { success: false, message: formatErrorToString(err) };
+    } finally {
+      ssh.close();
+    }
+  });
+  ipcMain.handle("ssh-download-from-path", async (event, options, path: string, fileName: string) => {
+    const ssh = buildConnection(options);
+    // Append the time to the file name, but before the .log, for uniqueness:
+    fileName = fileName.replace(".log", `-${Date.now() * 1000}.log`);
+    try {
+      let sftp = ssh.sftp();
+      await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
+      return { success: true, message: "Downloaded to Downloads folder" };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {
