@@ -19,3 +19,7 @@ export function getFilesInDirectory(path: string): Promise<string[]> {
 export function encryptString(string: string): Promise<string> {
   return ipcRenderer.invoke("encrypt-string", string);
 }
+
+export function canUseSafeStorage(): Promise<boolean> {
+  return ipcRenderer.invoke("can-use-safe-storage");
+}
