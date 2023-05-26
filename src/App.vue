@@ -2,27 +2,35 @@
   <div class="d-flex">
     <TheSidebar />
     <CommandPalette />
-    <div class="flex-grow-1 container-fluid pt-2 main-content">
-      <div v-if="applicationStore.routeParams.error" class="alert alert-danger my-2" role="alert">
-        {{ applicationStore.routeParams.error }}
-      </div>
-      <div v-if="applicationStore.routeParams.success" class="alert alert-success my-2" role="alert">
-        {{ applicationStore.routeParams.success }}
-      </div>
-
-      <ConnectionsPage v-if="applicationStore.page === 'connections'" />
-      <AddConnectionPage v-if="applicationStore.page === 'connections.add'" />
-      <EditConnectionPage v-if="applicationStore.page === 'connections.edit'" />
-      <ForgeConnectionPage v-if="applicationStore.page === 'connections.forge'" />
-      <SettingsPage v-if="applicationStore.page === 'settings'" />
-
-      <!-- Example for now, a standard log viewer page -->
-      <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
-
-      <template v-for="connection in connectionStore.openConnections" :key="connection.uid">
-        <ViewConnection :connection="connection"
-          v-show="applicationStore.page === 'connections.page.' + connection.uid" />
+    <div class="flex-grow-1 main-content">
+      <template v-if="!applicationStore.canUseSafeStorage">
+        <div class="d-block px-3 py-2 text-center text-bold text-white bg-danger" role="alert">
+          <strong>Note:</strong> Your system does not support secure storage. Only the file browser will be available.
+        </div>
+        <LogViewerPage class="pt-2 container-fluid" />
       </template>
+      <div v-else class="pt-2 container-fluid">
+        <div v-if="applicationStore.routeParams.error" class="alert alert-danger my-2" role="alert">
+          {{ applicationStore.routeParams.error }}
+        </div>
+        <div v-if="applicationStore.routeParams.success" class="alert alert-success my-2" role="alert">
+          {{ applicationStore.routeParams.success }}
+        </div>
+
+        <ConnectionsPage v-if="applicationStore.page === 'connections'" />
+        <AddConnectionPage v-if="applicationStore.page === 'connections.add'" />
+        <EditConnectionPage v-if="applicationStore.page === 'connections.edit'" />
+        <ForgeConnectionPage v-if="applicationStore.page === 'connections.forge'" />
+        <SettingsPage v-if="applicationStore.page === 'settings'" />
+
+        <!-- Example for now, a standard log viewer page -->
+        <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
+
+        <template v-for="connection in connectionStore.openConnections" :key="connection.uid">
+          <ViewConnection :connection="connection"
+            v-show="applicationStore.page === 'connections.page.' + connection.uid" />
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -52,5 +60,6 @@ onMounted(() => {
   userStore.init();
   connectionStore.init();
   forgeStore.init();
+  applicationStore.init();
 });
 </script>
