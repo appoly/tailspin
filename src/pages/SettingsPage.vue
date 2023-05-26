@@ -27,6 +27,8 @@
                 <hr />
                 <TheDefaultKeyPathForm />
                 <hr />
+                <TheNumberOfLinesOnSshForm />
+                <hr />
             </div>
         </div>
         <!-- bottom -->
@@ -47,6 +49,7 @@ import { useConnectionStore } from '@/stores/useConnectionStore';
 import { computed } from 'vue';
 import TheDefaultKeyPathForm from '@/components/settings/TheDefaultKeyPathForm.vue';
 import TheForgeApiKeyForm from '@/components/settings/TheForgeApiKeyForm.vue';
+import TheNumberOfLinesOnSshForm from '@/components/settings/TheNumberOfLinesOnSshForm.vue';
 const userStore = useUserStore();
 const connectionStore = useConnectionStore();
 

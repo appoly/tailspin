@@ -41,12 +41,14 @@ export default () => {
       ssh.close();
     }
   });
-  ipcMain.handle("ssh-read-from-path", async (event, options, path: string) => {
+  ipcMain.handle("ssh-read-from-path", async (event, options, path: string, numberOfLines = 1000) => {
     const ssh = buildConnection(options);
     try {
       await ssh.connect();
-      // Read the last 1000 lines of the file:
-      let response = await ssh.exec(`tail -n 1000`, [path]);
+      if (numberOfLines > 20000) {
+        numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
+      }
+      let response = await ssh.exec(`tail -n`, [numberOfLines, path]);
       return { success: true, message: response };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
