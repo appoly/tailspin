@@ -21,7 +21,6 @@ export default () => {
     return safeStorage.encryptString(string).toString("base64");
   });
   ipcMain.handle("can-use-safe-storage", (event) => {
-    return false;
     return safeStorage.isEncryptionAvailable();
   });
 };
