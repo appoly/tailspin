@@ -21,7 +21,13 @@
             </div>
         </div>
     </div>
-    <div :class="['container-fluid expanded', { 'show': showAll }]">
+    <div :class="['container-fluid expanded position-relative', { 'show': showAll }]">
+        <button v-if="canCopy" class="btn btn-secondary btn-sm position-absolute copy-btn"
+            @click="() => copyContents(logItem.text)">
+            <span v-if="copyLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span v-else-if="copySuccess"><i class="bi bi-clipboard2-check-fill"></i></span>
+            <span v-else><i class="bi bi-clipboard-fill"></i></span>
+        </button>
         <pre class="code-card bg-body-tertiary">{{ logItem.text }}</pre>
     </div>
 </template>
@@ -70,6 +76,32 @@ const severityIcon = (severity: string) => {
     }
 };
 
+const canCopy = ref(navigator.clipboard !== undefined);
+const copyLoading = ref(false);
+const copySuccess = ref(false);
+async function copyContents(contents: string) {
+    if (!canCopy.value || copyLoading.value) {
+        return;
+    }
+
+    // If it is not type that can be copied, run it through JSON.stringify:
+    if (typeof contents !== "string") {
+        contents = JSON.stringify(contents, null, 2);
+    }
+    try {
+        copyLoading.value = true;
+        await navigator.clipboard.writeText(contents);
+        copySuccess.value = true;
+        setTimeout(() => {
+            copySuccess.value = false;
+        }, 1500);
+    } catch (error) {
+        console.error("Failed to copy: ", error);
+    } finally {
+        copyLoading.value = false;
+    }
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -78,5 +110,11 @@ const severityIcon = (severity: string) => {
     padding: 0.5rem;
     border-radius: 0 0 0.5rem 0.5rem;
     overflow-y: auto;
+}
+
+.copy-btn {
+    top: 0.25rem;
+    right: 2.5rem;
+    z-index: 1;
 }
 </style>
