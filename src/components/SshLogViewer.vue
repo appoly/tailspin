@@ -71,10 +71,13 @@ import { useLogParser } from "@/composables/useLogParser";
 import TheLogViewer from "./TheLogViewer.vue";
 import { unproxify } from "@/helpers";
 import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
+import { useApplicationStore } from "@/stores/useApplicationStore";
 
 const props = defineProps<{
     connection: Connection;
 }>();
+
+const applicationStore = useApplicationStore();
 
 const passphrase = ref<string | null>(null);
 const passphraseModal = ref();
@@ -152,14 +155,36 @@ async function downloadLog() {
      */
     downloading.value = true;
     try {
-        let fileName = currentPath.value.split('/').pop();
+        // Let the file name be the concatenation of the connection name and the file name, made safe for file systems:
+
+        // For the connection name, we want to remove all whitespace and non-alphanumeric characters, and make it lowercase:
+        let connectionName = props.connection.name.trim().replace(/[\s]/gi, '').replace(/[^\w\-]/gi, '_').toLowerCase();
+
+        // For the filename, firstly, we only want the bit after the final '/':
+        let fileName = currentPath.value.split('/').slice(-1)[0];
+
+        // Then drop the .log extension, make safe, and then add it back on:
+        fileName = fileName.replace(/\.log$/i, '').replace(/[^\w\-]/gi, '_').toLowerCase() + '.log';
+
+        // Prepend 'log' to avoid any issues where the file name starts with non-alphanumeric characters:
+        fileName = 'log-' + connectionName + '-' + fileName;
+
+        // The max character limit on file names is 255, so we need to truncate it if it's too long, still keeping .log on the end:
+        if (fileName.length > 255) {
+            fileName = fileName.slice(0, 255 - 4) + '.log';
+        }
+
+        if (!applicationStore.updateDownloads(fileName, 'inProgress')) {
+            throw new Error("Download already in progress");
+        }
         const data = await api.Ssh.downloadFromPath(unproxify(sshConfig.value), currentPath.value, fileName ?? 'Log');
-        console.log(data);
 
         if (!data.success) {
+            applicationStore.updateDownloads(fileName, 'failed');
             throw new Error(data.message);
+        } else {
+            applicationStore.updateDownloads(fileName, 'completed');
         }
-        alert("Downloaded");
     } catch (error: any) {
         alert(error?.message ?? "Error downloading log file");
     } finally {

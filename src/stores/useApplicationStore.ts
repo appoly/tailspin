@@ -1,3 +1,4 @@
+import { Download } from "@/interfaces";
 import { defineStore } from "pinia";
 
 export const useApplicationStore = defineStore("application", {
@@ -6,6 +7,7 @@ export const useApplicationStore = defineStore("application", {
     page: "connections",
     routeParams: {} as { [key: string]: string },
     canUseSafeStorage: false,
+    downloads: [] as Download[],
   }),
   actions: {
     async init() {
@@ -31,6 +33,21 @@ export const useApplicationStore = defineStore("application", {
     },
     setOpen(connectionId: string) {
       this.openConnections.push(connectionId);
+    },
+    updateDownloads(item: string, status: "completed" | "failed" | "inProgress") {
+      let download = this.downloads.find((d) => d.name === item);
+      // If it is an inProgress request and the item is already in the inProgress list, return false:
+      if (status === "inProgress" && download && download.type === "inProgress") {
+        return false;
+      }
+      // Create the entry if it doesn't exist, otherwise update it:
+      if (!download) {
+        this.downloads.push({ name: item, type: status, date: new Date() });
+      } else {
+        download.type = status;
+        download.date = new Date();
+      }
+      return true;
     },
   },
 });

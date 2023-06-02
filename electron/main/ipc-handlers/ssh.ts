@@ -49,7 +49,8 @@ export default () => {
         numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
       }
       let response = await ssh.exec(`tail -n`, [numberOfLines, path]);
-      return { success: true, message: response };
+      let lineCount = await ssh.exec(`wc -l`, [path]);
+      return { success: true, message: response, lineCount: parseInt(lineCount) };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {
@@ -58,8 +59,6 @@ export default () => {
   });
   ipcMain.handle("ssh-download-from-path", async (event, options, path: string, fileName: string) => {
     const ssh = buildConnection(options);
-    // Append the time to the file name, but before the .log, for uniqueness:
-    fileName = fileName.replace(".log", `-${Date.now() * 1000}.log`);
     try {
       let sftp = ssh.sftp();
       await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
