@@ -1,8 +1,9 @@
 <template>
     <a @click="() => $emit('setPage', { page: pageId })" href="javascript://"
-        class="nav-link text-center py-3 border-bottom border-top rounded-0" :class="active && 'active'" aria-current="page"
+        class="nav-link text-center py-3 border-bottom border-top rounded-0 position-relative" :class="active && 'active'" aria-current="page"
         data-bs-toggle="tooltip" data-bs-placement="right" :aria-label="label" :data-bs-original-title="label">
         <i class="h2" :class="icon"></i>
+        <slot name="badge"></slot>
     </a>
 </template>
 

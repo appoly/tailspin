@@ -29,6 +29,20 @@
                 </li>
             </ul>
             <div class="nav nav-pills nav-flush flex-column text-center border-top">
+                <SidebarItem key="downloads" label="Downloads" icon="bi bi-download" tooltip="Downloads"
+                    :active="applicationStore.page === 'downloads'" pageId="downloads"
+                    @setPage="() => applicationStore.changePage('downloads')">
+                    <template #badge>
+                        <span v-if="applicationStore.downloads.filter(d => d.type === 'inProgress').length > 0"
+                            class="position-absolute translate-middle badge rounded-pill bg-info">
+                            {{ applicationStore.downloads.filter(d => d.type === 'inProgress').length }}
+                        </span>
+                        <span v-if="applicationStore.downloads.filter(d => d.type === 'completed').length > 0"
+                            class="position-absolute translate-middle badge rounded-pill bg-success">
+                            {{ applicationStore.downloads.filter(d => d.type === 'completed').length }}
+                        </span>
+                    </template>
+                </SidebarItem>
                 <SidebarItem key="settings" label="Settings" icon="bi bi-gear-wide-connected" tooltip="Settings"
                     :active="applicationStore.page === 'settings'" pageId="settings"
                     @setPage="() => applicationStore.changePage('settings')" />

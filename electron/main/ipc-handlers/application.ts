@@ -1,4 +1,4 @@
-import { ipcMain, dialog, safeStorage } from "electron";
+import { ipcMain, dialog, safeStorage, app, shell } from "electron";
 import * as fs from "fs";
 
 export default () => {
@@ -22,5 +22,12 @@ export default () => {
   });
   ipcMain.handle("can-use-safe-storage", (event) => {
     return safeStorage.isEncryptionAvailable();
+  });
+  ipcMain.handle("open-folder-to-file", (event, fileName) => {
+    let path = app.getPath("downloads") + "/" + fileName;
+    return shell.showItemInFolder(path);
+  });
+  ipcMain.handle("open-downloads-folder", (event) => {
+    return shell.openPath(app.getPath("downloads"));
   });
 };

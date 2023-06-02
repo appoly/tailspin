@@ -17,15 +17,16 @@
           {{ applicationStore.routeParams.success }}
         </div>
 
-        <ConnectionsPage v-if="applicationStore.page === 'connections'" />
-        <AddConnectionPage v-if="applicationStore.page === 'connections.add'" />
-        <EditConnectionPage v-if="applicationStore.page === 'connections.edit'" />
-        <ForgeConnectionPage v-if="applicationStore.page === 'connections.forge'" />
-        <SettingsPage v-if="applicationStore.page === 'settings'" />
-
-        <!-- Example for now, a standard log viewer page -->
+        <!-- Core pages that we only want one of to be visible at a time -->
         <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
+        <ConnectionsPage v-else-if="applicationStore.page === 'connections'" />
+        <AddConnectionPage v-else-if="applicationStore.page === 'connections.add'" />
+        <EditConnectionPage v-else-if="applicationStore.page === 'connections.edit'" />
+        <ForgeConnectionPage v-else-if="applicationStore.page === 'connections.forge'" />
+        <SettingsPage v-else-if="applicationStore.page === 'settings'" />
+        <DownloadsPage v-else-if="applicationStore.page === 'downloads'" />
 
+        <!-- Connection pages that we want to be able to have multiple of, so use v-show instead of v-if -->
         <template v-for="connection in connectionStore.openConnections" :key="connection.uid">
           <ViewConnection :connection="connection"
             v-show="applicationStore.page === 'connections.page.' + connection.uid" />
@@ -50,6 +51,7 @@ import EditConnectionPage from "@/pages/EditConnectionPage.vue";
 import CommandPalette from "@/components/CommandPalette.vue";
 import ForgeConnectionPage from "@/pages/ForgeConnectionPage.vue";
 import { useForgeConnectionStore } from "./stores/useForgeConnectionStore";
+import DownloadsPage from "./pages/DownloadsPage.vue";
 
 const userStore = useUserStore();
 const applicationStore = useApplicationStore();
