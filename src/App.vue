@@ -18,7 +18,7 @@
         </div>
 
         <!-- Core pages that we only want one of to be visible at a time -->
-        <TransitionGroup name="page" mode="out-in">
+        <TransitionGroup name="page">
           <LogViewerPage v-if="applicationStore.page === 'log-viewer'" key="log-viewer.page" />
           <ConnectionsPage v-else-if="applicationStore.page === 'connections'" key="connections.page" />
           <AddConnectionPage v-else-if="applicationStore.page === 'connections.add'" key="connections.add.page" />
