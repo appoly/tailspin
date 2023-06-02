@@ -40,3 +40,9 @@ export interface ForgeServer {
   name: string;
   ipAddress: string;
 }
+
+export interface Download {
+  type: "inProgress" | "completed" | "failed";
+  name: string;
+  date: Date;
+}
