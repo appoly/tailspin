@@ -6,7 +6,7 @@
                     placeholder="Enter command" v-model="searchTerm" autofocus />
             </div>
             <div class="suggestions my-2">
-                <TransitionGroup name="list" tag="ul">
+                <TransitionGroup name="list" tag="ul" class="list-group">
                     <button type="button"
                         :class="['list-group-item list-group-item-action', { 'active': key === focusedAction }]"
                         v-for="(action, key) in filteredActions" :key="key" @click="action.action">
