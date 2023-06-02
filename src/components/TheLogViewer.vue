@@ -7,23 +7,29 @@
         </div>
 
         <!-- Filter by severity -->
-        <div class="d-flex mb-4 justify-content-between">
-            <div class="d-flex">
-                <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity"
-                    :count="filter.count" :selected="filter.selected.value" @click="filterBySeverity(filter.severity)" />
+        <div class="d-flex">
+            <div class="d-flex justify-content-between flex-grow-1">
+                <div class="d-flex">
+                    <SeverityFilter v-for="filter in severityFilters" class="me-2" :severity="filter.severity"
+                        :count="filter.count" :selected="filter.selected.value"
+                        @click="filterBySeverity(filter.severity)" />
+                </div>
+                <div>
+                    <select v-model="itemsPerPage" class="form-select w-fit" :disabled="isLoading">
+                        <option :value="20">20 Per Page</option>
+                        <option :value="50">50 Per Page</option>
+                        <option :value="100">100 Per Page</option>
+                        <option :value="200">200 Per Page</option>
+                    </select>
+                </div>
             </div>
-            <div>
-                <select v-model="itemsPerPage" class="form-select w-fit" :disabled="isLoading">
-                    <option :value="20">20 Per Page</option>
-                    <option :value="50">50 Per Page</option>
-                    <option :value="100">100 Per Page</option>
-                    <option :value="200">200 Per Page</option>
-                </select>
-            </div>
+            <slot name="additional-filters" />
         </div>
     </div>
 
-    <div class="row">
+    <slot name="above-table" />
+
+    <div class="row mt-4">
         <div class="col-2 log-item-severity">
             Severity
         </div>

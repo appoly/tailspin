@@ -32,8 +32,8 @@ export function getFilesInDirectory(options: SshDetails, path: string): Promise<
   return ipcRenderer.invoke("ssh-get-files-in-directory", options, path);
 }
 
-export async function readFromPath(options: SshDetails, path: string): Promise<SshResponse> {
-  let lines = await ipcRenderer.invoke("config-get", "ssh.numberOfLines", 1000);
+export async function readFromPath(options: SshDetails, path: string, linesOverride?: number): Promise<SshResponse> {
+  let lines = linesOverride ?? (await ipcRenderer.invoke("config-get", "ssh.numberOfLines", 1000));
   return ipcRenderer.invoke("ssh-read-from-path", options, path, lines);
 }
 
