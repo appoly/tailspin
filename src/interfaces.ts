@@ -46,3 +46,7 @@ export interface Download {
   name: string;
   date: Date;
 }
+
+export interface SshOptions {
+  numberOfLines: number;
+}

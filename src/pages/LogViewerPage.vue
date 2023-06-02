@@ -32,6 +32,14 @@ async function handleFileSelect(evt: any) {
     const files = evt.target.files; // FileList object
     const file = files[0];
     const filePath = file.path;
+    // Get file size:
+    const fileSize = file.size;
+    // If file size is larger than 500Mb, show error message and return
+    if (fileSize > 500000000) {
+        let fileSizeInMb = Math.round(fileSize / 1000000);
+        alert(`File size of ${fileSizeInMb} is too large. Please select a file smaller than 500Mb.`);
+        return;
+    }
 
     readLog(filePath);
 }
