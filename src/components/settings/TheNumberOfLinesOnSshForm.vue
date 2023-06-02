@@ -1,20 +1,16 @@
 <template>
     <div class="form-group my-4">
         <label for="ssh-number-of-lines">
-            SSH - Number of Lines to retrieve
+            SSH - Default Number of Lines
         </label>
         <form @submit.prevent="submit">
             <div class="input-group">
-                <select class="form-control" v-model="numberOfLines" @change="hasChanged = true" id="ssh-number-of-lines">
-                    <option value="500">{{ Number(500).toLocaleString() }}</option>
+                <select class="form-select" v-model.number="numberOfLines" @change="hasChanged = true"
+                    id="ssh-number-of-lines">
                     <option value="1000">{{ Number(1000).toLocaleString() }}</option>
-                    <option value="2000">{{ Number(2000).toLocaleString() }}</option>
-                    <option value="5000">{{ Number(5000).toLocaleString() }}</option>
                     <option value="10000">{{ Number(10000).toLocaleString() }}</option>
-                    <option value="20000">{{ Number(20000).toLocaleString() }}</option>
                     <option value="50000">{{ Number(50000).toLocaleString() }}</option>
                     <option value="100000">{{ Number(100000).toLocaleString() }}</option>
-                    <option value="150000">{{ Number(150000).toLocaleString() }}</option>
                     <option value="200000">{{ Number(200000).toLocaleString() }}</option>
                 </select>
                 <button class="btn btn-secondary" type="submit" :disabled="isLoading || !hasChanged">

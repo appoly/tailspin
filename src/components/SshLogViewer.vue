@@ -18,7 +18,9 @@
                             <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown"
                                 :disabled="downloading || isLoading">
                                 <option disabled value=''>Please select an option...</option>
-                                <option v-for="path in paths" :value="path">{{ getLastPathSegment(path) }}</option>
+                                <option v-for="file in files" :value="file.path">
+                                    {{ getLastPathSegment(file.path) }} ({{ kilobytesToHumanReadableFileSize(file.size) }})
+                                </option>
                             </select>
 
                         </template>
@@ -39,7 +41,22 @@
         </div>
         <div>
             <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
-                :key="`log_viewer_${currentPath}`" />
+                :key="`log_viewer_${currentPath}`">
+                <template #additional-filters>
+                    <div class="ms-2">
+                        <button class="btn btn-primary" @click="() => showSshOptions = !showSshOptions">
+                            SSH Options&nbsp;
+                            <i v-if="!showSshOptions" class="bi bi-chevron-down"></i>
+                            <i v-else class="bi bi-chevron-up"></i>
+                        </button>
+                    </div>
+                </template>
+
+                <template #above-table>
+                    <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
+                        :isLoading="isLoading" :currentFile="currentFile" @submitted="handleOptionsUpdate" />
+                </template>
+            </TheLogViewer>
 
             <div v-if="paths.length && !currentPath" class="my-2">
                 <div class="alert alert-info" role="alert">
@@ -65,17 +82,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from "vue";
-import { Connection, LogEntry } from "@/interfaces";
+import { ref, onMounted, nextTick, computed, watch } from "vue";
+import { Connection, LogEntry, SshOptions } from "@/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
-import TheLogViewer from "./TheLogViewer.vue";
 import { unproxify } from "@/helpers";
-import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
 import { useApplicationStore } from "@/stores/useApplicationStore";
+import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
+import TheLogViewer from "@/components/TheLogViewer.vue";
+import TheLogViewerSshOptions from "@/components/TheLogViewerSshOptions.vue";
 
 const props = defineProps<{
     connection: Connection;
 }>();
+
+onMounted(async () => {
+    readLog(props.connection.path);
+    sshOptions.value.numberOfLines = Number(await api.Store.get('ssh.numberOfLines', 1000));
+});
 
 const applicationStore = useApplicationStore();
 
@@ -90,20 +113,36 @@ const logEntries = ref<LogEntry[]>([]);
 const isLoading = ref(false);
 const errorMsg = ref('');
 
-const paths = ref<string[]>([]);
+const sshOptions = ref<SshOptions>({
+    numberOfLines: 1000,
+});
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
+const files = ref<{ size: number, path: string }[]>([]);
+const paths = computed(() => {
+    return files.value.map((file) => file.path);
+});
+const currentFile = computed(() => {
+    return files.value.find((file) => file.path === currentPath.value);
+});
+
+const showSshOptions = ref(false);
 
 const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value);
 
-onMounted(async () => {
-    readLog(props.connection.path);
-});
-
+function handleOptionsUpdate() {
+    if (currentPath.value) {
+        readLog(currentPath.value);
+    }
+}
 async function readLog(path: string) {
     isLoading.value = true;
     errorMsg.value = '';
     try {
+        // If the number of lines is set to 0 (ie. unlimited) and the file is larger than 500Mb, abort:
+        if (sshOptions.value.numberOfLines === 0 && currentFile.value!.size > 500000) {
+            throw new Error('File too large to retrieve all lines. Please select a limited number of lines.');
+        }
         if (props.connection.ssh?.passphraseRequired && !passphrase.value) {
             passphraseModal.value!.open();
             return;
@@ -123,15 +162,23 @@ async function readLog(path: string) {
         if (contentType.message.trim() === 'directory') {
             isDirectory.value = true;
             data = await api.Ssh.getFilesInDirectory(unproxify(sshConfig.value), path);
+
             if (!data.success) {
                 throw new Error(data.message);
             }
-            paths.value = (data.message as string).trim().split('\n').sort().reverse();
+            // We have back each file with first its size, then its name. Below, we'll extract these into an array with 2 elements: size and path:
+            files.value = (data.message as string).trim().split('\n').map((file: string) => {
+                const [size, ...path] = file.trim().split(' ');
+                return {
+                    size: parseInt(size),
+                    path: path.join(' ')
+                }
+            });
             return;
         };
 
         currentPath.value = path;
-        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path)
+        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfLines)
         if (!data.success) {
             throw new Error(data.message);
         }
@@ -192,7 +239,6 @@ async function downloadLog() {
     }
 }
 
-
 async function handlePathDropdown() {
     nextTick(() => readLog(currentPath.value));
 }
@@ -213,6 +259,15 @@ function retryConnection() {
 
 function getLastPathSegment(path: string) {
     return path.split('/').pop();
+}
+
+function kilobytesToHumanReadableFileSize(kilobytes: number) {
+    const sizes = ['Kb', 'Mb', 'Gb', 'Tb'];
+    if (kilobytes === 0) {
+        return '0 Kb';
+    }
+    const i = Math.floor(Math.log(kilobytes) / Math.log(1024));
+    return Math.round(kilobytes / Math.pow(1024, i)) + ' ' + sizes[i];
 }
 
 </script>

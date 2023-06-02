@@ -33,7 +33,7 @@ export default () => {
       // Output one file per line, only .log files:
       // Only look for .log files
       path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
-      let response = await ssh.exec(`ls`, ["-1", path]);
+      let response = await ssh.exec("ls -1s", [path]);
       return { success: true, message: response };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
@@ -45,12 +45,17 @@ export default () => {
     const ssh = buildConnection(options);
     try {
       await ssh.connect();
-      if (numberOfLines > 200000) {
-        numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
+      let response = "";
+      // If number of lines is 0, it means read the entire file with tail:
+      if (numberOfLines === 0) {
+        response = await ssh.exec(`tail`, ["-n", "+1", path]);
+      } else {
+        if (numberOfLines > 200000) {
+          numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
+        }
+        response = await ssh.exec(`tail -n`, [numberOfLines, path]);
       }
-      let response = await ssh.exec(`tail -n`, [numberOfLines, path]);
-      let lineCount = await ssh.exec(`wc -l`, [path]);
-      return { success: true, message: response, lineCount: parseInt(lineCount) };
+      return { success: true, message: response };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {
