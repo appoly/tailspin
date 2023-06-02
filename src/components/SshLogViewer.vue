@@ -18,7 +18,9 @@
                             <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown"
                                 :disabled="downloading || isLoading">
                                 <option disabled value=''>Please select an option...</option>
-                                <option v-for="path in paths" :value="path">{{ getLastPathSegment(path) }}</option>
+                                <option v-for="file in files" :value="file.path">
+                                    {{ getLastPathSegment(file.path) }} ({{ kilobytesToHumanReadableFileSize(file.size) }})
+                                </option>
                             </select>
 
                         </template>
@@ -90,9 +92,12 @@ const logEntries = ref<LogEntry[]>([]);
 const isLoading = ref(false);
 const errorMsg = ref('');
 
-const paths = ref<string[]>([]);
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
+const files = ref<{ size: number, path: string }[]>([]);
+const paths = computed(() => {
+    return files.value.map((file) => file.path);
+});
 
 const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value);
 
@@ -123,10 +128,18 @@ async function readLog(path: string) {
         if (contentType.message.trim() === 'directory') {
             isDirectory.value = true;
             data = await api.Ssh.getFilesInDirectory(unproxify(sshConfig.value), path);
+
             if (!data.success) {
                 throw new Error(data.message);
             }
-            paths.value = (data.message as string).trim().split('\n').sort().reverse();
+            // We have back each file with first its size, then its name. Below, we'll extract these into an array with 2 elements: size and path:
+            files.value = (data.message as string).trim().split('\n').map((file: string) => {
+                const [size, ...path] = file.trim().split(' ');
+                return {
+                    size: parseInt(size),
+                    path: path.join(' ')
+                }
+            });
             return;
         };
 
@@ -213,6 +226,15 @@ function retryConnection() {
 
 function getLastPathSegment(path: string) {
     return path.split('/').pop();
+}
+
+function kilobytesToHumanReadableFileSize(kilobytes: number) {
+    const sizes = ['Kb', 'Mb', 'Gb', 'Tb'];
+    if (kilobytes === 0) {
+        return '0 Kb';
+    }
+    const i = Math.floor(Math.log(kilobytes) / Math.log(1024));
+    return Math.round(kilobytes / Math.pow(1024, i)) + ' ' + sizes[i];
 }
 
 </script>
