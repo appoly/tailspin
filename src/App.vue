@@ -18,13 +18,15 @@
         </div>
 
         <!-- Core pages that we only want one of to be visible at a time -->
-        <LogViewerPage v-if="applicationStore.page === 'log-viewer'" />
-        <ConnectionsPage v-else-if="applicationStore.page === 'connections'" />
-        <AddConnectionPage v-else-if="applicationStore.page === 'connections.add'" />
-        <EditConnectionPage v-else-if="applicationStore.page === 'connections.edit'" />
-        <ForgeConnectionPage v-else-if="applicationStore.page === 'connections.forge'" />
-        <SettingsPage v-else-if="applicationStore.page === 'settings'" />
-        <DownloadsPage v-else-if="applicationStore.page === 'downloads'" />
+        <TransitionGroup name="page" mode="out-in">
+          <LogViewerPage v-if="applicationStore.page === 'log-viewer'" key="log-viewer.page" />
+          <ConnectionsPage v-else-if="applicationStore.page === 'connections'" key="connections.page" />
+          <AddConnectionPage v-else-if="applicationStore.page === 'connections.add'" key="connections.add.page" />
+          <EditConnectionPage v-else-if="applicationStore.page === 'connections.edit'" key="connections.edit.page" />
+          <ForgeConnectionPage v-else-if="applicationStore.page === 'connections.forge'" key="connections.forge.page" />
+          <SettingsPage v-else-if="applicationStore.page === 'settings'" key="settings.page" />
+          <DownloadsPage v-else-if="applicationStore.page === 'downloads'" key="downloads.page" />
+        </TransitionGroup>
 
         <!-- Connection pages that we want to be able to have multiple of, so use v-show instead of v-if -->
         <template v-for="connection in connectionStore.openConnections" :key="connection.uid">
@@ -65,3 +67,15 @@ onMounted(() => {
   applicationStore.init();
 });
 </script>
+
+<style scoped>
+.page-enter-active {
+  transition: all 0.2s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+</style>
