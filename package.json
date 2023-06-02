@@ -1,5 +1,6 @@
 {
   "name": "laravel-log-viewer",
+  "productName": "Laravel Log Viewer",
   "version": "0.0.6-alpha",
   "main": "dist-electron/main/index.js",
   "license": "MIT",
