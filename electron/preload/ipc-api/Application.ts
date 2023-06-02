@@ -23,3 +23,11 @@ export function encryptString(string: string): Promise<string> {
 export function canUseSafeStorage(): Promise<boolean> {
   return ipcRenderer.invoke("can-use-safe-storage");
 }
+
+export function openFolderToFile(fileName: string): Promise<void> {
+  return ipcRenderer.invoke("open-folder-to-file", fileName);
+}
+
+export function openDownloadsFolder(): Promise<string> {
+  return ipcRenderer.invoke("open-downloads-folder");
+}

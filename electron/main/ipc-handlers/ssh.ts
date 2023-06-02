@@ -1,4 +1,4 @@
-import { ipcMain, safeStorage } from "electron";
+import { ipcMain, safeStorage, app } from "electron";
 import SSH2Promise from "ssh2-promise";
 
 export default () => {
@@ -45,11 +45,24 @@ export default () => {
     const ssh = buildConnection(options);
     try {
       await ssh.connect();
-      if (numberOfLines > 20000) {
+      if (numberOfLines > 200000) {
         numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
       }
       let response = await ssh.exec(`tail -n`, [numberOfLines, path]);
-      return { success: true, message: response };
+      let lineCount = await ssh.exec(`wc -l`, [path]);
+      return { success: true, message: response, lineCount: parseInt(lineCount) };
+    } catch (err) {
+      return { success: false, message: formatErrorToString(err) };
+    } finally {
+      ssh.close();
+    }
+  });
+  ipcMain.handle("ssh-download-from-path", async (event, options, path: string, fileName: string) => {
+    const ssh = buildConnection(options);
+    try {
+      let sftp = ssh.sftp();
+      await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
+      return { success: true, message: "Downloaded to Downloads folder" };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {

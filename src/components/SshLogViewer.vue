@@ -15,7 +15,8 @@
                                     No log files found in this directory.
                                 </div>
                             </div>
-                            <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
+                            <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown"
+                                :disabled="downloading || isLoading">
                                 <option disabled value=''>Please select an option...</option>
                                 <option v-for="path in paths" :value="path">{{ getLastPathSegment(path) }}</option>
                             </select>
@@ -24,9 +25,14 @@
                     </template>
                 </div>
                 <div class="ms-2">
-                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog"
-                        :disabled="isLoading || !currentPath">
-                        <i class="bi bi-arrow-clockwise"></i>
+                    <button class="btn btn-outline-secondary me-2" type="button" @click="() => downloadLog()"
+                        :disabled="!isReady">
+                        <i class="bi bi-download" aria-hidden="true"></i>
+                        <span class="visually-hidden">Download</span>
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="!isReady">
+                        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                        <span class="visually-hidden">Refresh</span>
                     </button>
                 </div>
             </div>
@@ -35,13 +41,12 @@
             <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
                 :key="`log_viewer_${currentPath}`" />
 
-            <template v-if="!isLoading && !errorMsg && !logEntries.length">
-
-                <div v-if="paths.length && !currentPath" class="my-2">
-                    <div class="alert alert-info" role="alert">
-                        Please select a file from the dropdown above.
-                    </div>
+            <div v-if="paths.length && !currentPath" class="my-2">
+                <div class="alert alert-info" role="alert">
+                    Please select a file from the dropdown above.
                 </div>
+            </div>
+            <template v-if="isReady">
                 <div v-if="!paths.length" class="my-2">
                     <div class="alert alert-info" role="alert">
                         <div class="d-flex justify-content-between align-items-center">
@@ -66,10 +71,13 @@ import { useLogParser } from "@/composables/useLogParser";
 import TheLogViewer from "./TheLogViewer.vue";
 import { unproxify } from "@/helpers";
 import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
+import { useApplicationStore } from "@/stores/useApplicationStore";
 
 const props = defineProps<{
     connection: Connection;
 }>();
+
+const applicationStore = useApplicationStore();
 
 const passphrase = ref<string | null>(null);
 const passphraseModal = ref();
@@ -85,6 +93,8 @@ const errorMsg = ref('');
 const paths = ref<string[]>([]);
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
+
+const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value);
 
 onMounted(async () => {
     readLog(props.connection.path);
@@ -133,6 +143,55 @@ async function readLog(path: string) {
         isLoading.value = false;
     }
 }
+
+const downloading = ref(false);
+
+async function downloadLog() {
+    /**
+     * TODO
+     * We either want to:
+     * 1. Block EVERYTHING whilst this is running, including changing pages
+     * 2. Send it to a queue instead of awaiting
+     */
+    downloading.value = true;
+    try {
+        // Let the file name be the concatenation of the connection name and the file name, made safe for file systems:
+
+        // For the connection name, we want to remove all whitespace and non-alphanumeric characters, and make it lowercase:
+        let connectionName = props.connection.name.trim().replace(/[\s]/gi, '').replace(/[^\w\-]/gi, '_').toLowerCase();
+
+        // For the filename, firstly, we only want the bit after the final '/':
+        let fileName = currentPath.value.split('/').slice(-1)[0];
+
+        // Then drop the .log extension, make safe, and then add it back on:
+        fileName = fileName.replace(/\.log$/i, '').replace(/[^\w\-]/gi, '_').toLowerCase() + '.log';
+
+        // Prepend 'log' to avoid any issues where the file name starts with non-alphanumeric characters:
+        fileName = 'log-' + connectionName + '-' + fileName;
+
+        // The max character limit on file names is 255, so we need to truncate it if it's too long, still keeping .log on the end:
+        if (fileName.length > 255) {
+            fileName = fileName.slice(0, 255 - 4) + '.log';
+        }
+
+        if (!applicationStore.updateDownloads(fileName, 'inProgress')) {
+            throw new Error("Download already in progress");
+        }
+        const data = await api.Ssh.downloadFromPath(unproxify(sshConfig.value), currentPath.value, fileName ?? 'Log');
+
+        if (!data.success) {
+            applicationStore.updateDownloads(fileName, 'failed');
+            throw new Error(data.message);
+        } else {
+            applicationStore.updateDownloads(fileName, 'completed');
+        }
+    } catch (error: any) {
+        alert(error?.message ?? "Error downloading log file");
+    } finally {
+        downloading.value = false;
+    }
+}
+
 
 async function handlePathDropdown() {
     nextTick(() => readLog(currentPath.value));
