@@ -7,9 +7,9 @@
         <div class="d-block px-3 py-2 text-center text-bold text-white bg-danger" role="alert">
           <strong>Note:</strong> Your system does not support secure storage. Only the file browser will be available.
         </div>
-        <LogViewerPage class="pt-2 container-fluid" />
+        <LogViewerPage class="py-2 container-fluid" />
       </template>
-      <div v-else class="pt-2 container-fluid">
+      <div v-else class="py-2 container-fluid">
         <div v-if="applicationStore.routeParams.error" class="alert alert-danger my-2" role="alert">
           {{ applicationStore.routeParams.error }}
         </div>
