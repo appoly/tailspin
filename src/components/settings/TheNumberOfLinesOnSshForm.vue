@@ -12,6 +12,10 @@
                     <option value="5000">{{ Number(5000).toLocaleString() }}</option>
                     <option value="10000">{{ Number(10000).toLocaleString() }}</option>
                     <option value="20000">{{ Number(20000).toLocaleString() }}</option>
+                    <option value="50000">{{ Number(50000).toLocaleString() }}</option>
+                    <option value="100000">{{ Number(100000).toLocaleString() }}</option>
+                    <option value="150000">{{ Number(150000).toLocaleString() }}</option>
+                    <option value="200000">{{ Number(200000).toLocaleString() }}</option>
                 </select>
                 <button class="btn btn-secondary" type="submit" :disabled="isLoading || !hasChanged">
                     <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>

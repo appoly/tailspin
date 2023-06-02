@@ -45,7 +45,7 @@ export default () => {
     const ssh = buildConnection(options);
     try {
       await ssh.connect();
-      if (numberOfLines > 20000) {
+      if (numberOfLines > 200000) {
         numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
       }
       let response = await ssh.exec(`tail -n`, [numberOfLines, path]);
