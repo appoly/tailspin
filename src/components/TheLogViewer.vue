@@ -37,21 +37,23 @@
     <div v-if="errorMsg" class="mt-2 alert alert-danger">
         {{ errorMsg }}
     </div>
-    <template v-if="isLoading">
-        <div v-for="row in 25" class="row p-2 my-2 cursor-none">
-            <div class="col-2 log-item-severity placeholder-glow">
-                <span class="col-4 placeholder rounded"
-                    :class="'bg-' + selectRandomFromArray(['primary', 'warning', 'danger', 'secondary'])"></span>
-            </div>
-            <div class="col-2 log-item-time placeholder-glow">
-                <span class="col-4 placeholder rounded"></span>
-            </div>
-            <div class="col log-item-text placeholder-glow">
-                <span class="col-10 placeholder rounded"></span>
+    <Transition>
+        <div key="placeholder" v-if="isLoading">
+            <div v-for="row in 25" class="row p-2 my-2 cursor-none">
+                <div class="col-2 log-item-severity placeholder-glow">
+                    <span class="col-4 placeholder rounded"
+                        :class="'bg-' + selectRandomFromArray(['primary', 'warning', 'danger', 'secondary'])"></span>
+                </div>
+                <div class="col-2 log-item-time placeholder-glow">
+                    <span class="col-4 placeholder rounded"></span>
+                </div>
+                <div class="col log-item-text placeholder-glow">
+                    <span class="col-10 placeholder rounded"></span>
+                </div>
             </div>
         </div>
-    </template>
-    <template v-else>
+    </Transition>
+    <div key="entries" v-if="!isLoading">
         <div class="log-container">
             <TheLogEntry v-for="logItem in currentPageItems" :logItem="logItem" />
         </div>
@@ -65,8 +67,7 @@
                 <i class="bi bi-arrow-up"></i>
             </button>
         </div>
-
-    </template>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -136,3 +137,14 @@ function jumpToTop() {
 }
 
 </script>
+
+<style scoped lang="scss">
+.v-enter-active {
+    transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
+}
+</style>
