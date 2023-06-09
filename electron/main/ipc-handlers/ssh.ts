@@ -33,7 +33,7 @@ export default () => {
       // Output one file per line, only .log files:
       // Only look for .log files
       path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
-      let response = await ssh.exec("ls -1s", [path]);
+      let response = await ssh.exec("ls -1sr", [path]);
       return { success: true, message: response };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
