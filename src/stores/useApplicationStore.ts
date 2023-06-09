@@ -8,11 +8,13 @@ export const useApplicationStore = defineStore("application", {
     routeParams: {} as { [key: string]: string },
     canUseSafeStorage: false,
     downloads: [] as Download[],
+    forgeSectionEnabled: false,
   }),
   actions: {
     async init() {
       this.canUseSafeStorage = await api.Application.canUseSafeStorage();
       this.page = this.canUseSafeStorage ? "connections" : "log-viewer";
+      this.initForgeSectionEnabled();
     },
     changePage(page: string, params = {}) {
       this.routeParams = params;
@@ -48,6 +50,13 @@ export const useApplicationStore = defineStore("application", {
         download.date = new Date();
       }
       return true;
+    },
+    async initForgeSectionEnabled() {
+      this.forgeSectionEnabled = (await api.Store.get("app.forgeEnabled", true)) !== false; // Default to true
+    },
+    toggleForgeSectionEnabled() {
+      this.forgeSectionEnabled = !this.forgeSectionEnabled;
+      api.Store.set("app.forgeEnabled", this.forgeSectionEnabled);
     },
   },
 });
