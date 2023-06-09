@@ -17,9 +17,10 @@
                     :active="applicationStore.page === 'connections'" pageId="connections"
                     @setPage="() => applicationStore.changePage('connections')" />
 
-                <SidebarItem key="connections" label="Laravel Forge Connections" icon="bi bi-hammer"
-                    tooltip="Laravel Forge Connections" :active="applicationStore.page === 'connections.forge'"
-                    pageId="connections.forge" @setPage="() => applicationStore.changePage('connections.forge')" />
+                <SidebarItem v-if="applicationStore.forgeSectionEnabled" key="connections" label="Laravel Forge Connections"
+                    icon="bi bi-hammer" tooltip="Laravel Forge Connections"
+                    :active="applicationStore.page === 'connections.forge'" pageId="connections.forge"
+                    @setPage="() => applicationStore.changePage('connections.forge')" />
 
                 <li v-for="connection in connectionStore.openConnections" :key="connection.uid" class="nav-item">
                     <SidebarItem :key="connection.uid" :label="connection.name" :icon="`bi bi-${connection.icon}`"
