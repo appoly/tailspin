@@ -161,7 +161,6 @@ async function testConnection() {
         // Password is only encrypted if it's not changed AND it is a password - the key path doesn't need encryption
         let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged && sshCredentials.value.passwordType === 'password';
         let response = await api.Ssh.testSshCredentials(unproxify(sshCredentials.value), passwordIsEncrypted);
-        console.log(response);
         if (response.success) {
             testSuccess.value = true;
             alert('Connection successful');

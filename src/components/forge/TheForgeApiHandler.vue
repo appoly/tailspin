@@ -52,8 +52,6 @@ async function queryForge() {
         // Then store these:
         forgeStore.setSitesAndServers(sites, servers);
     } catch (error: any) {
-        console.log(error);
-
         errorMsg.value = error.message ?? 'An unknown error occurred';
     } finally {
         isLoading.value = false;
