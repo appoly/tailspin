@@ -20,12 +20,11 @@
                     :active="applicationStore.page === 'connections'" pageId="connections"
                     @setPage="() => applicationStore.changePage('connections')" />
 
-                <li v-for="connection in connectionStore.openConnections" :key="connection.uid" class="nav-item">
-                    <SidebarItem :key="connection.uid" :label="connection.name" :icon="`bi bi-${connection.icon}`"
-                        :tooltip="connection.name" :active="applicationStore.page === 'connections.page.' + connection.uid"
-                        :pageId="connection.uid"
+                <template v-for="connection in connectionStore.openConnections" :key="connection.uid" class="nav-item">
+                    <SidebarItem :label="connection.name" :icon="`bi bi-${connection.icon}`" :tooltip="connection.name"
+                        :active="applicationStore.page === 'connections.page.' + connection.uid" :pageId="connection.uid"
                         @setPage="() => applicationStore.changePage('connections.page.' + connection.uid)" />
-                </li>
+                </template>
             </ul>
             <div class="nav nav-pills nav-flush flex-column text-center border-top">
                 <SidebarItem key="downloads" label="Downloads" icon="bi bi-download" tooltip="Downloads"

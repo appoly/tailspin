@@ -14,6 +14,10 @@ export interface SshDetails {
   passphraseRequired?: boolean;
 }
 
+export interface SshDetailsToIpc extends SshDetails {
+  passphrase?: string;
+}
+
 export interface BaseConnection {
   name: string;
   icon: string;

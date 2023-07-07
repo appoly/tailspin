@@ -161,9 +161,15 @@ async function readLog(path: string) {
 
         if (contentType.message.trim() === 'directory') {
             isDirectory.value = true;
+            console.log('test');
             data = await api.Ssh.getFilesInDirectory(unproxify(sshConfig.value), path);
+            console.log('test2');
+            
 
             if (!data.success) {
+                console.log('hello');
+                console.log(data.message);
+                
                 throw new Error(data.message);
             }
             // We have back each file with first its size, then its name. Below, we'll extract these into an array with 2 elements: size and path:
@@ -185,6 +191,8 @@ async function readLog(path: string) {
         logEntries.value = await useLogParser(data.message as string);
         return;
     } catch (error: any) {
+        console.error(error);
+        
         errorMsg.value = error?.message ?? "Error reading log file";
     } finally {
         isLoading.value = false;
