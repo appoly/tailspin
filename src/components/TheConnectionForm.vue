@@ -81,7 +81,7 @@ const emit = defineEmits(['saved']);
 
 const formFields = ref<BaseConnection>({
     name: '',
-    icon: 'plus',
+    icon: 'terminal',
     path: '',
     type: 'local' as 'remote' | 'local',
     ssh: {
@@ -110,7 +110,7 @@ onMounted(() => {
                     password: props.connection!.ssh?.password || '',
                 }
             }),
-            iconColor: props.connection!.iconColor || '#12345'
+            iconColor: props.connection!.iconColor || 'currentColor'
         }
     }
 });

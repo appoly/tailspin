@@ -25,7 +25,7 @@
             <small class="text-muted" v-if="favoriteConnections.length == 0">
                 You don't have any favorite connections yet. Right click on a connection to add it to your favorites.
             </small>
-            <div :class="['d-flex flex-wrap']">
+            <div class="row">
                 <ConnectionCard v-for="connection in favoriteConnections" :connection="connection"
                     @delete="() => connectionStore.removeConnection(connection.uid)" view-mode="grid" />
             </div>
@@ -34,8 +34,7 @@
 
             <h2>All Connections</h2>
             <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]">
-                <draggable v-model="allConnections" @start="drag = true" @end="drag = false"
-                    item-key="uid">
+                <draggable v-model="allConnections" @start="drag = true" @end="drag = false" item-key="uid">
                     <template #item="{ element }">
                         <span>
                             <ConnectionCard :connection="element"

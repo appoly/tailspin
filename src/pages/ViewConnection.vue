@@ -1,7 +1,10 @@
 <template>
     <div>
         <div class="d-flex flex-wrap justify-content-between w-100" id="logViewerHeader">
-            <h1>{{ connection.name }}</h1>
+            <h1>
+                <TheConnectionIcon :icon-class="connection.icon" :icon-color="connection.iconColor" />
+                {{ connection.name }}
+            </h1>
             <span>
                 <button @click="() => closeConnection(connection.uid)" class="btn btn-outline-danger btn-sm">Close</button>
             </span>
@@ -14,6 +17,7 @@
 <script setup lang="ts">
 import LocalLogViewer from '@/components/LocalLogViewer.vue';
 import SshLogViewer from '@/components/SshLogViewer.vue';
+import TheConnectionIcon from '@/components/TheConnectionIcon.vue';
 import { Connection } from '@/interfaces';
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { nextTick } from 'vue';
