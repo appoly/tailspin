@@ -15,8 +15,6 @@ export default () => {
   ipcMain.handle("get-server-list", async (event, encryptedString) => {
     try {
       const apiKey = decryptString(encryptedString);
-      console.log(apiKey);
-
       const response = await forgeAxios.get("/servers", { headers: { Authorization: `Bearer ${apiKey}` } });
 
       return response.data;

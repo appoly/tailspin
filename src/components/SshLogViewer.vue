@@ -185,8 +185,6 @@ async function readLog(path: string) {
         logEntries.value = await useLogParser(data.message as string);
         return;
     } catch (error: any) {
-        console.error(error);
-        
         errorMsg.value = error?.message ?? "Error reading log file";
     } finally {
         isLoading.value = false;
