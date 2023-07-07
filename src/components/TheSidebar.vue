@@ -4,8 +4,8 @@
             <SidebarItem key="log-viewer" label="View By File" icon="bi bi-book" tooltip="View By File"
                 :active="applicationStore.page === 'log-viewer'" :pageId="'log-viewer'"
                 @setPage="() => applicationStore.changePage('log-viewer')" />
-            <SidebarItem v-if="applicationStore.forgeSectionEnabled" key="forge-connections" label="Laravel Forge Connections"
-                icon="bi bi-hammer" tooltip="Laravel Forge Connections"
+            <SidebarItem v-if="applicationStore.forgeSectionEnabled" key="forge-connections"
+                label="Laravel Forge Connections" icon="bi bi-hammer" tooltip="Laravel Forge Connections"
                 :active="applicationStore.page === 'connections.forge'" pageId="connections.forge"
                 @setPage="() => applicationStore.changePage('connections.forge')" />
 
@@ -25,11 +25,11 @@
                 @setPage="() => applicationStore.changePage('downloads')">
                 <template #badge>
                     <span v-if="applicationStore.downloads.filter(d => d.type === 'inProgress').length > 0"
-                        class="position-absolute translate-middle badge rounded-pill bg-info">
+                        class="position-absolute top-0 badge rounded-pill bg-info">
                         {{ applicationStore.downloads.filter(d => d.type === 'inProgress').length }}
                     </span>
                     <span v-if="applicationStore.downloads.filter(d => d.type === 'completed').length > 0"
-                        class="position-absolute translate-middle badge rounded-pill bg-success">
+                        class="position-absolute top-0 badge rounded-pill bg-success">
                         {{ applicationStore.downloads.filter(d => d.type === 'completed').length }}
                     </span>
                 </template>
