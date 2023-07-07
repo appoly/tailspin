@@ -4,7 +4,7 @@
             <SidebarItem key="log-viewer" label="View By File" icon="bi bi-book" tooltip="View By File"
                 :active="applicationStore.page === 'log-viewer'" :pageId="'log-viewer'"
                 @setPage="() => applicationStore.changePage('log-viewer')" />
-            <SidebarItem v-if="applicationStore.forgeSectionEnabled" key="connections" label="Laravel Forge Connections"
+            <SidebarItem v-if="applicationStore.forgeSectionEnabled" key="forge-connections" label="Laravel Forge Connections"
                 icon="bi bi-hammer" tooltip="Laravel Forge Connections"
                 :active="applicationStore.page === 'connections.forge'" pageId="connections.forge"
                 @setPage="() => applicationStore.changePage('connections.forge')" />

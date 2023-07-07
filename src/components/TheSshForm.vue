@@ -45,6 +45,10 @@
                                 <button @click.prevent="() => handlePathSelection()" class="btn btn-outline-secondary"
                                     type="button">Browse</button>
                             </div>
+                            <small v-if="defaultSshPath && modelValue.password !== defaultSshPath">
+                                <a @click.prevent="() => modelValue!.password = defaultSshPath" href="javascript://">Use
+                                    default SSH key</a> ({{ defaultSshPath }})
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="passphraseRequired">Passphrase Required</label>
@@ -87,7 +91,7 @@ import { SshDetails } from '@/interfaces';
 import { computed, ref } from 'vue';
 import TheSshPassphraseModal from '@/components/TheSshPassphraseModal.vue';
 
-const props = withDefaults(defineProps<{ modelValue?: SshDetails, isEdit: boolean, passwordIsChanged: boolean }>(), {
+const props = withDefaults(defineProps<{ modelValue?: SshDetails, isEdit: boolean, passwordIsChanged: boolean, defaultSshPath: string }>(), {
     isEdit: false,
     passwordIsChanged: false,
 });
