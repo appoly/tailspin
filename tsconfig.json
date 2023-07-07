@@ -14,9 +14,10 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "$/*": ["./shared/*"],
     }
   },
-  "include": ["src", "electron/preload/ipc-api", "index.d.ts",],
-  "references": [{ "path": "./tsconfig.node.json" }],
+  "include": ["src", "electron/preload/ipc-api", "index.d.ts", "shared"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

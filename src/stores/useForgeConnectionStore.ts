@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ForgeServer, ForgeSite } from "@/interfaces";
+import { ForgeServer, ForgeSite } from "$/interfaces";
 import { unproxify } from "@/helpers";
 
 export const useForgeConnectionStore = defineStore("forgeConnection", {

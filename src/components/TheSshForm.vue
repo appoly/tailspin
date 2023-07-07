@@ -87,7 +87,7 @@
 
 <script setup lang="ts">
 import { unproxify } from '@/helpers';
-import { SshDetails } from '@/interfaces';
+import { SshDetails } from '$/interfaces';
 import { computed, ref } from 'vue';
 import TheSshPassphraseModal from '@/components/TheSshPassphraseModal.vue';
 
