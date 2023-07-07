@@ -3,13 +3,7 @@
     <TheSidebar />
     <CommandPalette />
     <div class="flex-grow-1 main-content">
-      <template v-if="!applicationStore.canUseSafeStorage">
-        <div class="d-block px-3 py-2 text-center text-bold text-white bg-danger" role="alert">
-          <strong>Note:</strong> Your system does not support secure storage. Only the file browser will be available.
-        </div>
-        <LogViewerPage class="py-2 container-fluid" />
-      </template>
-      <div v-else class="py-2 container-fluid">
+      <div class="py-2 container-fluid">
         <div v-if="applicationStore.routeParams.error" class="alert alert-danger my-2" role="alert">
           {{ applicationStore.routeParams.error }}
         </div>
