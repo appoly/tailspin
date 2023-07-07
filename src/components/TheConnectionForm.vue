@@ -44,7 +44,7 @@
             </template>
             <template v-else>
                 <TheSshForm v-model="formFields.ssh" :isEdit="isEdit" :passwordIsChanged="passwordIsChanged"
-                    @changePassword="handlePasswordChange" />
+                    :defaultSshPath="userStore.defaultSshPath" @changePassword="handlePasswordChange" />
 
                 <h4 class="my-2">Log File Details</h4>
                 <div class="form-group mb-2">

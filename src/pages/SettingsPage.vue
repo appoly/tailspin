@@ -23,11 +23,11 @@
                     </div>
                 </div>
                 <hr />
-                <TheForgeApiKeyForm />
-                <hr />
                 <TheDefaultKeyPathForm />
                 <hr />
                 <TheNumberOfLinesOnSshForm />
+                <hr />
+                <TheForgeApiKeyForm />
                 <hr />
             </div>
         </div>
