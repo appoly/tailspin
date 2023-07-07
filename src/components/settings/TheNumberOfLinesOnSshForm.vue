@@ -1,5 +1,5 @@
 <template>
-    <div class="form-group my-4">
+    <div class="form-group">
         <label for="ssh-number-of-lines">
             SSH - Default Number of Lines
         </label>

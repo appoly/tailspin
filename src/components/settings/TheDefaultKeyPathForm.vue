@@ -1,5 +1,5 @@
 <template>
-    <div class="form-group my-4">
+    <div class="form-group">
         <label for="default-ssh-key-path">
             Default SSH Key Path
         </label>
