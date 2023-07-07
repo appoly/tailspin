@@ -164,9 +164,6 @@ async function readLog(path: string) {
             data = await api.Ssh.getFilesInDirectory(unproxify(sshConfig.value), path);
 
             if (!data.success) {
-                console.log('hello');
-                console.log(data.message);
-                
                 throw new Error(data.message);
             }
             // We have back each file with first its size, then its name. Below, we'll extract these into an array with 2 elements: size and path:
