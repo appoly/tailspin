@@ -1,6 +1,7 @@
 <template>
     <div ref="iconPicker" class="icon-picker">
-        <button type="button" :class="[buttonClass, 'icon-button']" @click.stop="() => selectorOpen = !selectorOpen">
+        <button type="button" :class="[buttonClass, 'form-control']"
+            @click.stop="() => selectorOpen = !selectorOpen">
             <i :class="[iconClass + modelValue]" :style="{ color: color }"></i>
         </button>
 
@@ -15,7 +16,7 @@
                 </div>
                 <div class="icon-container">
                     <div class="d-flex flex-wrap">
-                        <i v-for="icon in filteredIcons" :class="[iconClass + icon, 'mx-2']" :key="icon"
+                        <i v-for="  icon   in   filteredIcons  " :class="[iconClass + icon, 'mx-2']" :key="icon"
                             @click="selectIcon(icon)" :style="{ color: color }"></i>
                     </div>
                 </div>
@@ -76,13 +77,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.icon-button {
-    padding: 0;
-    border: none;
-    font-size: 1.75rem;
-    width: 3rem;
-}
-
 .icon-picker {
     position: relative;
 }
