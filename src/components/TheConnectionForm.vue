@@ -6,9 +6,11 @@
         <form @submit.prevent="saveConnection">
             <div class="d-flex gap-2">
                 <div class="form-group">
+                    <label class="form-label mb-0" for="icon">Icon</label>
                     <BootstrapIconPicker v-model="formFields.icon" v-model:color="formFields.iconColor" />
                 </div>
-                <div class="flex-grow w-100 form-group">
+                <div class="flex-grow-1 form-group">
+                    <label class="form-label mb-0" for="connectionName">Connection Name</label>
                     <input type="text" class="form-control" id="connectionName" placeholder="Connection Name" required
                         v-model="formFields.name" />
                 </div>
