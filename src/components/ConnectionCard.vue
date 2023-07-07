@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <div v-show="isMenuVisible" class="menu" ref="menu">
+    <div v-show="isMenuVisible" class="menu w-auto" ref="menu">
         <div class="list-group">
             <button v-for="option in menuOptions" :key="option.value" class="list-group-item list-group-item-action"
                 @click="selectOption(option)">

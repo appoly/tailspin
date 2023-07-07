@@ -1,21 +1,17 @@
 import { ipcMain, safeStorage, app } from "electron";
 import SSH2Promise from "ssh2-promise";
+import { SshDetails, SshDetailsToIpc } from "../../../src/interfaces";
 
 export default () => {
   ipcMain.handle("test-ssh-credentials", async (event, options, passwordIsEncrypted: boolean) => {
-    const ssh = buildConnection(options, passwordIsEncrypted);
-    try {
-      await ssh.connect();
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message ?? "Error has occurred" };
-    } finally {
-      ssh.close(); // I think this is fine to do even when it fails to connect. This is safer because it will ensure the connection is always closed.
-    }
+    return handleSsh(options, passwordIsEncrypted, () => {
+      return Promise.resolve({ success: true }); // Simply by getting here, we know the credentials are valid, so return true
+    });
   });
   ipcMain.handle("ssh-is-file-or-directory", async (event, options, path: string) => {
-    const ssh = buildConnection(options);
+    let ssh: SSH2Promise;
     try {
+      ssh = buildConnection(options);
       await ssh.connect();
       // Determine whether the path is a file, directory, or does not exist:
       let response = await ssh.exec(`test -d ${path} && echo "directory" || (test -f ${path} && echo "file")`);
@@ -23,12 +19,16 @@ export default () => {
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {
-      ssh.close();
+      // Close ssh if successfully connected
+      if (ssh) {
+        ssh.close();
+      }
     }
   });
   ipcMain.handle("ssh-get-files-in-directory", async (event, options, path: string) => {
-    const ssh = buildConnection(options);
+    let ssh: SSH2Promise;
     try {
+      ssh = buildConnection(options);
       await ssh.connect();
       // Output one file per line, only .log files:
       // Only look for .log files
@@ -38,12 +38,15 @@ export default () => {
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {
-      ssh.close();
+      if (ssh) {
+        ssh.close();
+      }
     }
   });
   ipcMain.handle("ssh-read-from-path", async (event, options, path: string, numberOfLines = 1000) => {
-    const ssh = buildConnection(options);
+    let ssh: SSH2Promise;
     try {
+      ssh = buildConnection(options);
       await ssh.connect();
       let response = "";
       // If number of lines is 0, it means read the entire file with tail:
@@ -59,19 +62,24 @@ export default () => {
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {
-      ssh.close();
+      if (ssh) {
+        ssh.close();
+      }
     }
   });
   ipcMain.handle("ssh-download-from-path", async (event, options, path: string, fileName: string) => {
-    const ssh = buildConnection(options);
+    let ssh: SSH2Promise;
     try {
+      ssh = buildConnection(options);
       let sftp = ssh.sftp();
       await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
       return { success: true, message: "Downloaded to Downloads folder" };
     } catch (err) {
       return { success: false, message: formatErrorToString(err) };
     } finally {
-      ssh.close();
+      if (ssh) {
+        ssh.close();
+      }
     }
   });
 };
@@ -84,19 +92,41 @@ function decryptString(string: string) {
   return safeStorage.decryptString(buffer);
 }
 
-function buildConnection({ host, port, username, password, passwordType, passphrase = null }, decryptNeeded = true) {
+function buildConnection(
+  { host, port, username, password, passwordType, passphrase = null }: SshDetailsToIpc,
+  decryptNeeded: boolean = true
+) {
   const config = {
     host,
     port,
     username,
     readyTimeout: 4000,
     reconnect: false,
-    ...(passphrase && { passphrase }),
+    ...(passphrase && { passphrase }), // Only add passphrase if it exists
   };
+
+  if (decryptNeeded && !safeStorage.isEncryptionAvailable()) {
+    throw new Error("Cannot decrypt password, safe storage is not available.");
+  }
 
   const decryptedPassword = decryptNeeded ? decryptString(password) : password;
 
   config[passwordType === "password" ? "password" : "identity"] = decryptedPassword;
 
   return new SSH2Promise(config);
+}
+
+async function handleSsh(
+  options: SshDetailsToIpc,
+  passwordIsEncrypted = true,
+  callback: (ssh: SSH2Promise) => Promise<any>
+) {
+  let ssh: SSH2Promise;
+  try {
+    ssh = buildConnection(options, passwordIsEncrypted);
+    await ssh.connect();
+    return await callback(ssh);
+  } catch (err) {
+    return { success: false, message: formatErrorToString(err) };
+  }
 }

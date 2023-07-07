@@ -20,12 +20,16 @@ interface SshResponse {
 export function testSshCredentials(
   options: SshDetails,
   passwordIsEncrypted: boolean
-): Promise<{ success: boolean; error?: any }> {
+): Promise<SshResponse> {
   return ipcRenderer.invoke("test-ssh-credentials", options, passwordIsEncrypted);
 }
 
-export function isFileOrDirectory(options: SshDetails, path: string): Promise<SshResponse> {
-  return ipcRenderer.invoke("ssh-is-file-or-directory", options, path);
+export async function isFileOrDirectory(options: SshDetails, path: string): Promise<SshResponse> {
+  try {
+    return await ipcRenderer.invoke("ssh-is-file-or-directory", options, path);
+  } catch (error) {
+    return { success: false, message: error.message ?? "Error has occurred" };
+  }
 }
 
 export function getFilesInDirectory(options: SshDetails, path: string): Promise<SshResponse> {

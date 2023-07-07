@@ -159,7 +159,7 @@ async function saveConnection() {
     if (formFields.value.type === 'remote') {
         newConnection.ssh = formFields.value.ssh;
         // If this is an edit form, we need to check if the password is changed, and only assign it if it has, to avoid double encryption
-        if (!isEdit.value || passwordIsChanged.value) {
+        if (formFields.value.ssh?.passwordType === 'password' && (!isEdit.value || passwordIsChanged.value)) {
             newConnection.ssh!.password = await api.Application.encryptString(newConnection.ssh!.password);
         } else {
             newConnection.ssh!.password = props.connection!.ssh!.password;

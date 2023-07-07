@@ -154,17 +154,20 @@ async function testConnection() {
             passphraseModal.value!.open();
             return;
         }
-        let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged; // Password is only encrypted if it's not changed.
+        // Password is only encrypted if it's not changed AND it is a password - the key path doesn't need encryption
+        let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged && sshCredentials.value.passwordType === 'password';
         let response = await api.Ssh.testSshCredentials(unproxify(sshCredentials.value), passwordIsEncrypted);
+        console.log(response);
         if (response.success) {
             testSuccess.value = true;
             alert('Connection successful');
         } else {
             errorMsg.value = "Connection failed."
-            errorMsg.value += response.error ? ` Error: ${response.error}` : '';
+            errorMsg.value += response.message ? ` Error: ${response.message}` : '';
             alert(errorMsg.value);
         }
     } catch (err: any) {
+        console.error(err);
         errorMsg.value = err?.message ?? 'An unexpected error has occurred';
         alert(errorMsg.value);
     } finally {
