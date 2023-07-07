@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
-import { Connection } from "@/interfaces";
+import { Connection } from "$/interfaces";
 import { onMounted, ref } from 'vue';
 import TheConnectionForm from '@/components/TheConnectionForm.vue';
 

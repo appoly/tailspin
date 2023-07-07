@@ -1,5 +1,5 @@
 <template>
-    <div class="connection mb-1" :class="[viewMode === 'grid' ? 'col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2' : 'col-12']"
+    <div class="connection mb-1" :class="[viewMode === 'grid' ? 'col-12 col-sm-6 col-md-4 col-lg-3' : 'col-12']"
         @contextmenu.prevent="showMenu" @click="applicationStore.goToConnection(connection.uid)">
         <!-- grid -->
         <div class="connection-card card h-100" role="button" v-if="viewMode === 'grid'">
@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <div v-show="isMenuVisible" class="menu" ref="menu">
+    <div v-show="isMenuVisible" class="menu w-auto" ref="menu">
         <div class="list-group">
             <button v-for="option in menuOptions" :key="option.value" class="list-group-item list-group-item-action"
                 @click="selectOption(option)">
@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { Connection } from "@/interfaces"
+import { Connection } from "$/interfaces";
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 

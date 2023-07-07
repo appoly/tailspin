@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import LocalLogViewer from '@/components/LocalLogViewer.vue';
 import SshLogViewer from '@/components/SshLogViewer.vue';
-import { Connection } from '@/interfaces';
+import { Connection } from '$/interfaces';
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { nextTick } from 'vue';
 

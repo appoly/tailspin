@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { LogEntry } from "../interfaces";
+import { LogEntry } from "$/interfaces";
 
 // define props
 defineProps<{
@@ -117,4 +117,4 @@ async function copyContents(contents: string) {
     right: 2.5rem;
     z-index: 1;
 }
-</style>
+</style>../../shared/interfaces

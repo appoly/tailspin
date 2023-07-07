@@ -44,7 +44,7 @@
             </template>
             <template v-else>
                 <TheSshForm v-model="formFields.ssh" :isEdit="isEdit" :passwordIsChanged="passwordIsChanged"
-                    @changePassword="handlePasswordChange" />
+                    :defaultSshPath="userStore.defaultSshPath" @changePassword="handlePasswordChange" />
 
                 <h4 class="my-2">Log File Details</h4>
                 <div class="form-group mb-2">
@@ -64,10 +64,13 @@
 
 <script setup lang="ts">
 import { useConnectionStore } from '@/stores/useConnectionStore';
-import { BaseConnection, Connection } from "@/interfaces";
+import { BaseConnection, Connection } from "$/interfaces";
 import { computed, onMounted, ref, watch } from 'vue';
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 import TheSshForm from '@/components/TheSshForm.vue';
+import { useUserStore } from '@/stores/useUserStore';
+
+const userStore = useUserStore();
 
 const connectionStore = useConnectionStore();
 const props = defineProps<{
@@ -78,8 +81,7 @@ const passwordIsChanged = ref(false);
 const isEdit = computed(() => props.connection !== undefined);
 const emit = defineEmits(['saved']);
 
-
-const formFields = ref<BaseConnection>({
+const baseFormFields: BaseConnection = {
     name: '',
     icon: 'terminal',
     path: '',
@@ -88,11 +90,13 @@ const formFields = ref<BaseConnection>({
         host: '',
         port: 22,
         username: '',
-        passwordType: 'password',
-        password: '',
+        passwordType: 'key',
+        password: userStore.defaultSshPath,
     },
     iconColor: '#ffffff'
-})
+}
+
+const formFields = ref<BaseConnection>({ ...baseFormFields })
 
 onMounted(() => {
     if (isEdit.value) {
@@ -103,11 +107,11 @@ onMounted(() => {
             type: props.connection!.type,
             ...(props.connection!.type === 'remote' && {
                 ssh: {
-                    host: props.connection!.ssh?.host || '',
-                    port: props.connection!.ssh?.port || 22,
-                    username: props.connection!.ssh?.username || '',
-                    passwordType: props.connection!.ssh?.passwordType || 'password',
-                    password: props.connection!.ssh?.password || '',
+                    host: props.connection!.ssh?.host || baseFormFields.ssh!.host,
+                    port: props.connection!.ssh?.port || baseFormFields.ssh!.port,
+                    username: props.connection!.ssh?.username || baseFormFields.ssh!.username,
+                    passwordType: props.connection!.ssh?.passwordType || baseFormFields.ssh!.passwordType,
+                    password: props.connection!.ssh?.password || baseFormFields.ssh!.password,
                 }
             }),
             iconColor: props.connection!.iconColor || 'currentColor'
@@ -119,12 +123,12 @@ onMounted(() => {
 watch(() => formFields.value.type, () => {
     if (formFields.value.type === 'local') {
         formFields.value.ssh = {
-            host: '',
-            port: 22,
-            username: '',
-            passwordType: 'password',
-            password: '',
-        }
+            host: baseFormFields.ssh!.host,
+            port: baseFormFields.ssh!.port,
+            username: baseFormFields.ssh!.username,
+            passwordType: baseFormFields.ssh!.passwordType,
+            password: baseFormFields.ssh!.password,
+        };
     }
 });
 
@@ -158,10 +162,15 @@ async function saveConnection() {
     //  If it is remote connection, handle assigning of the ssh object, and handle encryption of password field
     if (formFields.value.type === 'remote') {
         newConnection.ssh = formFields.value.ssh;
-        // If this is an edit form, we need to check if the password is changed, and only assign it if it has, to avoid double encryption
-        if (!isEdit.value || passwordIsChanged.value) {
+        if (formFields.value.ssh?.passwordType === 'key') {
+            // If password type is key (path), always set it...
+            newConnection.ssh!.password = formFields.value.ssh!.password;
+        }
+        else if ((!isEdit.value || passwordIsChanged.value)) {
+            // ...else if we are not editing, or the password is changed, encrypt the new password.
             newConnection.ssh!.password = await api.Application.encryptString(newConnection.ssh!.password);
         } else {
+            // ...else the password has not been changed, so use the old password.         
             newConnection.ssh!.password = props.connection!.ssh!.password;
         }
     }

@@ -12,3 +12,6 @@ export function has(key: string): Promise<boolean> {
 export function deleteByKey(key: string) {
   return ipcRenderer.invoke("config-delete", key);
 }
+export function clear() {
+  return ipcRenderer.invoke("config-clear");
+}

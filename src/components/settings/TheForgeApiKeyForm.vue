@@ -1,5 +1,5 @@
 <template>
-    <div class="my-4">
+    <div>
         <div class="form-group d-flex align-items-center gap-3 mb-2">
             <span>Enable Forge Section</span>
             <div class="btn-group flex-grow-1" role="group" aria-label="Basic radio toggle button group">
@@ -52,13 +52,13 @@ const isLoading = ref(false);
 const errorMsg = ref('');
 
 onMounted(async () => {
-    currentKeyExists.value = await api.Store.has('forgeApiKey');
+    currentKeyExists.value = await api.Store.has('app.forgeApiKey');
 })
 
 const emit = defineEmits(['submit']);
 
 async function clearKey() {
-    await api.Store.deleteByKey('forgeApiKey');
+    await api.Store.deleteByKey('app.forgeApiKey');
     currentKeyExists.value = false;
 }
 
@@ -66,7 +66,7 @@ async function submitKey() {
     isLoading.value = true;
     try {
         let encryptedKey = await api.Application.encryptString(forgeApiKey.value);
-        await api.Store.set('forgeApiKey', encryptedKey);
+        await api.Store.set('app.forgeApiKey', encryptedKey);
         currentKeyExists.value = true;
         forgeApiKey.value = '';
         emit('submit');

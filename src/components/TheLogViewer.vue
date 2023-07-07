@@ -82,7 +82,7 @@ import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
 import TheLogPaginator from "@/components/TheLogPaginator.vue";
 import SeverityFilter from "@/components/SeverityFilter.vue";
-import { LogEntry } from "@/interfaces";
+import { LogEntry } from "$/interfaces";
 import { selectRandomFromArray } from "@/helpers";
 import { useFilterLogs } from "@/composables/LogViewer/filterLogs";
 import SearchBar from "./SearchBar.vue";

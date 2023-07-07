@@ -15,4 +15,7 @@ export default () => {
   ipcMain.handle("config-delete", (event, key) => {
     store.delete(key);
   });
+  ipcMain.handle("config-clear", () => {
+    store.clear();
+  });
 };
