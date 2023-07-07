@@ -18,6 +18,11 @@ export interface SshDetailsToIpc extends SshDetails {
   passphrase?: string;
 }
 
+export interface SshIpcResponse {
+  success: boolean;
+  message?: string;
+}
+
 export interface BaseConnection {
   name: string;
   icon: string;

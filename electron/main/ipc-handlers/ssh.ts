@@ -10,43 +10,63 @@ export default () => {
       passwordIsEncrypted
     )
   );
-  ipcMain.handle("ssh-is-file-or-directory", async (event, options, path: string) =>
-    handleSsh(async (ssh) => {
-      // Determine whether the path is a file, directory, or does not exist:
-      let response = await ssh.exec(`test -d ${path} && echo "directory" || (test -f ${path} && echo "file")`);
-      return { success: true, message: response };
-    }, options)
+  ipcMain.handle("ssh-is-file-or-directory", async (event, options, path: string, passwordIsEncrypted: boolean) =>
+    handleSsh(
+      async (ssh) => {
+        // Determine whether the path is a file, directory, or does not exist:
+        let response = await ssh.exec(`test -d ${path} && echo "directory" || (test -f ${path} && echo "file")`);
+        return { success: true, message: response };
+      },
+      options,
+      passwordIsEncrypted
+    )
   );
-  ipcMain.handle("ssh-get-files-in-directory", async (event, options, path: string) =>
-    handleSsh(async (ssh) => {
-      // Output one file per line, only .log files:
-      // Only look for .log files
-      path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
-      let response = await ssh.exec("ls -1sr", [path]);
-      return { success: true, message: response };
-    }, options)
+  ipcMain.handle("ssh-get-files-in-directory", async (event, options, path: string, passwordIsEncrypted: boolean) =>
+    handleSsh(
+      async (ssh) => {
+        // Output one file per line, only .log files:
+        // Only look for .log files
+        path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
+        let response = await ssh.exec("ls -1sr", [path]);
+        return { success: true, message: response };
+      },
+      options,
+      passwordIsEncrypted
+    )
   );
-  ipcMain.handle("ssh-read-from-path", async (event, options, path: string, numberOfLines = 1000) =>
-    handleSsh(async (ssh) => {
-      let response = "";
-      // If number of lines is 0, it means read the entire file with tail:
-      if (numberOfLines === 0) {
-        response = await ssh.exec(`tail`, ["-n", "+1", path]);
-      } else {
-        if (numberOfLines > 200000) {
-          numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
-        }
-        response = await ssh.exec(`tail -n`, [numberOfLines, path]);
-      }
-      return { success: true, message: response };
-    }, options)
+  ipcMain.handle(
+    "ssh-read-from-path",
+    async (event, options, path: string, passwordIsEncrypted: boolean, numberOfLines = 1000) =>
+      handleSsh(
+        async (ssh) => {
+          let response = "";
+          // If number of lines is 0, it means read the entire file with tail:
+          if (numberOfLines === 0) {
+            response = await ssh.exec(`tail`, ["-n", "+1", path]);
+          } else {
+            if (numberOfLines > 200000) {
+              numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
+            }
+            response = await ssh.exec(`tail -n`, [numberOfLines, path]);
+          }
+          return { success: true, message: response };
+        },
+        options,
+        passwordIsEncrypted
+      )
   );
-  ipcMain.handle("ssh-download-from-path", async (event, options, path: string, fileName: string) =>
-    handleSsh(async (ssh) => {
-      let sftp = ssh.sftp();
-      await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
-      return { success: true, message: "Downloaded to Downloads folder" };
-    }, options)
+  ipcMain.handle(
+    "ssh-download-from-path",
+    async (event, options, path: string, passwordIsEncrypted: boolean, fileName: string) =>
+      handleSsh(
+        async (ssh) => {
+          let sftp = ssh.sftp();
+          await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
+          return { success: true, message: "Downloaded to Downloads folder" };
+        },
+        options,
+        passwordIsEncrypted
+      )
   );
 };
 
