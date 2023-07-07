@@ -58,5 +58,8 @@ export const useApplicationStore = defineStore("application", {
       this.forgeSectionEnabled = !this.forgeSectionEnabled;
       api.Store.set("app.forgeEnabled", this.forgeSectionEnabled);
     },
+    async deleteAllConfigData() {
+      await api.Store.clear();
+    },
   },
 });
