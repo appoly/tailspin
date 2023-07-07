@@ -1,6 +1,6 @@
 import { ipcMain, safeStorage, app } from "electron";
 import SSH2Promise from "ssh2-promise";
-import { SshDetails, SshDetailsToIpc } from "../../../shared/interfaces";
+import { SshDetailsToIpc } from "../../../shared/interfaces";
 
 export default () => {
   ipcMain.handle("test-ssh-credentials", async (event, options, passwordIsEncrypted: boolean) =>
@@ -115,5 +115,9 @@ async function handleSsh(
     return await callback(ssh);
   } catch (err) {
     return { success: false, message: formatErrorToString(err) };
+  } finally {
+    if (ssh) {
+      ssh.close();
+    }
   }
 }
