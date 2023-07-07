@@ -4,6 +4,7 @@
             <h1>Settings</h1>
             <div>
                 <div class="d-flex flex-column my-4">
+                    <h2 class="h4">User Settings</h2>
                     <label for="theme-select">Theme</label>
                     <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
                         <input type="radio" name="theme-radio" class="btn-check" id="theme-auto" value="auto"
@@ -23,11 +24,12 @@
                     </div>
                 </div>
                 <hr />
-                <TheDefaultKeyPathForm />
+                <h2 class="h4">SSH</h2>
+                <TheDefaultKeyPathForm class="mb-2" />
+                <TheNumberOfLinesOnSshForm class="mb-2" />
                 <hr />
-                <TheNumberOfLinesOnSshForm />
-                <hr />
-                <TheForgeApiKeyForm />
+                <h2 class="h4">Laravel Forge</h2>
+                <TheForgeApiKeyForm class="mt-2 mb-3" />
                 <hr />
             </div>
         </div>

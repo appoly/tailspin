@@ -1,5 +1,5 @@
 <template>
-    <div class="my-4">
+    <div>
         <div class="form-group d-flex align-items-center gap-3 mb-2">
             <span>Enable Forge Section</span>
             <div class="btn-group flex-grow-1" role="group" aria-label="Basic radio toggle button group">
