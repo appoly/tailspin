@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from "vue";
-import { Connection, LogEntry } from "@/interfaces";
+import { Connection, LogEntry } from "$/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
 import TheLogViewer from "./TheLogViewer.vue";
 

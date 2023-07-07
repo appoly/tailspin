@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { Connection } from "@/interfaces";
+import { Connection } from "$/interfaces";
 import { useApplicationStore } from "./useApplicationStore";
 import { unproxify } from "@/helpers";
 

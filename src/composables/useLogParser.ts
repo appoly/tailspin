@@ -1,5 +1,5 @@
 import { LogStatuses } from "@/constants/LogStatuses";
-import { LogEntry } from "@/interfaces";
+import { LogEntry } from "$/interfaces";
 import { unref } from "vue";
 
 // Match on the date, optionally with a space or T, and the time, and optionally the microseconds and timezone offset.

@@ -48,7 +48,7 @@ import TheForgeApiKeyForm from '@/components/settings/TheForgeApiKeyForm.vue';
 import TheForgeApiHandler from '@/components/forge/TheForgeApiHandler.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore';
-import { Connection, ForgeServer, ForgeSite } from "@/interfaces"
+import { Connection, ForgeServer, ForgeSite } from "$/interfaces"
 import SshLogViewer from '@/components/SshLogViewer.vue';
 
 const forgeConnection = useForgeConnectionStore();

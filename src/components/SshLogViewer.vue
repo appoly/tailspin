@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed, watch } from "vue";
-import { Connection, LogEntry, SshOptions } from "@/interfaces";
+import { Connection, LogEntry, SshOptions } from "$/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
 import { unproxify } from "@/helpers";
 import { useApplicationStore } from "@/stores/useApplicationStore";

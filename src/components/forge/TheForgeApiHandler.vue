@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { unproxify } from '@/helpers';
 import { ref } from 'vue';
-import { ForgeServer, ForgeSite } from '@/interfaces';
+import { ForgeServer, ForgeSite } from '$/interfaces';
 import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore';
 
 const forgeStore = useForgeConnectionStore();

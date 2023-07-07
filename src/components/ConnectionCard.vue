@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { Connection } from "@/interfaces"
+import { Connection } from "$/interfaces";
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 

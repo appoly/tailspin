@@ -1,5 +1,5 @@
 import { ipcRenderer } from "electron";
-import { SshDetailsToIpc, SshIpcResponse } from "../../../src/interfaces";
+import { SshDetailsToIpc, SshIpcResponse } from "../../../shared/interfaces";
 
 export function testSshCredentials(options: SshDetailsToIpc, passwordIsEncrypted: boolean): Promise<SshIpcResponse> {
   return ipcRenderer.invoke("test-ssh-credentials", options, passwordIsEncrypted);
