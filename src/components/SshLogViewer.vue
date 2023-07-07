@@ -161,10 +161,7 @@ async function readLog(path: string) {
 
         if (contentType.message.trim() === 'directory') {
             isDirectory.value = true;
-            console.log('test');
             data = await api.Ssh.getFilesInDirectory(unproxify(sshConfig.value), path);
-            console.log('test2');
-            
 
             if (!data.success) {
                 console.log('hello');

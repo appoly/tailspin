@@ -3,51 +3,31 @@ import SSH2Promise from "ssh2-promise";
 import { SshDetails, SshDetailsToIpc } from "../../../src/interfaces";
 
 export default () => {
-  ipcMain.handle("test-ssh-credentials", async (event, options, passwordIsEncrypted: boolean) => {
-    return handleSsh(options, passwordIsEncrypted, () => {
-      return Promise.resolve({ success: true }); // Simply by getting here, we know the credentials are valid, so return true
-    });
-  });
-  ipcMain.handle("ssh-is-file-or-directory", async (event, options, path: string) => {
-    let ssh: SSH2Promise;
-    try {
-      ssh = buildConnection(options);
-      await ssh.connect();
+  ipcMain.handle("test-ssh-credentials", async (event, options, passwordIsEncrypted: boolean) =>
+    handleSsh(
+      () => Promise.resolve({ success: true }), // Simply by getting here, we know the credentials are valid, so return true
+      options,
+      passwordIsEncrypted
+    )
+  );
+  ipcMain.handle("ssh-is-file-or-directory", async (event, options, path: string) =>
+    handleSsh(async (ssh) => {
       // Determine whether the path is a file, directory, or does not exist:
       let response = await ssh.exec(`test -d ${path} && echo "directory" || (test -f ${path} && echo "file")`);
       return { success: true, message: response };
-    } catch (err) {
-      return { success: false, message: formatErrorToString(err) };
-    } finally {
-      // Close ssh if successfully connected
-      if (ssh) {
-        ssh.close();
-      }
-    }
-  });
-  ipcMain.handle("ssh-get-files-in-directory", async (event, options, path: string) => {
-    let ssh: SSH2Promise;
-    try {
-      ssh = buildConnection(options);
-      await ssh.connect();
+    }, options)
+  );
+  ipcMain.handle("ssh-get-files-in-directory", async (event, options, path: string) =>
+    handleSsh(async (ssh) => {
       // Output one file per line, only .log files:
       // Only look for .log files
       path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
       let response = await ssh.exec("ls -1sr", [path]);
       return { success: true, message: response };
-    } catch (err) {
-      return { success: false, message: formatErrorToString(err) };
-    } finally {
-      if (ssh) {
-        ssh.close();
-      }
-    }
-  });
-  ipcMain.handle("ssh-read-from-path", async (event, options, path: string, numberOfLines = 1000) => {
-    let ssh: SSH2Promise;
-    try {
-      ssh = buildConnection(options);
-      await ssh.connect();
+    }, options)
+  );
+  ipcMain.handle("ssh-read-from-path", async (event, options, path: string, numberOfLines = 1000) =>
+    handleSsh(async (ssh) => {
       let response = "";
       // If number of lines is 0, it means read the entire file with tail:
       if (numberOfLines === 0) {
@@ -59,34 +39,21 @@ export default () => {
         response = await ssh.exec(`tail -n`, [numberOfLines, path]);
       }
       return { success: true, message: response };
-    } catch (err) {
-      return { success: false, message: formatErrorToString(err) };
-    } finally {
-      if (ssh) {
-        ssh.close();
-      }
-    }
-  });
-  ipcMain.handle("ssh-download-from-path", async (event, options, path: string, fileName: string) => {
-    let ssh: SSH2Promise;
-    try {
-      ssh = buildConnection(options);
+    }, options)
+  );
+  ipcMain.handle("ssh-download-from-path", async (event, options, path: string, fileName: string) =>
+    handleSsh(async (ssh) => {
       let sftp = ssh.sftp();
       await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
       return { success: true, message: "Downloaded to Downloads folder" };
-    } catch (err) {
-      return { success: false, message: formatErrorToString(err) };
-    } finally {
-      if (ssh) {
-        ssh.close();
-      }
-    }
-  });
+    }, options)
+  );
 };
 
 function formatErrorToString(err: any) {
   return typeof err === "string" ? err : err.message ?? "Error has occurred";
 }
+
 function decryptString(string: string) {
   let buffer = Buffer.from(string, "base64");
   return safeStorage.decryptString(buffer);
@@ -117,9 +84,9 @@ function buildConnection(
 }
 
 async function handleSsh(
+  callback: (ssh: SSH2Promise) => Promise<any>,
   options: SshDetailsToIpc,
-  passwordIsEncrypted = true,
-  callback: (ssh: SSH2Promise) => Promise<any>
+  passwordIsEncrypted = true
 ) {
   let ssh: SSH2Promise;
   try {
