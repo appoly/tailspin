@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class=pb-4>
         <div class="alert alert-danger" role="alert" v-if="error">
             {{ error }}
         </div>
