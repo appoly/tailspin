@@ -68,6 +68,9 @@ import { BaseConnection, Connection } from "@/interfaces";
 import { computed, onMounted, ref, watch } from 'vue';
 import BootstrapIconPicker from '@/components/BootstrapIconPicker/BootstrapIconPicker.vue';
 import TheSshForm from '@/components/TheSshForm.vue';
+import { useUserStore } from '@/stores/useUserStore';
+
+const userStore = useUserStore();
 
 const connectionStore = useConnectionStore();
 const props = defineProps<{
@@ -88,7 +91,7 @@ const baseFormFields: BaseConnection = {
         port: 22,
         username: '',
         passwordType: 'key',
-        password: '',
+        password: userStore.defaultSshPath,
     },
     iconColor: '#ffffff'
 }
@@ -97,8 +100,6 @@ const formFields = ref<BaseConnection>({ ...baseFormFields })
 
 onMounted(() => {
     if (isEdit.value) {
-        console.log(props.connection);
-
         formFields.value = {
             name: props.connection!.name,
             icon: props.connection!.icon,
@@ -168,7 +169,7 @@ async function saveConnection() {
         else if ((!isEdit.value || passwordIsChanged.value)) {
             // ...else if we are not editing, or the password is changed, encrypt the new password.
             newConnection.ssh!.password = await api.Application.encryptString(newConnection.ssh!.password);
-        } else {   
+        } else {
             // ...else the password has not been changed, so use the old password.         
             newConnection.ssh!.password = props.connection!.ssh!.password;
         }
@@ -176,8 +177,6 @@ async function saveConnection() {
 
     if (isEdit.value) {
         connectionStore.updateConnection({ ...newConnection, uid: props.connection!.uid });
-        console.log('updated: ', newConnection);
-        
     } else {
         connectionStore.addConnection(newConnection);
     }

@@ -31,7 +31,7 @@ const test = ref();
 async function queryForge() {
     isLoading.value = true;
     try {
-        encryptedApiKey.value = await api.Store.get('forgeApiKey', '');
+        encryptedApiKey.value = await api.Store.get('app.forgeApiKey', '');
         if (!encryptedApiKey.value) {
             throw new Error('No API key set');
         }
