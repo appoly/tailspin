@@ -177,7 +177,7 @@ async function testConnection() {
 }
 
 function changePassword() {
-    window.confirm('Are you sure you want to change the password/private key path?') && emit('changePassword');
+    window.confirm('Are you sure you want to change the password?') && emit('changePassword');
 }
 
 function handleChangeToPasswordField() {

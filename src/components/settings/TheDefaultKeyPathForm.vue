@@ -42,7 +42,7 @@ onMounted(() => {
 async function getExistingKeyPath() {
     isLoading.value = true;
     try {
-        sshKeyPath.value = await api.Store.get('sshKeyPath', '');
+        sshKeyPath.value = await api.Store.get('app.sshKeyPath', '');
         hasChanged.value = false;
     } catch (error: any) {
         errMsg.value = error.message ?? "Error getting existing key path";
@@ -62,7 +62,7 @@ async function handlePathSelection() {
 async function handleSshKeyPathSubmit() {
     isLoading.value = true;
     try {
-        await api.Store.set('sshKeyPath', sshKeyPath.value);
+        await api.Store.set('app.sshKeyPath', sshKeyPath.value);
         hasChanged.value = false;
     } catch (error: any) {
         errMsg.value = error.message ?? "Error getting existing key path";
