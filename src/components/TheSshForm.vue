@@ -14,22 +14,22 @@
                 <hr>
                 <h4>Authentication</h4>
                 <div class="btn-group my-4" role="group" aria-label="Basic radio toggle button group">
-                    <input type="radio" class="btn-check" id="radio-password" autocomplete="off" value="password"
-                        :disabled="isEdit && !passwordIsChanged" v-model="modelValue.passwordType">
-                    <label class="btn btn-outline-primary" for="radio-password">Password</label>
                     <input type="radio" class="btn-check" id="radio-key" autocomplete="off" value="key"
-                        :disabled="isEdit && !passwordIsChanged" v-model="modelValue.passwordType" />
+                        v-model="modelValue.passwordType" />
                     <label class="btn btn-outline-primary" for="radio-key">Private Key</label>
+                    <input type="radio" class="btn-check" id="radio-password" autocomplete="off" value="password"
+                        v-model="modelValue.passwordType" @click="handleChangeToPasswordField">
+                    <label class="btn btn-outline-primary" for="radio-password">Password</label>
                 </div>
                 <div class="form-group mb-2">
                     <label class="form-label" for="username">Username</label>
                     <input class="form-control" type="text" v-model="modelValue.username" required />
                 </div>
-                <template v-if="isEdit && !passwordIsChanged">
-                    <button @click.prevent="changePassword" class="btn btn-outline-danger" type="button">Change
-                        Password/Private Key Path</button>
-                    <small>Clicking this will override the current value for the Password/Private Key
-                        Path</small>
+                <template v-if="isEdit && !passwordIsChanged && modelValue.passwordType === 'password'">
+                    <button @click.prevent="changePassword" class="btn btn-outline-danger" type="button">
+                        Change Password
+                    </button>
+                    <small>Clicking this will override the current value for the Password</small>
                 </template>
                 <template v-else>
                     <div v-if="modelValue.passwordType === 'password'" class="form-group mb-2">
@@ -45,6 +45,10 @@
                                 <button @click.prevent="() => handlePathSelection()" class="btn btn-outline-secondary"
                                     type="button">Browse</button>
                             </div>
+                            <small v-if="defaultSshPath && modelValue.password !== defaultSshPath">
+                                <a @click.prevent="() => modelValue!.password = defaultSshPath" href="javascript://">Use
+                                    default SSH key</a> ({{ defaultSshPath }})
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="passphraseRequired">Passphrase Required</label>
@@ -83,11 +87,11 @@
 
 <script setup lang="ts">
 import { unproxify } from '@/helpers';
-import { SshDetails } from '@/interfaces';
+import { SshDetails } from '$/interfaces';
 import { computed, ref } from 'vue';
 import TheSshPassphraseModal from '@/components/TheSshPassphraseModal.vue';
 
-const props = withDefaults(defineProps<{ modelValue?: SshDetails, isEdit: boolean, passwordIsChanged: boolean }>(), {
+const props = withDefaults(defineProps<{ modelValue?: SshDetails, isEdit: boolean, passwordIsChanged: boolean, defaultSshPath: string }>(), {
     isEdit: false,
     passwordIsChanged: false,
 });
@@ -154,17 +158,19 @@ async function testConnection() {
             passphraseModal.value!.open();
             return;
         }
-        let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged; // Password is only encrypted if it's not changed.
+        // Password is only encrypted if it's not changed AND it is a password - the key path doesn't need encryption
+        let passwordIsEncrypted = props.isEdit && !props.passwordIsChanged && sshCredentials.value.passwordType === 'password';
         let response = await api.Ssh.testSshCredentials(unproxify(sshCredentials.value), passwordIsEncrypted);
         if (response.success) {
             testSuccess.value = true;
             alert('Connection successful');
         } else {
             errorMsg.value = "Connection failed."
-            errorMsg.value += response.error ? ` Error: ${response.error}` : '';
+            errorMsg.value += response.message ? ` Error: ${response.message}` : '';
             alert(errorMsg.value);
         }
     } catch (err: any) {
+        console.error(err);
         errorMsg.value = err?.message ?? 'An unexpected error has occurred';
         alert(errorMsg.value);
     } finally {
@@ -174,6 +180,10 @@ async function testConnection() {
 }
 
 function changePassword() {
-    window.confirm('Are you sure you want to change the password/private key path?') && emit('changePassword');
+    window.confirm('Are you sure you want to change the password?') && emit('changePassword');
+}
+
+function handleChangeToPasswordField() {
+    emit('changePassword');
 }
 </script>

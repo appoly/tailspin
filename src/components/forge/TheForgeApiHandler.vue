@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { unproxify } from '@/helpers';
 import { ref } from 'vue';
-import { ForgeServer, ForgeSite } from '@/interfaces';
+import { ForgeServer, ForgeSite } from '$/interfaces';
 import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore';
 
 const forgeStore = useForgeConnectionStore();
@@ -31,7 +31,7 @@ const test = ref();
 async function queryForge() {
     isLoading.value = true;
     try {
-        encryptedApiKey.value = await api.Store.get('forgeApiKey', '');
+        encryptedApiKey.value = await api.Store.get('app.forgeApiKey', '');
         if (!encryptedApiKey.value) {
             throw new Error('No API key set');
         }
@@ -52,8 +52,6 @@ async function queryForge() {
         // Then store these:
         forgeStore.setSitesAndServers(sites, servers);
     } catch (error: any) {
-        console.log(error);
-
         errorMsg.value = error.message ?? 'An unknown error occurred';
     } finally {
         isLoading.value = false;

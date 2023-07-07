@@ -20,7 +20,7 @@
   
 <script setup lang="ts">
 import { ref } from "vue";
-import { LogEntry } from "@/interfaces";
+import { LogEntry } from "$/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
 import TheLogViewer from "@/components/TheLogViewer.vue";
 

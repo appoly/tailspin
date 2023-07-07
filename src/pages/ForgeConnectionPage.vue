@@ -48,7 +48,7 @@ import TheForgeApiKeyForm from '@/components/settings/TheForgeApiKeyForm.vue';
 import TheForgeApiHandler from '@/components/forge/TheForgeApiHandler.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore';
-import { Connection, ForgeServer, ForgeSite } from "@/interfaces"
+import { Connection, ForgeServer, ForgeSite } from "$/interfaces"
 import SshLogViewer from '@/components/SshLogViewer.vue';
 
 const forgeConnection = useForgeConnectionStore();
@@ -72,18 +72,18 @@ const sitesByServerId = computed(() => {
 });
 
 onMounted(async () => {
-    currentKeyExists.value = await api.Store.has('forgeApiKey');
+    currentKeyExists.value = await api.Store.has('app.forgeApiKey');
 })
 
 async function handleFormSubmit() {
-    currentKeyExists.value = await api.Store.has('forgeApiKey');
+    currentKeyExists.value = await api.Store.has('app.forgeApiKey');
 }
 
 // Hacky for now as a POC
 const connection = ref<Connection>();
 const hideSelector = ref(false);
 async function selectSite(site: ForgeSite, server: ForgeServer) {
-    const sshKeyPath = await api.Store.get('sshKeyPath', '');
+    const sshKeyPath = await api.Store.get('app.sshKeyPath', '');
     if (!sshKeyPath) {
         alert('You must set your SSH key path in the settings first.');
         return;
@@ -99,7 +99,6 @@ async function selectSite(site: ForgeSite, server: ForgeServer) {
             port: 22,
             passwordType: 'key',
             password: await api.Application.encryptString(sshKeyPath),
-
         },
         isFavorite: false,
         iconColor: 'blue',

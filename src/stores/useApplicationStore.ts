@@ -1,4 +1,4 @@
-import { Download } from "@/interfaces";
+import { Download } from "$/interfaces";
 import { defineStore } from "pinia";
 
 export const useApplicationStore = defineStore("application", {
@@ -57,6 +57,9 @@ export const useApplicationStore = defineStore("application", {
     toggleForgeSectionEnabled() {
       this.forgeSectionEnabled = !this.forgeSectionEnabled;
       api.Store.set("app.forgeEnabled", this.forgeSectionEnabled);
+    },
+    async deleteAllConfigData() {
+      await api.Store.clear();
     },
   },
 });

@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { SshOptions } from "@/interfaces";
+import { SshOptions } from "$/interfaces";
 
 const props = defineProps<{
     modelValue: SshOptions;
