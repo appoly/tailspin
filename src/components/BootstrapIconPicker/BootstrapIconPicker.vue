@@ -1,7 +1,6 @@
 <template>
     <div ref="iconPicker" class="icon-picker">
-        <button type="button" :class="[buttonClass, 'form-control']"
-            @click.stop="() => selectorOpen = !selectorOpen">
+        <button type="button" :class="[buttonClass, 'form-control']" @click.stop="() => selectorOpen = !selectorOpen">
             <i :class="[iconClass + modelValue]" :style="{ color: color }"></i>
         </button>
 
@@ -38,7 +37,7 @@ export default {
         }
     },
     props: {
-        modelValue: { type: String, default: 'plus' },
+        modelValue: { type: String, required: true },
         buttonClass: { type: String, default: 'btn btn-outline-secondary' },
         color: { type: String, default: '#ffffff' }
     },

@@ -1,13 +1,15 @@
 <template>
-    <div class="connection" @contextmenu.prevent="showMenu" @click="applicationStore.goToConnection(connection.uid)">
+    <div class="connection mb-1" :class="[viewMode === 'grid' ? 'col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2' : 'col-12']"
+        @contextmenu.prevent="showMenu" @click="applicationStore.goToConnection(connection.uid)">
         <!-- grid -->
-        <div class="connection-card card m-1" role="button" v-if="viewMode === 'grid'">
+        <div class="connection-card card h-100" role="button" v-if="viewMode === 'grid'">
             <div class="text-center font-weight-bold">
                 <div class="icon">
                     <i :class="['h3 bi', `bi-${connection.icon}`]" :style="{ 'color': connection.iconColor ?? '' }"></i>
                 </div>
 
                 <span class="d-block fs-5">{{ connection.name ?? '?' }}</span>
+                <small class="d-block text-truncate">{{ connection.path }}</small>
             </div>
         </div>
 
@@ -24,12 +26,12 @@
     </div>
 
     <div v-show="isMenuVisible" class="menu" ref="menu">
-        <ul class="list-group">
-            <li v-for="option in menuOptions" :key="option.value" class="list-group-item selectable"
+        <div class="list-group">
+            <button v-for="option in menuOptions" :key="option.value" class="list-group-item list-group-item-action"
                 @click="selectOption(option)">
                 {{ option.label }}
-            </li>
-        </ul>
+            </button>
+        </div>
     </div>
 </template>
 
