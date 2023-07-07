@@ -14,22 +14,22 @@
                 <hr>
                 <h4>Authentication</h4>
                 <div class="btn-group my-4" role="group" aria-label="Basic radio toggle button group">
-                    <input type="radio" class="btn-check" id="radio-password" autocomplete="off" value="password"
-                        :disabled="isEdit && !passwordIsChanged" v-model="modelValue.passwordType">
-                    <label class="btn btn-outline-primary" for="radio-password">Password</label>
                     <input type="radio" class="btn-check" id="radio-key" autocomplete="off" value="key"
-                        :disabled="isEdit && !passwordIsChanged" v-model="modelValue.passwordType" />
+                        v-model="modelValue.passwordType" />
                     <label class="btn btn-outline-primary" for="radio-key">Private Key</label>
+                    <input type="radio" class="btn-check" id="radio-password" autocomplete="off" value="password"
+                        v-model="modelValue.passwordType" @click="handleChangeToPasswordField">
+                    <label class="btn btn-outline-primary" for="radio-password">Password</label>
                 </div>
                 <div class="form-group mb-2">
                     <label class="form-label" for="username">Username</label>
                     <input class="form-control" type="text" v-model="modelValue.username" required />
                 </div>
-                <template v-if="isEdit && !passwordIsChanged">
-                    <button @click.prevent="changePassword" class="btn btn-outline-danger" type="button">Change
-                        Password/Private Key Path</button>
-                    <small>Clicking this will override the current value for the Password/Private Key
-                        Path</small>
+                <template v-if="isEdit && !passwordIsChanged && modelValue.passwordType === 'password'">
+                    <button @click.prevent="changePassword" class="btn btn-outline-danger" type="button">
+                        Change Password
+                    </button>
+                    <small>Clicking this will override the current value for the Password</small>
                 </template>
                 <template v-else>
                     <div v-if="modelValue.passwordType === 'password'" class="form-group mb-2">
@@ -178,5 +178,9 @@ async function testConnection() {
 
 function changePassword() {
     window.confirm('Are you sure you want to change the password/private key path?') && emit('changePassword');
+}
+
+function handleChangeToPasswordField() {
+    emit('changePassword');
 }
 </script>
