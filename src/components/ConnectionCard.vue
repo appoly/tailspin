@@ -1,5 +1,5 @@
 <template>
-    <div class="connection mb-1" :class="[viewMode === 'grid' ? 'col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2' : 'col-12']"
+    <div class="connection mb-1" :class="[viewMode === 'grid' ? 'col-12 col-sm-6 col-md-4 col-lg-3' : 'col-12']"
         @contextmenu.prevent="showMenu" @click="applicationStore.goToConnection(connection.uid)">
         <!-- grid -->
         <div class="connection-card card h-100" role="button" v-if="viewMode === 'grid'">
