@@ -1,17 +1,15 @@
 <template>
     <div class="form-group">
         <label for="ssh-number-of-lines">
-            SSH - Default Number of Lines
+            SSH - Default size to retrieve
         </label>
         <form @submit.prevent="submit">
             <div class="input-group">
-                <select class="form-select" v-model.number="numberOfLines" @change="hasChanged = true"
+                <select class="form-select" v-model.number="numberOfKilobytes" @change="hasChanged = true"
                     id="ssh-number-of-lines">
-                    <option value="1000">{{ Number(1000).toLocaleString() }}</option>
-                    <option value="10000">{{ Number(10000).toLocaleString() }}</option>
-                    <option value="50000">{{ Number(50000).toLocaleString() }}</option>
-                    <option value="100000">{{ Number(100000).toLocaleString() }}</option>
-                    <option value="200000">{{ Number(200000).toLocaleString() }}</option>
+                    <option v-for="size in FileSizesInKb" :value="size" :key="size">
+                        {{ kilobytesToHumanReadableFileSize(size) }}
+                    </option>
                 </select>
                 <button class="btn btn-secondary" type="submit" :disabled="isLoading || !hasChanged">
                     <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -19,8 +17,8 @@
                 </button>
             </div>
             <small class="text-muted">
-                This is the number of lines that will be requested from the log. A larger number will take longer to load,
-                but provide more log entries.
+                This is the default amount of the file that will be retrieved when viewing the log, from the end of the
+                file. A larger value will give more entries, but take longer to load.
             </small>
             <div v-if="errMsg">
                 <small class="text-danger">{{ errMsg }}</small>
@@ -31,8 +29,10 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { FileSizesInKb } from "@/constants/Ssh";
+import { kilobytesToHumanReadableFileSize } from "@/helpers";
 
-const numberOfLines = ref(1000);
+const numberOfKilobytes = ref(1000);
 const isLoading = ref(false);
 const errMsg = ref('');
 const hasChanged = ref(false);
@@ -44,7 +44,7 @@ onMounted(() => {
 async function getExistingKeyPath() {
     isLoading.value = true;
     try {
-        numberOfLines.value = parseInt(await api.Store.get('ssh.numberOfLines', 1000));
+        numberOfKilobytes.value = parseInt(await api.Store.get('ssh.numberOfKilobytes', 1000));
         hasChanged.value = false;
     } catch (error: any) {
         errMsg.value = error.message ?? "Error getting existing key path";
@@ -56,10 +56,10 @@ async function getExistingKeyPath() {
 async function submit() {
     isLoading.value = true;
     try {
-        await api.Store.set('ssh.numberOfLines', numberOfLines.value);
+        await api.Store.set('ssh.numberOfKilobytes', numberOfKilobytes.value);
         hasChanged.value = false;
     } catch (error: any) {
-        errMsg.value = error.message ?? "Error getting existing key path";
+        errMsg.value = error.message ?? "Error Submitting Form";
     } finally {
         isLoading.value = false;
     }

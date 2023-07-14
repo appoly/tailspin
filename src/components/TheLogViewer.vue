@@ -59,33 +59,24 @@
             </div>
         </div>
     </Transition>
-    <div key="entries" v-if="!isLoading">
-        <div class="log-container">
-            <TheLogEntry v-for="logItem in currentPageItems" :logItem="logItem" />
-        </div>
-
-        <!-- pagination -->
-        <TheLogPaginator :totalItems="filteredLogItems.length" :itemsPerPage="itemsPerPage" :page="page"
-            @changePage="changePage" />
-
-        <div class="d-flex justify-content-end" v-if="filteredLogItems.length > 0">
-            <button class="btn btn-outline-secondary" type="button" @click="jumpToTop">
-                <i class="bi bi-arrow-up"></i>
-            </button>
-        </div>
+    <TheLogEntriesContainer key="entries" v-if="logEntries.length" :logEntries="logEntries" :page="page"
+        :itemsPerPage="itemsPerPage" :searchTerm="searchTerm" :selectedSeverity="selectedSeverity"
+        @change-page="changePage" />
+    <div class="position-absolute" style="bottom: 10px; right: 10px;">
+        <button class="btn btn-outline-secondary" type="button" @click="jumpToTop">
+            <i class="bi bi-arrow-up"></i>
+        </button>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
-import TheLogEntry from "@/components/TheLogEntry.vue"
-import TheLogPaginator from "@/components/TheLogPaginator.vue";
 import SeverityFilter from "@/components/SeverityFilter.vue";
 import { LogEntry } from "$/interfaces";
 import { selectRandomFromArray } from "@/helpers";
-import { useFilterLogs } from "@/composables/LogViewer/filterLogs";
 import SearchBar from "./SearchBar.vue";
+import TheLogEntriesContainer from "./TheLogEntriesContainer.vue";
 
 const props = defineProps<{
     logEntries: LogEntry[];
@@ -99,16 +90,9 @@ const selectedSeverity = ref('');
 const page = ref(1);
 const itemsPerPage = ref(20);
 
-const filteredLogItems = computed(() => {
-    const search = searchTerm.value.toLowerCase();
-    let items = props.logEntries;
 
-    return useFilterLogs(items, search, selectedSeverity.value);
-});
-
-const currentPageItems = computed(() => {
-    return filteredLogItems.value.slice((page.value - 1) * itemsPerPage.value, page.value * itemsPerPage.value);
-});
+// We want to be able to access the changePage function from outside this component:
+defineExpose({ changePage });
 
 const severityFilters = computed(() => {
     const filters = [];
