@@ -358,7 +358,7 @@ function beginAutoRefresh() {
     autoFetchInterval.value = RefreshInterval;
     applicationStore.autoFetching.intervalId = setInterval(() => {
         fetchLogUpdates();
-    }, autoFetchInterval.value * 1000);
+    }, autoFetchInterval.value);
 }
 
 onUnmounted(() => {
