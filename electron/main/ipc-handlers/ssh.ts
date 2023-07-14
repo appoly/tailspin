@@ -27,7 +27,7 @@ export default () => {
         // Output one file per line, only .log files:
         // Only look for .log files
         path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
-        let response = await ssh.exec("ls -1sr", [path]);
+        let response = await ssh.exec("ls -lr", [path]);
         return { success: true, message: response };
       },
       options,
@@ -36,7 +36,7 @@ export default () => {
   );
   ipcMain.handle(
     "ssh-read-from-path",
-    async (event, options, path: string, passwordIsEncrypted: boolean, numberOfBytes = 1000) =>
+    async (event, options, path: string, passwordIsEncrypted: boolean, numberOfBytes = 10000) =>
       handleSsh(
         async (ssh) => {
           let response = "";
@@ -47,7 +47,7 @@ export default () => {
             response = await ssh.exec(`tail -c`, [numberOfBytes, path]);
           }
           // Also get the file size in Kilobytes to help with loading the next x bytes etc:
-          let fileSize = await ssh.exec(`du -k`, [path]);
+          const fileSize = (await ssh.exec(`stat -c %s`, [path]));
           return { success: true, message: response, fileSize };
         },
         options,
@@ -60,7 +60,7 @@ export default () => {
       handleSsh(
         async (ssh) => {
           const response = await ssh.exec(`tail -c`, [`+${fileSizeAtLastReadInBytes.toString()}`, path]); // Read from the last read position
-          const fileSize = await ssh.exec(`du -k`, [path]);
+          const fileSize = (await ssh.exec(`stat -c %s`, [path]));
           return { success: true, message: response, fileSize };
         },
         options,

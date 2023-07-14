@@ -32,7 +32,7 @@
                         <span class="visually-hidden">Download</span>
                     </button>
                     <div v-if="autoFetchInterval" class="btn-group">
-                        <button class="btn btn-outline-info" type="button" @click="toggleAutoRefresh">
+                        <button class="btn btn-outline-info" type="button" @click="stopAutoRefresh">
                             <i class="bi bi-stop" aria-hidden="true"></i>
                             <span class="visually-hidden">Stop Auto-fetch</span>
                         </button>
@@ -52,10 +52,18 @@
                         </button>
                         <ul class="dropdown-menu">
                             <li>
-                                <button class="dropdown-item" @click="toggleAutoRefresh">
-                                    <span v-if="autoFetchInterval">Stop</span>
-                                    <span v-else>Start</span>
-                                    Auto-fetch
+                                <button class="dropdown-item" @click="() => beginAutoRefresh(120000)">
+                                    Auto-fetch every 2 minutes
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item" @click="() => beginAutoRefresh(60000)">
+                                    Auto-fetch every 60 seconds
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item" @click="() => beginAutoRefresh(30000)">
+                                    Auto-fetch every 30 seconds
                                 </button>
                             </li>
                             <li>
@@ -130,7 +138,7 @@ import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
 import TheLogViewer from "@/components/TheLogViewer.vue";
 import TheLogViewerSshOptions from "@/components/TheLogViewerSshOptions.vue";
 import { kilobytesToHumanReadableFileSize } from "@/helpers";
-import { MaxFileSizeToLoadKb, RefreshInterval } from "@/constants/Ssh";
+import { MaxFileSizeToLoadKb } from "@/constants/Ssh";
 
 const props = defineProps<{
     connection: Connection;
@@ -138,7 +146,7 @@ const props = defineProps<{
 
 onMounted(async () => {
     readLog(props.connection.path);
-    sshOptions.value.numberOfKilobytes = Number(await api.Store.get('ssh.numberOfKilobytes', 1000));
+    sshOptions.value.numberOfBytes = Number(await api.Store.get('ssh.numberOfBytes', 1000));
 });
 
 const applicationStore = useApplicationStore();
@@ -155,7 +163,7 @@ const isLoading = ref(false);
 const errorMsg = ref('');
 
 const sshOptions = ref<SshOptions>({
-    numberOfKilobytes: 1000,
+    numberOfBytes: 1000,
 });
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
@@ -185,7 +193,7 @@ async function readLog(path: string) {
     errorMsg.value = '';
     try {
         // If the number of lines is set to 0 (ie. unlimited) and the file is larger than the max, abort:
-        if (sshOptions.value.numberOfKilobytes === 0 && currentFile.value!.size > MaxFileSizeToLoadKb) {
+        if (sshOptions.value.numberOfBytes === 0 && currentFile.value!.size > MaxFileSizeToLoadKb) {
             throw new Error('File too large to retrieve all lines. Please select a limited number of lines.');
         }
         if (props.connection.ssh?.passphraseRequired && !passphrase.value) {
@@ -211,19 +219,20 @@ async function readLog(path: string) {
             if (!data.success) {
                 throw new Error(data.message);
             }
-            // We have back each file with first its size, then its name. Below, we'll extract these into an array with 2 elements: size and path:
-            files.value = (data.message as string).trim().split('\n').map((file: string) => {
-                const [size, ...path] = file.trim().split(' ');
+            files.value = (data.message as string).trim().split('\n').filter(line => line.trim() !== '').map((file: string) => {
+                const [permissions, links, owner, group, size, month, day, time, ...nameParts] = file
+                    .trim()
+                    .split(/\s+/);
                 return {
-                    size: parseInt(size),
-                    path: path.join(' ')
+                    size: parseInt(size) / 1024,
+                    path: nameParts.join(' ')
                 }
             });
             return;
         };
 
         currentPath.value = path;
-        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfKilobytes)
+        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfBytes)
 
 
         if (!data.success) {
@@ -288,12 +297,16 @@ async function downloadLog() {
 }
 
 async function handlePathDropdown() {
-    stopAutoRefresh();
+    if (isThisConnectionAutoFetching.value) {
+        stopAutoRefresh();
+    }
     nextTick(() => readLog(currentPath.value));
 }
 
 function refreshSsh() {
-    stopAutoRefresh();
+    if (isThisConnectionAutoFetching.value) {
+        stopAutoRefresh();
+    }
     readLog(props.connection.path);
 }
 
@@ -307,15 +320,14 @@ function getLastPathSegment(path: string) {
 
 const isUpdating = ref(false);
 async function fetchLogUpdates() {
-    console.log('fetching updates');
-
     isUpdating.value = true;
     try {
-        const data = await api.Ssh.readNextFromPath(unproxify(sshConfig.value), currentPath.value, currentFileSize.value * 1000);
+        const data = await api.Ssh.readNextFromPath(unproxify(sshConfig.value), currentPath.value, currentFileSize.value);
         if (!data.success) {
             throw new Error(data.message);
         }
-        logEntries.value = await useLogParser(data.message as string);
+        const newEntries = await useLogParser(data.message as string);
+        logEntries.value = [...newEntries, ...logEntries.value]; // Add them to the front as the order is reversed
         currentFileSize.value = parseInt(data.fileSize as string);
         return;
     } catch (error: any) {
@@ -330,14 +342,7 @@ async function fetchLogUpdates() {
 // ------------------------------
 
 const autoFetchInterval = ref(0);
-
-function toggleAutoRefresh() {
-    if (autoFetchInterval.value) {
-        stopAutoRefresh();
-    } else {
-        beginAutoRefresh();
-    }
-}
+const isThisConnectionAutoFetching = computed(() => applicationStore.autoFetching.connectionId === props.connection.uid);
 
 function stopAutoRefresh() {
     applicationStore.autoFetching.connectionId = null;
@@ -345,8 +350,8 @@ function stopAutoRefresh() {
     clearInterval(applicationStore.autoFetching!.intervalId);
 }
 
-function beginAutoRefresh() {
-    if (applicationStore.autoFetching.connectionId && applicationStore.autoFetching.connectionId !== props.connection.uid) {
+function beginAutoRefresh(intervalTime = 6000) {
+    if (applicationStore.autoFetching.connectionId && !isThisConnectionAutoFetching.value) {
         alert("You can only have one connection auto-fetching at a time. Please deactivate auto-fetching on the other connection first.");
         return;
     }
@@ -354,15 +359,19 @@ function beginAutoRefresh() {
     if (applicationStore.autoFetching.intervalId) {
         clearInterval(applicationStore.autoFetching.intervalId);
     }
+
     applicationStore.autoFetching.connectionId = props.connection.uid;
-    autoFetchInterval.value = RefreshInterval;
+    autoFetchInterval.value = intervalTime;
     applicationStore.autoFetching.intervalId = setInterval(() => {
         fetchLogUpdates();
     }, autoFetchInterval.value);
+    console.log(applicationStore.autoFetching.intervalId, applicationStore.autoFetching.connectionId);
 }
 
 onUnmounted(() => {
-    stopAutoRefresh();
+    if (isThisConnectionAutoFetching.value) {
+        stopAutoRefresh();
+    }
 });
 
 </script>
