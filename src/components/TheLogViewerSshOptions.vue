@@ -24,7 +24,7 @@
                     load, but provide more log entries.
                 </small>
                 <small class="text-info" v-if="!canLoadEntireFile">
-                    <span v-if="props.currentFile">Note: File too large to load all lines.</span>
+                    <span v-if="props.currentFileSize !== 0">Note: File too large to load all lines.</span>
                 </small>
                 <small class="text-warning" v-if="modelValue.numberOfKilobytes === 0">
                     This will load the entire file. If the file is too large, this may cause an error to occur.
@@ -50,7 +50,7 @@ const props = defineProps<{
     modelValue: SshOptions;
     originalOptions: SshOptions;
     isLoading: boolean;
-    currentFile?: { path: string; size: number };
+    currentFileSize: number;
 }>();
 const emit = defineEmits(['submitted', 'update:modelValue']);
 
@@ -66,12 +66,7 @@ computed({
 const buttonText = ref("Apply");
 
 // Can only load the entire file if it less than 500Mb:
-const canLoadEntireFile = computed(() => {
-    if (!props.currentFile) {
-        return true;
-    }
-    return props.currentFile.size < MaxFileSizeToLoadKb;
-});
+const canLoadEntireFile = computed(() => props.currentFileSize < MaxFileSizeToLoadKb);
 
 function submit() {
     buttonText.value = "Applying...";
