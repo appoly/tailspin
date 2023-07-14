@@ -53,8 +53,10 @@
                 </template>
 
                 <template #above-table>
-                    <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
-                        :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
+                    <Transition>
+                        <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
+                            :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
+                    </Transition>
                 </template>
             </TheLogViewer>
 
