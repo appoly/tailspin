@@ -55,6 +55,19 @@ export default () => {
       )
   );
   ipcMain.handle(
+    "ssh-read-next-from-path",
+    async (event, options, path: string, passwordIsEncrypted: boolean, fileSizeAtLastReadInBytes: number) =>
+      handleSsh(
+        async (ssh) => {
+          const response = await ssh.exec(`tail -c`, [`+${fileSizeAtLastReadInBytes.toString()}`, path]); // Read from the last read position
+          const fileSize = await ssh.exec(`du -k`, [path]);
+          return { success: true, message: response, fileSize };
+        },
+        options,
+        passwordIsEncrypted
+      )
+  );
+  ipcMain.handle(
     "ssh-download-from-path",
     async (event, options, path: string, passwordIsEncrypted: boolean, fileName: string) =>
       handleSsh(

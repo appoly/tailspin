@@ -22,6 +22,20 @@ export async function readFromPath(
   return ipcRenderer.invoke("ssh-read-from-path", options, path, doesPasswordNeedDecrypting(options), bytes);
 }
 
+export async function readNextFromPath(
+  options: SshDetailsToIpc,
+  path: string,
+  fileSizeAtLastRead: number
+): Promise<SshIpcResponse & { fileSize: string }> {
+  return ipcRenderer.invoke(
+    "ssh-read-next-from-path",
+    options,
+    path,
+    doesPasswordNeedDecrypting(options),
+    fileSizeAtLastRead
+  );
+}
+
 export async function downloadFromPath(
   options: SshDetailsToIpc,
   path: string,

@@ -18,11 +18,11 @@ import TheLogPaginator from './TheLogPaginator.vue';
 import { debounce } from '@/helpers';
 
 const props = defineProps<{
-    logEntries: LogEntry[];
     page: number;
     itemsPerPage: number;
     searchTerm: string;
     selectedSeverity: string;
+    logEntries: LogEntry[];
 }>();
 
 const emits = defineEmits(['change-page']);
@@ -33,6 +33,9 @@ const filteredLogItems = ref<LogEntry[]>(props.logEntries);
 const currentPageItems = computed(() => {
     return filteredLogItems.value.slice((props.page - 1) * props.itemsPerPage, props.page * props.itemsPerPage);
 });
+
+// Whenever the log entries change, we need to re-filter them:
+watch(() => props.logEntries.length, loadAndFilterLogEntries);
 
 // Delay the filtering of the log entries until the user has stopped typing for 250ms:
 watch(() => props.searchTerm, debounce(loadAndFilterLogEntries, 250));

@@ -27,16 +27,32 @@
                     </template>
                 </div>
                 <div class="ms-2">
-                    <button class="btn btn-outline-secondary me-2" type="button" @click="() => downloadLog()"
-                        :disabled="!isReady">
+                    <button class="btn btn-outline-secondary me-2" type="button" @click="downloadLog" :disabled="!isReady">
                         <i class="bi bi-download" aria-hidden="true"></i>
                         <span class="visually-hidden">Download</span>
                     </button>
-                    <button class="btn btn-outline-secondary" type="button" @click="() => readLog(props.connection.path)"
-                        :disabled="!isReady">
-                        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
-                        <span class="visually-hidden">Refresh</span>
-                    </button>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary" type="button" @click="fetchLogUpdates"
+                            :disabled="!isReady" data-toggle="tooltip" title="Fetch New Entries">
+                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                            <span class="visually-hidden">Refresh</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
+                            data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="true" :disabled="!isReady">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <button class="dropdown-item" @click="handleLiveUpdate">Live Updates</button>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><button class="dropdown-item" @click="refreshSsh">Full Refresh</button></li>
+                        </ul>
+                    </div>
+
+
                 </div>
             </div>
         </div>
@@ -45,8 +61,9 @@
                 :key="`log_viewer_${currentPath}`">
                 <template #additional-filters>
                     <div class="ms-2">
-                        <button class="btn btn-primary" @click="() => showSshOptions = !showSshOptions">
-                            SSH Options&nbsp;
+                        <button class="btn btn-outline-secondary" @click="() => showSshOptions = !showSshOptions"
+                            data-bs-toggle="tooltip" title="SSH Options">
+                            <i class="bi bi-terminal"></i>&nbsp;
                             <i v-if="!showSshOptions" class="bi bi-chevron-down"></i>
                             <i v-else class="bi bi-chevron-up"></i>
                         </button>
@@ -58,6 +75,14 @@
                         <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
                             :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
                     </Transition>
+                    <div v-if="isUpdating" class="alert alert-info" role="alert">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-arrow-repeat me-2" aria-hidden="true"></i>
+                                Fetching new entries...
+                            </div>
+                        </div>
+                    </div>
                 </template>
             </TheLogViewer>
 
@@ -67,11 +92,11 @@
                 </div>
             </div>
             <template v-if="isReady">
-                <div v-if="!paths.length" class="my-2">
+                <div v-if="!paths.length && isDirectory" class="my-2">
                     <div class="alert alert-info" role="alert">
                         <div class="d-flex justify-content-between align-items-center">
                             No log entries found.
-                            <button class="btn btn-outline-light" type="button" @click="retryConnection">Reload?</button>
+                            <button class="btn btn-outline-light" type="button" @click="refreshSsh">Reload?</button>
                         </div>
                     </div>
                 </div>
@@ -134,7 +159,7 @@ const currentFile = computed(() => {
 
 const showSshOptions = ref(false);
 
-const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value);
+const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value && !isUpdating.value);
 const theLogViewer = ref();
 
 function handleOptionsUpdate() {
@@ -255,22 +280,39 @@ async function handlePathDropdown() {
     nextTick(() => readLog(currentPath.value));
 }
 
-function refreshLog() {
-    if (currentPath.value) {
-        readLog(currentPath.value);
-    }
+function refreshSsh() {
+    readLog(props.connection.path);
 }
 
 function handlePassphraseSubmit() {
     readLog(currentPath.value || props.connection.path);
 }
 
-function retryConnection() {
-    readLog(currentPath.value || props.connection.path);
-}
-
 function getLastPathSegment(path: string) {
     return path.split('/').pop();
+}
+
+const isUpdating = ref(false);
+async function fetchLogUpdates() {
+    isUpdating.value = true; // TODO: Use a different variable 'isUpdating'
+    try {
+        const data = await api.Ssh.readNextFromPath(unproxify(sshConfig.value), currentPath.value, currentFileSize.value * 1000);
+        if (!data.success) {
+            throw new Error(data.message);
+        }
+        logEntries.value = await useLogParser(data.message as string);
+        currentFileSize.value = parseInt(data.fileSize as string);
+        return;
+    } catch (error: any) {
+        errorMsg.value = error?.message ?? "Error reading log file";
+    } finally {
+        isUpdating.value = false;
+    }
+}
+
+function handleLiveUpdate() {
+    // TODO
+    alert("Coming soon!");
 }
 
 </script>
