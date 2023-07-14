@@ -35,15 +35,17 @@ const currentPageItems = computed(() => {
 });
 
 // Whenever the log entries change, we need to re-filter them:
-watch(() => props.logEntries.length, loadAndFilterLogEntries);
+watch(() => props.logEntries.length, () => loadAndFilterLogEntries(false));
 
 // Delay the filtering of the log entries until the user has stopped typing for 250ms:
 watch(() => props.searchTerm, debounce(loadAndFilterLogEntries, 250));
 // Filter the log entries when the selected severity changes:
-watch(() => props.selectedSeverity, loadAndFilterLogEntries);
+watch(() => props.selectedSeverity, () => loadAndFilterLogEntries());
 
-function loadAndFilterLogEntries() {
-    changePage(1);
+function loadAndFilterLogEntries(resetPageToOne = true) {
+    if (resetPageToOne) {
+        changePage(1);
+    }
     filteredLogItems.value = filterLogs(props.logEntries, props.searchTerm.toLowerCase(), props.selectedSeverity);
 }
 

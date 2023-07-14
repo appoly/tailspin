@@ -31,19 +31,32 @@
                         <i class="bi bi-download" aria-hidden="true"></i>
                         <span class="visually-hidden">Download</span>
                     </button>
-                    <div class="btn-group">
+                    <div v-if="autoFetchInterval" class="btn-group">
+                        <button class="btn btn-outline-info" type="button" @click="toggleAutoRefresh">
+                            <i class="bi bi-stop" aria-hidden="true"></i>
+                            <span class="visually-hidden">Stop Auto-fetch</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" disabled>
+                        </button>
+                    </div>
+                    <div v-else class="btn-group">
                         <button class="btn btn-outline-secondary" type="button" @click="fetchLogUpdates"
-                            :disabled="!isReady" data-toggle="tooltip" title="Fetch New Entries">
+                            :disabled="!isReady" title="Fetch New Entries">
                             <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
                             <span class="visually-hidden">Refresh</span>
                         </button>
                         <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
-                            data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="true" :disabled="!isReady">
+                            :class="{ 'btn-outline-info': autoFetchInterval > 0 }" data-bs-toggle="dropdown"
+                            aria-expanded="false" data-bs-auto-close="true" :disabled="!isReady">
                             <span class="visually-hidden">Toggle Dropdown</span>
                         </button>
                         <ul class="dropdown-menu">
                             <li>
-                                <button class="dropdown-item" @click="handleLiveUpdate">Live Updates</button>
+                                <button class="dropdown-item" @click="toggleAutoRefresh">
+                                    <span v-if="autoFetchInterval">Stop</span>
+                                    <span v-else>Start</span>
+                                    Auto-fetch
+                                </button>
                             </li>
                             <li>
                                 <hr class="dropdown-divider">
@@ -51,8 +64,6 @@
                             <li><button class="dropdown-item" @click="refreshSsh">Full Refresh</button></li>
                         </ul>
                     </div>
-
-
                 </div>
             </div>
         </div>
@@ -110,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed, watch } from "vue";
+import { ref, onMounted, nextTick, computed, onUnmounted } from "vue";
 import { Connection, LogEntry, SshOptions } from "$/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
 import { unproxify } from "@/helpers";
@@ -277,10 +288,12 @@ async function downloadLog() {
 }
 
 async function handlePathDropdown() {
+    stopAutoRefresh();
     nextTick(() => readLog(currentPath.value));
 }
 
 function refreshSsh() {
+    stopAutoRefresh();
     readLog(props.connection.path);
 }
 
@@ -294,7 +307,9 @@ function getLastPathSegment(path: string) {
 
 const isUpdating = ref(false);
 async function fetchLogUpdates() {
-    isUpdating.value = true; // TODO: Use a different variable 'isUpdating'
+    console.log('fetching updates');
+
+    isUpdating.value = true;
     try {
         const data = await api.Ssh.readNextFromPath(unproxify(sshConfig.value), currentPath.value, currentFileSize.value * 1000);
         if (!data.success) {
@@ -310,9 +325,44 @@ async function fetchLogUpdates() {
     }
 }
 
-function handleLiveUpdate() {
-    // TODO
-    alert("Coming soon!");
+// ------------------------------
+// Auto-fetching
+// ------------------------------
+
+const autoFetchInterval = ref(0);
+
+function toggleAutoRefresh() {
+    if (autoFetchInterval.value) {
+        stopAutoRefresh();
+    } else {
+        beginAutoRefresh();
+    }
 }
+
+function stopAutoRefresh() {
+    applicationStore.autoFetching.connectionId = null;
+    autoFetchInterval.value = 0;
+    clearInterval(applicationStore.autoFetching!.intervalId);
+}
+
+function beginAutoRefresh() {
+    if (applicationStore.autoFetching.connectionId && applicationStore.autoFetching.connectionId !== props.connection.uid) {
+        alert("You can only have one connection auto-fetching at a time. Please deactivate auto-fetching on the other connection first.");
+        return;
+    }
+    // If one is already running, stop it then start the next. This probably wont occur when not developing, but it's good to have here just in case:
+    if (applicationStore.autoFetching.intervalId) {
+        clearInterval(applicationStore.autoFetching.intervalId);
+    }
+    applicationStore.autoFetching.connectionId = props.connection.uid;
+    autoFetchInterval.value = 5;
+    applicationStore.autoFetching.intervalId = setInterval(() => {
+        fetchLogUpdates();
+    }, autoFetchInterval.value * 1000);
+}
+
+onUnmounted(() => {
+    stopAutoRefresh();
+});
 
 </script>
