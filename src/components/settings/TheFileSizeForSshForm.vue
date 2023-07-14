@@ -7,14 +7,9 @@
             <div class="input-group">
                 <select class="form-select" v-model.number="numberOfKilobytes" @change="hasChanged = true"
                     id="ssh-number-of-lines">
-                    <option v-for="size in FileSizesInKb" :value="size" :key="size">{{
-                        kilobytesToHumanReadableFileSize(size) }}
+                    <option v-for="size in FileSizesInKb" :value="size" :key="size">
+                        {{ kilobytesToHumanReadableFileSize(size) }}
                     </option>
-                    <!-- <option value="1000">{{ Number(1000).toLocaleString() }}</option>
-                    <option value="10000">{{ Number(10000).toLocaleString() }}</option>
-                    <option value="50000">{{ Number(50000).toLocaleString() }}</option>
-                    <option value="100000">{{ Number(100000).toLocaleString() }}</option>
-                    <option value="200000">{{ Number(200000).toLocaleString() }}</option> -->
                 </select>
                 <button class="btn btn-secondary" type="submit" :disabled="isLoading || !hasChanged">
                     <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -22,7 +17,8 @@
                 </button>
             </div>
             <small class="text-muted">
-                This is the
+                This is the default amount of the file that will be retrieved when viewing the log, from the end of the
+                file. A larger value will give more entries, but take longer to load.
             </small>
             <div v-if="errMsg">
                 <small class="text-danger">{{ errMsg }}</small>
