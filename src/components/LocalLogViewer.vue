@@ -24,9 +24,14 @@
                     </template>
                 </div>
                 <div class="ms-2">
+                    <button v-if="isDirectory" class="btn btn-outline-secondary me-2" type="button" @click="goToFolder">
+                        <i class="bi bi-folder"></i>
+                        <span class="visually-hidden">Open Folder</span>
+                    </button>
                     <button class="btn btn-outline-secondary" type="button" @click="refreshLog"
                         :disabled="isLoading || !currentPath">
                         <i class="bi bi-arrow-clockwise"></i>
+                        <span class="visually-hidden">Refresh Log</span>
                     </button>
                 </div>
             </div>
@@ -52,7 +57,7 @@
 import { ref, onMounted, nextTick } from "vue";
 import { Connection, LogEntry } from "$/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
-import TheLogViewer from "./TheLogViewer.vue";
+import TheLogViewer from "@/components/TheLogViewer.vue";
 
 const props = defineProps<{
     connection: Connection;
@@ -102,6 +107,14 @@ async function readLog(path: string) {
 function refreshLog() {
     if (currentPath.value) {
         readLog(currentPath.value);
+    }
+}
+
+function goToFolder() {
+    try {
+        api.Application.openFolderFromPath(props.connection.path);
+    } catch (error: any) {
+        alert(error?.message ?? 'Error opening folder');
     }
 }
 
