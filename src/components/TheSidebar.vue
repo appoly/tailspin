@@ -18,10 +18,10 @@
                     :active="applicationStore.page === 'connections.page.' + connection.uid" :pageId="connection.uid"
                     @setPage="() => applicationStore.changePage('connections.page.' + connection.uid)">
                     <template #badge>
-                        <span v-if="applicationStore.autoFetching.connectionId === connection.uid"
-                            class="position-absolute top-0 badge rounded-pill bg-info">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </span>
+                        <SidebarItemBadge v-if="applicationStore.autoFetching.connectionId === connection.uid"
+                            class="bg-info">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </SidebarItemBadge>
                     </template>
                 </SidebarItem>
             </template>
@@ -31,14 +31,14 @@
                 :active="applicationStore.page === 'downloads'" pageId="downloads"
                 @setPage="() => applicationStore.changePage('downloads')">
                 <template #badge>
-                    <span v-if="applicationStore.downloads.filter(d => d.type === 'inProgress').length > 0"
-                        class="position-absolute top-0 badge rounded-pill bg-info">
+                    <SidebarItemBadge v-if="applicationStore.downloads.filter(d => d.type === 'inProgress').length > 0"
+                        class="bg-info">
                         {{ applicationStore.downloads.filter(d => d.type === 'inProgress').length }}
-                    </span>
-                    <span v-if="applicationStore.downloads.filter(d => d.type === 'completed').length > 0"
-                        class="position-absolute top-0 badge rounded-pill bg-success">
+                    </SidebarItemBadge>
+                    <SidebarItemBadge class="bg-success"
+                        v-if="applicationStore.downloads.filter(d => d.type === 'completed').length > 0">
                         {{ applicationStore.downloads.filter(d => d.type === 'completed').length }}
-                    </span>
+                    </SidebarItemBadge>
                 </template>
             </SidebarItem>
             <SidebarItem key="settings" label="Settings" icon="bi bi-gear-wide-connected" tooltip="Settings"
@@ -52,7 +52,8 @@
 import { Tooltip } from 'bootstrap'
 import { onMounted } from 'vue';
 import { useApplicationStore } from '@/stores/useApplicationStore';
-import SidebarItem from './SidebarItem.vue';
+import SidebarItem from '@/components/SidebarItem.vue';
+import SidebarItemBadge from '@/components/SidebarItemBadge.vue';
 import { useConnectionStore } from '@/stores/useConnectionStore';
 
 const applicationStore = useApplicationStore();

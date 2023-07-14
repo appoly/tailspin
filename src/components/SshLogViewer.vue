@@ -130,7 +130,7 @@ import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
 import TheLogViewer from "@/components/TheLogViewer.vue";
 import TheLogViewerSshOptions from "@/components/TheLogViewerSshOptions.vue";
 import { kilobytesToHumanReadableFileSize } from "@/helpers";
-import { MaxFileSizeToLoadKb } from "@/constants/Ssh";
+import { MaxFileSizeToLoadKb, RefreshInterval } from "@/constants/Ssh";
 
 const props = defineProps<{
     connection: Connection;
@@ -355,7 +355,7 @@ function beginAutoRefresh() {
         clearInterval(applicationStore.autoFetching.intervalId);
     }
     applicationStore.autoFetching.connectionId = props.connection.uid;
-    autoFetchInterval.value = 60; // We may want this as a constant somewhere, or make it configurable
+    autoFetchInterval.value = RefreshInterval;
     applicationStore.autoFetching.intervalId = setInterval(() => {
         fetchLogUpdates();
     }, autoFetchInterval.value * 1000);
