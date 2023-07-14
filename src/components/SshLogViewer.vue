@@ -32,7 +32,8 @@
                         <i class="bi bi-download" aria-hidden="true"></i>
                         <span class="visually-hidden">Download</span>
                     </button>
-                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="!isReady">
+                    <button class="btn btn-outline-secondary" type="button" @click="() => readLog(props.connection.path)"
+                        :disabled="!isReady">
                         <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
                         <span class="visually-hidden">Refresh</span>
                     </button>
