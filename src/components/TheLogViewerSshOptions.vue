@@ -4,7 +4,7 @@
             <h3>Ssh Options</h3>
             <div class="form-group my-4">
                 <label for="ssh-number-of-lines">
-                    SSH - Number of Lines Override
+                    SSH - File Size Override
                 </label>
                 <div class="input-group">
                     <select class="form-select" v-model="modelValue.numberOfBytes" id="ssh-number-of-lines">
@@ -20,8 +20,8 @@
                     </button>
                 </div>
                 <small class="text-muted">
-                    This is the number of lines that will be requested from the log. A larger number will take longer to
-                    load, but provide more log entries.
+                    This is the amount of the file that will be retrieved when viewing the log, from the end of the
+                    file. A larger value will give more entries, but take longer to load.
                 </small>
                 <small class="text-info" v-if="!canLoadEntireFile">
                     <span v-if="props.currentFileSize !== 0">Note: File too large to load all lines.</span>
