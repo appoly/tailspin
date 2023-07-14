@@ -27,15 +27,51 @@
                     </template>
                 </div>
                 <div class="ms-2">
-                    <button class="btn btn-outline-secondary me-2" type="button" @click="() => downloadLog()"
-                        :disabled="!isReady">
+                    <button class="btn btn-outline-secondary me-2" type="button" @click="downloadLog" :disabled="!isReady">
                         <i class="bi bi-download" aria-hidden="true"></i>
                         <span class="visually-hidden">Download</span>
                     </button>
-                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog" :disabled="!isReady">
-                        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
-                        <span class="visually-hidden">Refresh</span>
-                    </button>
+                    <div v-if="autoFetchInterval" class="btn-group">
+                        <button class="btn btn-outline-info" type="button" @click="stopAutoRefresh">
+                            <i class="bi bi-stop" aria-hidden="true"></i>
+                            <span class="visually-hidden">Stop Auto-fetch</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" disabled>
+                        </button>
+                    </div>
+                    <div v-else class="btn-group">
+                        <button class="btn btn-outline-secondary" type="button" @click="fetchLogUpdates"
+                            :disabled="!isReady" title="Fetch New Entries">
+                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                            <span class="visually-hidden">Refresh</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
+                            :class="{ 'btn-outline-info': autoFetchInterval > 0 }" data-bs-toggle="dropdown"
+                            aria-expanded="false" data-bs-auto-close="true" :disabled="!isReady">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <button class="dropdown-item" @click="() => beginAutoRefresh(120000)">
+                                    Auto-fetch every 2 minutes
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item" @click="() => beginAutoRefresh(60000)">
+                                    Auto-fetch every 60 seconds
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item" @click="() => beginAutoRefresh(30000)">
+                                    Auto-fetch every 30 seconds
+                                </button>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><button class="dropdown-item" @click="refreshSsh">Full Refresh</button></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -44,8 +80,9 @@
                 :key="`log_viewer_${currentPath}`">
                 <template #additional-filters>
                     <div class="ms-2">
-                        <button class="btn btn-primary" @click="() => showSshOptions = !showSshOptions">
-                            SSH Options&nbsp;
+                        <button class="btn btn-outline-secondary" @click="() => showSshOptions = !showSshOptions"
+                            data-bs-toggle="tooltip" title="SSH Options">
+                            <i class="bi bi-terminal"></i>&nbsp;
                             <i v-if="!showSshOptions" class="bi bi-chevron-down"></i>
                             <i v-else class="bi bi-chevron-up"></i>
                         </button>
@@ -53,8 +90,18 @@
                 </template>
 
                 <template #above-table>
-                    <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
-                        :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
+                    <Transition>
+                        <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
+                            :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
+                    </Transition>
+                    <div v-if="isUpdating" class="alert alert-info" role="alert">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-arrow-repeat me-2" aria-hidden="true"></i>
+                                Fetching new entries...
+                            </div>
+                        </div>
+                    </div>
                 </template>
             </TheLogViewer>
 
@@ -64,11 +111,11 @@
                 </div>
             </div>
             <template v-if="isReady">
-                <div v-if="!paths.length" class="my-2">
+                <div v-if="!paths.length && isDirectory" class="my-2">
                     <div class="alert alert-info" role="alert">
                         <div class="d-flex justify-content-between align-items-center">
                             No log entries found.
-                            <button class="btn btn-outline-light" type="button" @click="retryConnection">Reload?</button>
+                            <button class="btn btn-outline-light" type="button" @click="refreshSsh">Reload?</button>
                         </div>
                     </div>
                 </div>
@@ -82,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed, watch } from "vue";
+import { ref, onMounted, nextTick, computed, onUnmounted } from "vue";
 import { Connection, LogEntry, SshOptions } from "$/interfaces";
 import { useLogParser } from "@/composables/useLogParser";
 import { unproxify } from "@/helpers";
@@ -99,7 +146,7 @@ const props = defineProps<{
 
 onMounted(async () => {
     readLog(props.connection.path);
-    sshOptions.value.numberOfKilobytes = Number(await api.Store.get('ssh.numberOfKilobytes', 1000));
+    sshOptions.value.numberOfBytes = Number(await api.Store.get('ssh.numberOfBytes', 1000));
 });
 
 const applicationStore = useApplicationStore();
@@ -116,7 +163,7 @@ const isLoading = ref(false);
 const errorMsg = ref('');
 
 const sshOptions = ref<SshOptions>({
-    numberOfKilobytes: 1000,
+    numberOfBytes: 1000,
 });
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
@@ -131,7 +178,7 @@ const currentFile = computed(() => {
 
 const showSshOptions = ref(false);
 
-const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value);
+const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value && !isUpdating.value);
 const theLogViewer = ref();
 
 function handleOptionsUpdate() {
@@ -146,7 +193,7 @@ async function readLog(path: string) {
     errorMsg.value = '';
     try {
         // If the number of lines is set to 0 (ie. unlimited) and the file is larger than the max, abort:
-        if (sshOptions.value.numberOfKilobytes === 0 && currentFile.value!.size > MaxFileSizeToLoadKb) {
+        if (sshOptions.value.numberOfBytes === 0 && currentFile.value!.size > MaxFileSizeToLoadKb) {
             throw new Error('File too large to retrieve all lines. Please select a limited number of lines.');
         }
         if (props.connection.ssh?.passphraseRequired && !passphrase.value) {
@@ -172,19 +219,20 @@ async function readLog(path: string) {
             if (!data.success) {
                 throw new Error(data.message);
             }
-            // We have back each file with first its size, then its name. Below, we'll extract these into an array with 2 elements: size and path:
-            files.value = (data.message as string).trim().split('\n').map((file: string) => {
-                const [size, ...path] = file.trim().split(' ');
+            files.value = (data.message as string).trim().split('\n').filter(line => line.trim() !== '').map((file: string) => {
+                const [permissions, links, owner, group, size, month, day, time, ...nameParts] = file
+                    .trim()
+                    .split(/\s+/);
                 return {
-                    size: parseInt(size),
-                    path: path.join(' ')
+                    size: parseInt(size) / 1024,
+                    path: nameParts.join(' ')
                 }
             });
             return;
         };
 
         currentPath.value = path;
-        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfKilobytes)
+        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfBytes)
 
 
         if (!data.success) {
@@ -249,25 +297,81 @@ async function downloadLog() {
 }
 
 async function handlePathDropdown() {
+    if (isThisConnectionAutoFetching.value) {
+        stopAutoRefresh();
+    }
     nextTick(() => readLog(currentPath.value));
 }
 
-function refreshLog() {
-    if (currentPath.value) {
-        readLog(currentPath.value);
+function refreshSsh() {
+    if (isThisConnectionAutoFetching.value) {
+        stopAutoRefresh();
     }
+    readLog(props.connection.path);
 }
 
 function handlePassphraseSubmit() {
     readLog(currentPath.value || props.connection.path);
 }
 
-function retryConnection() {
-    readLog(currentPath.value || props.connection.path);
-}
-
 function getLastPathSegment(path: string) {
     return path.split('/').pop();
 }
+
+const isUpdating = ref(false);
+async function fetchLogUpdates() {
+    isUpdating.value = true;
+    try {
+        const data = await api.Ssh.readNextFromPath(unproxify(sshConfig.value), currentPath.value, currentFileSize.value);
+        if (!data.success) {
+            throw new Error(data.message);
+        }
+        const newEntries = await useLogParser(data.message as string);
+        logEntries.value = [...newEntries, ...logEntries.value]; // Add them to the front as the order is reversed
+        currentFileSize.value = parseInt(data.fileSize as string);
+        return;
+    } catch (error: any) {
+        errorMsg.value = error?.message ?? "Error reading log file";
+    } finally {
+        isUpdating.value = false;
+    }
+}
+
+// ------------------------------
+// Auto-fetching
+// ------------------------------
+
+const autoFetchInterval = ref(0);
+const isThisConnectionAutoFetching = computed(() => applicationStore.autoFetching.connectionId === props.connection.uid);
+
+function stopAutoRefresh() {
+    applicationStore.autoFetching.connectionId = null;
+    autoFetchInterval.value = 0;
+    clearInterval(applicationStore.autoFetching!.intervalId);
+}
+
+function beginAutoRefresh(intervalTime = 6000) {
+    if (applicationStore.autoFetching.connectionId && !isThisConnectionAutoFetching.value) {
+        alert("You can only have one connection auto-fetching at a time. Please deactivate auto-fetching on the other connection first.");
+        return;
+    }
+    // If one is already running, stop it then start the next. This probably wont occur when not developing, but it's good to have here just in case:
+    if (applicationStore.autoFetching.intervalId) {
+        clearInterval(applicationStore.autoFetching.intervalId);
+    }
+
+    applicationStore.autoFetching.connectionId = props.connection.uid;
+    autoFetchInterval.value = intervalTime;
+    applicationStore.autoFetching.intervalId = setInterval(() => {
+        fetchLogUpdates();
+    }, autoFetchInterval.value);
+    console.log(applicationStore.autoFetching.intervalId, applicationStore.autoFetching.connectionId);
+}
+
+onUnmounted(() => {
+    if (isThisConnectionAutoFetching.value) {
+        stopAutoRefresh();
+    }
+});
 
 </script>

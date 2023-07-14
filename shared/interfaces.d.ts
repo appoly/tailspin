@@ -57,5 +57,5 @@ export interface Download {
 }
 
 export interface SshOptions {
-  numberOfKilobytes: number;
+  numberOfBytes: number;
 }
