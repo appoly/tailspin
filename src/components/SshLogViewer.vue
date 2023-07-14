@@ -355,7 +355,7 @@ function beginAutoRefresh() {
         clearInterval(applicationStore.autoFetching.intervalId);
     }
     applicationStore.autoFetching.connectionId = props.connection.uid;
-    autoFetchInterval.value = 5;
+    autoFetchInterval.value = 60; // We may want this as a constant somewhere, or make it configurable
     applicationStore.autoFetching.intervalId = setInterval(() => {
         fetchLogUpdates();
     }, autoFetchInterval.value * 1000);
