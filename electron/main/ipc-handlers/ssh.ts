@@ -36,20 +36,19 @@ export default () => {
   );
   ipcMain.handle(
     "ssh-read-from-path",
-    async (event, options, path: string, passwordIsEncrypted: boolean, numberOfLines = 1000) =>
+    async (event, options, path: string, passwordIsEncrypted: boolean, numberOfBytes = 1000) =>
       handleSsh(
         async (ssh) => {
           let response = "";
-          // If number of lines is 0, it means read the entire file with tail:
-          if (numberOfLines === 0) {
+          // If number of bytes is 0, it means read the entire file with tail:
+          if (numberOfBytes === 0) {
             response = await ssh.exec(`tail`, ["-n", "+1", path]);
           } else {
-            if (numberOfLines > 200000) {
-              numberOfLines = 1000; // Limit to 1000 lines if the user has somehow got above the max
-            }
-            response = await ssh.exec(`tail -n`, [numberOfLines, path]);
+            response = await ssh.exec(`tail -c`, [numberOfBytes, path]);
           }
-          return { success: true, message: response };
+          // Also get the file size in Kilobytes to help with loading the next x bytes etc:
+          let fileSize = await ssh.exec(`du -k`, [path]);
+          return { success: true, message: response, fileSize };
         },
         options,
         passwordIsEncrypted

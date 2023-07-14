@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { LogStatuses } from "@/constants/LogStatuses"
 import TheLogEntry from "@/components/TheLogEntry.vue"
 import TheLogPaginator from "@/components/TheLogPaginator.vue";
@@ -105,6 +105,14 @@ const filteredLogItems = computed(() => {
 
     return useFilterLogs(items, search, selectedSeverity.value);
 });
+
+// When a search tem is entered, reset the page to 1:
+watch(searchTerm, () => {
+    changePage(1);
+});
+
+// We want to be able to access the changePage function from outside this component:
+defineExpose({ changePage });
 
 const currentPageItems = computed(() => {
     return filteredLogItems.value.slice((page.value - 1) * itemsPerPage.value, page.value * itemsPerPage.value);

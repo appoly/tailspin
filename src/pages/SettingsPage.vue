@@ -26,7 +26,7 @@
                 <hr />
                 <h2 class="h4">SSH</h2>
                 <TheDefaultKeyPathForm class="mb-2" />
-                <TheNumberOfLinesOnSshForm class="mb-2" />
+                <TheFileSizeForSshForm class="mb-2" />
                 <hr />
                 <h2 class="h4">Laravel Forge</h2>
                 <TheForgeApiKeyForm class="mt-2 mb-3" />
@@ -61,7 +61,7 @@ import { useConnectionStore } from '@/stores/useConnectionStore';
 import { useApplicationStore } from '@/stores/useApplicationStore';
 import TheForgeApiKeyForm from '@/components/settings/TheForgeApiKeyForm.vue';
 import TheDefaultKeyPathForm from '@/components/settings/TheDefaultKeyPathForm.vue';
-import TheNumberOfLinesOnSshForm from '@/components/settings/TheNumberOfLinesOnSshForm.vue';
+import TheFileSizeForSshForm from '@/components/settings/TheFileSizeForSshForm.vue';
 import GenericBootstrapModal from '@/components/GenericBootstrapModal.vue';
 const userStore = useUserStore();
 const connectionStore = useConnectionStore();

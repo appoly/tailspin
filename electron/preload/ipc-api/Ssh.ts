@@ -16,10 +16,10 @@ export function getFilesInDirectory(options: SshDetailsToIpc, path: string): Pro
 export async function readFromPath(
   options: SshDetailsToIpc,
   path: string,
-  linesOverride?: number
-): Promise<SshIpcResponse> {
-  let lines = linesOverride ?? (await ipcRenderer.invoke("config-get", "ssh.numberOfLines", 1000));
-  return ipcRenderer.invoke("ssh-read-from-path", options, path, doesPasswordNeedDecrypting(options), lines);
+  numberOfKilobytesOverride?: number
+): Promise<SshIpcResponse & { fileSize: string }> {
+  let bytes = (numberOfKilobytesOverride ?? (await ipcRenderer.invoke("config-get", "ssh.numberOfKilobytes"))) * 1024;
+  return ipcRenderer.invoke("ssh-read-from-path", options, path, doesPasswordNeedDecrypting(options), bytes);
 }
 
 export async function downloadFromPath(
