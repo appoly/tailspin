@@ -87,6 +87,14 @@
                             <i v-else class="bi bi-chevron-up"></i>
                         </button>
                     </div>
+                    <div v-if="countdownValue" class="ms-2">
+                        <button class="btn btn-outline-info" @click="stopAutoRefresh" data-bs-toggle="tooltip">
+                            <i class="bi bi-arrow-repeat"></i>&nbsp;
+                            <span class="visually-hidden">Refreshing in:</span>
+                            {{ countdownValue }}
+                            <span class="visually-hidden">Click to stop</span>
+                        </button>
+                    </div>
                 </template>
 
                 <template #above-table>
@@ -343,14 +351,18 @@ async function fetchLogUpdates() {
 
 const autoFetchInterval = ref(0);
 const isThisConnectionAutoFetching = computed(() => applicationStore.autoFetching.connectionId === props.connection.uid);
+const countdownValue = ref(0);
+const countdownInterval = ref<ReturnType<typeof setInterval>>();
 
 function stopAutoRefresh() {
     applicationStore.autoFetching.connectionId = null;
     autoFetchInterval.value = 0;
     clearInterval(applicationStore.autoFetching!.intervalId);
+    clearInterval(countdownInterval.value);
+    countdownValue.value = 0;
 }
 
-function beginAutoRefresh(intervalTime = 6000) {
+function beginAutoRefresh(intervalTime = 60000) {
     if (applicationStore.autoFetching.connectionId && !isThisConnectionAutoFetching.value) {
         alert("You can only have one connection auto-fetching at a time. Please deactivate auto-fetching on the other connection first.");
         return;
@@ -362,10 +374,23 @@ function beginAutoRefresh(intervalTime = 6000) {
 
     applicationStore.autoFetching.connectionId = props.connection.uid;
     autoFetchInterval.value = intervalTime;
+
+    countdown(autoFetchInterval.value / 1000);
     applicationStore.autoFetching.intervalId = setInterval(() => {
+        clearInterval(countdownInterval.value);
+        countdown(autoFetchInterval.value / 1000);
         fetchLogUpdates();
     }, autoFetchInterval.value);
-    console.log(applicationStore.autoFetching.intervalId, applicationStore.autoFetching.connectionId);
+}
+
+function countdown(seconds: number) {
+    countdownValue.value = seconds;
+    countdownInterval.value = setInterval(() => {
+        countdownValue.value--;
+        if (countdownValue.value <= 0) {
+            clearInterval(countdownInterval.value);
+        }
+    }, 1000);
 }
 
 onUnmounted(() => {
