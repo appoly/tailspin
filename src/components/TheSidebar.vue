@@ -16,7 +16,14 @@
             <template v-for="connection in connectionStore.openConnections" :key="connection.uid" class="nav-item">
                 <SidebarItem :label="connection.name" :icon="`bi bi-${connection.icon}`" :tooltip="connection.name"
                     :active="applicationStore.page === 'connections.page.' + connection.uid" :pageId="connection.uid"
-                    @setPage="() => applicationStore.changePage('connections.page.' + connection.uid)" />
+                    @setPage="() => applicationStore.changePage('connections.page.' + connection.uid)">
+                    <template #badge>
+                        <span v-if="applicationStore.autoFetching.connectionId === connection.uid"
+                            class="position-absolute top-0 badge rounded-pill bg-info">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </span>
+                    </template>
+                </SidebarItem>
             </template>
         </ul>
         <div class="nav nav-pills nav-flush flex-column text-center border-top">
