@@ -16,6 +16,10 @@ export function kilobytesToHumanReadableFileSize(kilobytes: number): string {
   }
 }
 
+export function bytesToHumanReadableFileSize(bytes: number): string {
+  return kilobytesToHumanReadableFileSize(bytes / 1024);
+}
+
 export function debounce(fn: (...args: any[]) => void, time: number): (...args: any[]) => void {
   let timeoutId: ReturnType<typeof setTimeout> | null;
   return function wrapper(...args: any[]) {
