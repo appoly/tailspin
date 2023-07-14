@@ -9,6 +9,11 @@ export const useApplicationStore = defineStore("application", {
     canUseSafeStorage: false,
     downloads: [] as Download[],
     forgeSectionEnabled: false,
+    // auto-fetching is done in the store-level to (hopefully) avoid memory leaks by always running the same clearInterval on the same intervalId
+    autoFetching: {
+      connectionId: null as string | null,
+      intervalId: undefined as ReturnType<typeof setInterval> | undefined,
+    },
   }),
   actions: {
     async init() {

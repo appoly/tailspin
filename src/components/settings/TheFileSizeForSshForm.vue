@@ -5,9 +5,9 @@
         </label>
         <form @submit.prevent="submit">
             <div class="input-group">
-                <select class="form-select" v-model.number="numberOfKilobytes" @change="hasChanged = true"
+                <select class="form-select" v-model.number="numberOfBytes" @change="hasChanged = true"
                     id="ssh-number-of-lines">
-                    <option v-for="size in FileSizesInKb" :value="size" :key="size">
+                    <option v-for="size in FileSizesInKb" :value="size * 1024" :key="size">
                         {{ kilobytesToHumanReadableFileSize(size) }}
                     </option>
                 </select>
@@ -32,7 +32,7 @@ import { onMounted, ref } from 'vue';
 import { FileSizesInKb } from "@/constants/Ssh";
 import { kilobytesToHumanReadableFileSize } from "@/helpers";
 
-const numberOfKilobytes = ref(1000);
+const numberOfBytes = ref(1000);
 const isLoading = ref(false);
 const errMsg = ref('');
 const hasChanged = ref(false);
@@ -44,7 +44,7 @@ onMounted(() => {
 async function getExistingKeyPath() {
     isLoading.value = true;
     try {
-        numberOfKilobytes.value = parseInt(await api.Store.get('ssh.numberOfKilobytes', 1000));
+        numberOfBytes.value = parseInt(await api.Store.get('ssh.numberOfBytes', 10000));
         hasChanged.value = false;
     } catch (error: any) {
         errMsg.value = error.message ?? "Error getting existing key path";
@@ -56,7 +56,7 @@ async function getExistingKeyPath() {
 async function submit() {
     isLoading.value = true;
     try {
-        await api.Store.set('ssh.numberOfKilobytes', numberOfKilobytes.value);
+        await api.Store.set('ssh.numberOfBytes', numberOfBytes.value);
         hasChanged.value = false;
     } catch (error: any) {
         errMsg.value = error.message ?? "Error Submitting Form";

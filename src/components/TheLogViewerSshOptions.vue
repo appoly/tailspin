@@ -1,5 +1,5 @@
 <template>
-    <div class="card p-3 bg-body-tertiary">
+    <div class="card p-3 mb-2 bg-body-tertiary">
         <form @submit.prevent="submit">
             <h3>Ssh Options</h3>
             <div class="form-group my-4">
@@ -7,16 +7,16 @@
                     SSH - File Size Override
                 </label>
                 <div class="input-group">
-                    <select class="form-select" v-model="modelValue.numberOfKilobytes" id="ssh-number-of-lines">
+                    <select class="form-select" v-model="modelValue.numberOfBytes" id="ssh-number-of-lines">
                         <option :disabled="!canLoadEntireFile" value="0">
                             Load Entire File <span v-if="!canLoadEntireFile" class="text-muted">(File is too large)</span>
                         </option>
-                        <option v-for="size in FileSizesInKb" :value="size" :key="size">
+                        <option v-for="size in FileSizesInKb" :value="size * 1024" :key="size">
                             {{ kilobytesToHumanReadableFileSize(size) }}
                         </option>
                     </select>
-                    <button @click="() => modelValue.numberOfKilobytes = 0" class="btn btn-secondary" type="button"
-                        :disabled="!canLoadEntireFile || modelValue.numberOfKilobytes === 0">Load All
+                    <button @click="() => modelValue.numberOfBytes = 0" class="btn btn-secondary" type="button"
+                        :disabled="!canLoadEntireFile || modelValue.numberOfBytes === 0">Load All
                     </button>
                 </div>
                 <small class="text-muted">
@@ -26,7 +26,7 @@
                 <small class="text-info" v-if="!canLoadEntireFile">
                     <span v-if="props.currentFileSize !== 0">Note: File too large to load all lines.</span>
                 </small>
-                <small class="text-warning" v-if="modelValue.numberOfKilobytes === 0">
+                <small class="text-warning" v-if="modelValue.numberOfBytes === 0">
                     This will load the entire file. If the file is too large, this may cause an error to occur.
                 </small>
             </div>
@@ -65,8 +65,8 @@ computed({
 
 const buttonText = ref("Apply");
 
-// Can only load the entire file if it less than 500Mb:
-const canLoadEntireFile = computed(() => props.currentFileSize < MaxFileSizeToLoadKb);
+// Can only load the entire file if it less than a set size.
+const canLoadEntireFile = computed(() => (props.currentFileSize / 1024) < MaxFileSizeToLoadKb);
 
 function submit() {
     buttonText.value = "Applying...";

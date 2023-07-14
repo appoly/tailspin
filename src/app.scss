@@ -112,3 +112,16 @@ body,
         transform: rotate(0deg);
     }
 }
+
+// Default transition for vue transitions
+.v-enter-active {
+    transition: opacity 0.5s ease;
+}
+.v-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
+}
