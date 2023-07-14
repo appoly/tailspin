@@ -31,3 +31,7 @@ export function openFolderToFile(fileName: string): Promise<void> {
 export function openDownloadsFolder(): Promise<string> {
   return ipcRenderer.invoke("open-downloads-folder");
 }
+
+export function openFolderFromPath(path: string): Promise<void> {
+  return ipcRenderer.invoke("open-folder-from-path", path);
+}
