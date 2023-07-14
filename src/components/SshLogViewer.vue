@@ -40,7 +40,7 @@
             </div>
         </div>
         <div>
-            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
+            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg" ref="theLogViewer"
                 :key="`log_viewer_${currentPath}`">
                 <template #additional-filters>
                     <div class="ms-2">
@@ -54,7 +54,7 @@
 
                 <template #above-table>
                     <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
-                        :isLoading="isLoading" :currentFile="currentFile" @submitted="handleOptionsUpdate" />
+                        :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
                 </template>
             </TheLogViewer>
 
@@ -90,6 +90,8 @@ import { useApplicationStore } from "@/stores/useApplicationStore";
 import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
 import TheLogViewer from "@/components/TheLogViewer.vue";
 import TheLogViewerSshOptions from "@/components/TheLogViewerSshOptions.vue";
+import { kilobytesToHumanReadableFileSize } from "@/helpers";
+import { MaxFileSizeToLoadKb } from "@/constants/Ssh";
 
 const props = defineProps<{
     connection: Connection;
@@ -97,7 +99,7 @@ const props = defineProps<{
 
 onMounted(async () => {
     readLog(props.connection.path);
-    sshOptions.value.numberOfLines = Number(await api.Store.get('ssh.numberOfLines', 1000));
+    sshOptions.value.numberOfKilobytes = Number(await api.Store.get('ssh.numberOfKilobytes', 1000));
 });
 
 const applicationStore = useApplicationStore();
@@ -114,7 +116,7 @@ const isLoading = ref(false);
 const errorMsg = ref('');
 
 const sshOptions = ref<SshOptions>({
-    numberOfLines: 1000,
+    numberOfKilobytes: 1000,
 });
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
@@ -122,6 +124,7 @@ const files = ref<{ size: number, path: string }[]>([]);
 const paths = computed(() => {
     return files.value.map((file) => file.path);
 });
+const currentFileSize = ref(0);
 const currentFile = computed(() => {
     return files.value.find((file) => file.path === currentPath.value);
 });
@@ -129,18 +132,21 @@ const currentFile = computed(() => {
 const showSshOptions = ref(false);
 
 const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value);
+const theLogViewer = ref();
 
 function handleOptionsUpdate() {
     if (currentPath.value) {
         readLog(currentPath.value);
+        // Reset the page to 1 by making use of the exposed `page` variable on TheLogViewer:
+        theLogViewer.value.changePage(1);
     }
 }
 async function readLog(path: string) {
     isLoading.value = true;
     errorMsg.value = '';
     try {
-        // If the number of lines is set to 0 (ie. unlimited) and the file is larger than 500Mb, abort:
-        if (sshOptions.value.numberOfLines === 0 && currentFile.value!.size > 500000) {
+        // If the number of lines is set to 0 (ie. unlimited) and the file is larger than the max, abort:
+        if (sshOptions.value.numberOfKilobytes === 0 && currentFile.value!.size > MaxFileSizeToLoadKb) {
             throw new Error('File too large to retrieve all lines. Please select a limited number of lines.');
         }
         if (props.connection.ssh?.passphraseRequired && !passphrase.value) {
@@ -157,7 +163,7 @@ async function readLog(path: string) {
             throw new Error("Path not valid");
         }
 
-        let data: { success: boolean, message?: string };
+        let data: { success: boolean, message?: string, fileSize?: string };
 
         if (contentType.message.trim() === 'directory') {
             isDirectory.value = true;
@@ -178,11 +184,14 @@ async function readLog(path: string) {
         };
 
         currentPath.value = path;
-        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfLines)
+        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfKilobytes)
+
+
         if (!data.success) {
             throw new Error(data.message);
         }
         logEntries.value = await useLogParser(data.message as string);
+        currentFileSize.value = parseInt(data.fileSize as string);
         return;
     } catch (error: any) {
         errorMsg.value = error?.message ?? "Error reading log file";
@@ -259,15 +268,6 @@ function retryConnection() {
 
 function getLastPathSegment(path: string) {
     return path.split('/').pop();
-}
-
-function kilobytesToHumanReadableFileSize(kilobytes: number) {
-    const sizes = ['Kb', 'Mb', 'Gb', 'Tb'];
-    if (kilobytes === 0) {
-        return '0 Kb';
-    }
-    const i = Math.floor(Math.log(kilobytes) / Math.log(1024));
-    return Math.round(kilobytes / Math.pow(1024, i)) + ' ' + sizes[i];
 }
 
 </script>

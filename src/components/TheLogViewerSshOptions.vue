@@ -7,18 +7,16 @@
                     SSH - Number of Lines Override
                 </label>
                 <div class="input-group">
-                    <select class="form-select" v-model="modelValue.numberOfLines" id="ssh-number-of-lines">
+                    <select class="form-select" v-model="modelValue.numberOfKilobytes" id="ssh-number-of-lines">
                         <option :disabled="!canLoadEntireFile" value="0">
                             Load Entire File <span v-if="!canLoadEntireFile" class="text-muted">(File is too large)</span>
                         </option>
-                        <option :value="1000">{{ Number(1000).toLocaleString() }}</option>
-                        <option :value="10000">{{ Number(10000).toLocaleString() }}</option>
-                        <option :value="50000">{{ Number(50000).toLocaleString() }}</option>
-                        <option :value="100000">{{ Number(100000).toLocaleString() }}</option>
-                        <option :value="200000">{{ Number(200000).toLocaleString() }}</option>
+                        <option v-for="size in FileSizesInKb" :value="size" :key="size">
+                            {{ kilobytesToHumanReadableFileSize(size) }}
+                        </option>
                     </select>
-                    <button @click="() => modelValue.numberOfLines = 0" class="btn btn-secondary" type="button"
-                        :disabled="!canLoadEntireFile || modelValue.numberOfLines === 0">Load All
+                    <button @click="() => modelValue.numberOfKilobytes = 0" class="btn btn-secondary" type="button"
+                        :disabled="!canLoadEntireFile || modelValue.numberOfKilobytes === 0">Load All
                     </button>
                 </div>
                 <small class="text-muted">
@@ -26,9 +24,9 @@
                     load, but provide more log entries.
                 </small>
                 <small class="text-info" v-if="!canLoadEntireFile">
-                    <span v-if="props.currentFile">Note: File too large to load all lines.</span>
+                    <span v-if="props.currentFileSize !== 0">Note: File too large to load all lines.</span>
                 </small>
-                <small class="text-warning" v-if="modelValue.numberOfLines === 0">
+                <small class="text-warning" v-if="modelValue.numberOfKilobytes === 0">
                     This will load the entire file. If the file is too large, this may cause an error to occur.
                 </small>
             </div>
@@ -45,12 +43,14 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { SshOptions } from "$/interfaces";
+import { FileSizesInKb, MaxFileSizeToLoadKb } from "@/constants/Ssh";
+import { kilobytesToHumanReadableFileSize } from "@/helpers";
 
 const props = defineProps<{
     modelValue: SshOptions;
     originalOptions: SshOptions;
     isLoading: boolean;
-    currentFile?: { path: string; size: number };
+    currentFileSize: number;
 }>();
 const emit = defineEmits(['submitted', 'update:modelValue']);
 
@@ -66,12 +66,7 @@ computed({
 const buttonText = ref("Apply");
 
 // Can only load the entire file if it less than 500Mb:
-const canLoadEntireFile = computed(() => {
-    if (!props.currentFile) {
-        return true;
-    }
-    return props.currentFile.size < 500000
-});
+const canLoadEntireFile = computed(() => props.currentFileSize < MaxFileSizeToLoadKb);
 
 function submit() {
     buttonText.value = "Applying...";
