@@ -15,3 +15,16 @@ export function kilobytesToHumanReadableFileSize(kilobytes: number): string {
     return `${(kilobytes / (1024 * 1024)).toFixed(2)} Gb`;
   }
 }
+
+export function debounce(fn: (...args: any[]) => void, time: number): (...args: any[]) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | null;
+  return function wrapper(...args: any[]) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      fn(...args);
+    }, time);
+  };
+}

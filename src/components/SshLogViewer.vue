@@ -54,7 +54,7 @@
 
                 <template #above-table>
                     <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
-                        :isLoading="isLoading" :currentFile="currentFile" @submitted="handleOptionsUpdate" />
+                        :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
                 </template>
             </TheLogViewer>
 
@@ -91,6 +91,7 @@ import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
 import TheLogViewer from "@/components/TheLogViewer.vue";
 import TheLogViewerSshOptions from "@/components/TheLogViewerSshOptions.vue";
 import { kilobytesToHumanReadableFileSize } from "@/helpers";
+import { MaxFileSizeToLoadKb } from "@/constants/Ssh";
 
 const props = defineProps<{
     connection: Connection;
@@ -123,6 +124,7 @@ const files = ref<{ size: number, path: string }[]>([]);
 const paths = computed(() => {
     return files.value.map((file) => file.path);
 });
+const currentFileSize = ref(0);
 const currentFile = computed(() => {
     return files.value.find((file) => file.path === currentPath.value);
 });
@@ -143,8 +145,8 @@ async function readLog(path: string) {
     isLoading.value = true;
     errorMsg.value = '';
     try {
-        // If the number of lines is set to 0 (ie. unlimited) and the file is larger than 500Mb, abort:
-        if (sshOptions.value.numberOfKilobytes === 0 && currentFile.value!.size > 500000) {
+        // If the number of lines is set to 0 (ie. unlimited) and the file is larger than the max, abort:
+        if (sshOptions.value.numberOfKilobytes === 0 && currentFile.value!.size > MaxFileSizeToLoadKb) {
             throw new Error('File too large to retrieve all lines. Please select a limited number of lines.');
         }
         if (props.connection.ssh?.passphraseRequired && !passphrase.value) {
@@ -189,7 +191,7 @@ async function readLog(path: string) {
             throw new Error(data.message);
         }
         logEntries.value = await useLogParser(data.message as string);
-        let fileSize: number = parseInt(data.fileSize as string);
+        currentFileSize.value = parseInt(data.fileSize as string);
         return;
     } catch (error: any) {
         errorMsg.value = error?.message ?? "Error reading log file";
