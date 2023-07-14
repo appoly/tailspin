@@ -30,4 +30,7 @@ export default () => {
   ipcMain.handle("open-downloads-folder", (event) => {
     return shell.openPath(app.getPath("downloads"));
   });
+  ipcMain.handle("open-folder-from-path", (event, path) => {
+    return shell.openPath(path);
+  });
 };
