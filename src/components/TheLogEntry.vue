@@ -19,15 +19,18 @@
                     </span>
                 </div>
             </div>
+            <div class="col flex-grow-0 log-item-time">
+                <button v-if="canCopy" class="btn btn-sm btn-outline-primary" :class="{ 'btn-outline-success': copySuccess }"
+                    @click.stop="() => copyContents(logItem.text)">
+                    <span v-if="copyLoading" class="spinner-border spinner-border-sm" role="status"
+                        aria-hidden="true"></span>
+                    <span v-else-if="copySuccess"><i class="bi bi-clipboard2-check-fill"></i></span>
+                    <span v-else><i class="bi bi-clipboard-fill"></i></span>
+                </button>
+            </div>
         </div>
     </div>
     <div :class="['container-fluid expanded position-relative', { 'show': showAll }]">
-        <button v-if="canCopy" class="btn btn-secondary btn-sm position-absolute copy-btn"
-            @click="() => copyContents(logItem.text)">
-            <span v-if="copyLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span v-else-if="copySuccess"><i class="bi bi-clipboard2-check-fill"></i></span>
-            <span v-else><i class="bi bi-clipboard-fill"></i></span>
-        </button>
         <pre class="code-card bg-body-tertiary">{{ logItem.text }}</pre>
     </div>
 </template>
@@ -97,6 +100,7 @@ async function copyContents(contents: string) {
         }, 1500);
     } catch (error) {
         console.error("Failed to copy: ", error);
+        alert("Failed to copy to clipboard");
     } finally {
         copyLoading.value = false;
     }
@@ -110,11 +114,5 @@ async function copyContents(contents: string) {
     padding: 0.5rem;
     border-radius: 0 0 0.5rem 0.5rem;
     overflow-y: auto;
-}
-
-.copy-btn {
-    top: 0.25rem;
-    right: 2.5rem;
-    z-index: 1;
 }
 </style>../../shared/interfaces

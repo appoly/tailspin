@@ -62,7 +62,7 @@
     <TheLogEntriesContainer key="entries" v-if="logEntries.length" :logEntries="logEntries" :page="page"
         :itemsPerPage="itemsPerPage" :searchTerm="searchTerm" :selectedSeverity="selectedSeverity"
         @change-page="changePage" />
-    <div class="position-absolute" style="bottom: 10px; right: 15px;">
+    <div class="position-absolute" style="bottom: 10px; right: 30px;">
         <button class="btn btn-outline-secondary" type="button" @click="jumpToTop">
             <i class="bi bi-arrow-up"></i>
         </button>
