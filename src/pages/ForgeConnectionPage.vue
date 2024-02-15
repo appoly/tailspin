@@ -85,7 +85,7 @@ const hideSelector = ref(false);
 async function selectSite(site: ForgeSite, server: ForgeServer) {
     const sshKeyPath = await api.Store.get('app.sshKeyPath', '');
     if (!sshKeyPath) {
-        alert('You must set your SSH key path in the settings first.');
+        alert('You must set your default SSH key path in the settings first.');
         return;
     }
     connection.value = {
@@ -98,7 +98,7 @@ async function selectSite(site: ForgeSite, server: ForgeServer) {
             username: site.username,
             port: 22,
             passwordType: 'key',
-            password: await api.Application.encryptString(sshKeyPath),
+            password: sshKeyPath,
         },
         isFavorite: false,
         iconColor: 'blue',
