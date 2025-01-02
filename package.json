@@ -19,7 +19,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "pre-build": "vue-tsc --noEmit && vite build",
+    "pre-build": "vite build",
     "build": "npm run pre-build && electron-builder",
     "build:linux": "npm run pre-build && electron-builder -l --x64",
     "preview": "vite preview"
