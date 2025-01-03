@@ -12,6 +12,7 @@
   mac: {
     artifactName: "${productName}_${version}.${ext}",
     target: ["dmg", "zip"],
+    icon: "public/logo-mac.png",
     entitlements: "build/entitlements.mac.plist",
     entitlementsInherit: "build/entitlements.mac.plist",
     gatekeeperAssess: false,
@@ -33,7 +34,6 @@
   },
   linux: {
     target: ["AppImage"],
-    icon: "public/logo.png",
     category: "Development",
   },
 }
