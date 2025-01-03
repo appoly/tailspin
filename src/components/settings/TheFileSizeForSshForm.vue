@@ -44,7 +44,7 @@ onMounted(() => {
 async function getExistingKeyPath() {
     isLoading.value = true;
     try {
-        numberOfBytes.value = parseInt(await api.Store.get('ssh.numberOfBytes', 10000));
+        numberOfBytes.value = parseInt(await api.Store.get('ssh.numberOfBytes', 500 * 1024));
         hasChanged.value = false;
     } catch (error: any) {
         errMsg.value = error.message ?? "Error getting existing key path";
