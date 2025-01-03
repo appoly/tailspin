@@ -19,7 +19,8 @@
                                 :disabled="downloading || isLoading">
                                 <option disabled value=''>Please select an option...</option>
                                 <option v-for="file in files" :value="file.path">
-                                    {{ getLastPathSegment(file.path) }} ({{ kilobytesToHumanReadableFileSize(file.size) }})
+                                    {{ getLastPathSegment(file.path) }}
+                                    ({{ kilobytesToHumanReadableFileSize(file.size) }})
                                 </option>
                             </select>
 
@@ -27,7 +28,8 @@
                     </template>
                 </div>
                 <div class="ms-2">
-                    <button class="btn btn-outline-secondary me-2" type="button" @click="downloadLog" :disabled="!isReady">
+                    <button class="btn btn-outline-secondary me-2" type="button" @click="downloadLog"
+                        :disabled="!isReady">
                         <i class="bi bi-download" aria-hidden="true"></i>
                         <span class="visually-hidden">Download</span>
                     </button>
@@ -36,7 +38,8 @@
                             <i class="bi bi-stop" aria-hidden="true"></i>
                             <span class="visually-hidden">Stop Auto-fetch</span>
                         </button>
-                        <button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" disabled>
+                        <button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split"
+                            disabled>
                         </button>
                     </div>
                     <div v-else class="btn-group">
@@ -99,8 +102,9 @@
 
                 <template #above-table>
                     <Transition>
-                        <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions" :originalOptions="sshOptions"
-                            :isLoading="isLoading" :currentFileSize="currentFileSize" @submitted="handleOptionsUpdate" />
+                        <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions"
+                            :originalOptions="sshOptions" :isLoading="isLoading" :currentFileSize="currentFileSize"
+                            @submitted="handleOptionsUpdate" />
                     </Transition>
                     <div v-if="isUpdating" class="alert alert-info" role="alert">
                         <div class="d-flex justify-content-between align-items-center">
@@ -153,8 +157,8 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
+    sshOptions.value.numberOfBytes = Number(await api.Store.get('ssh.numberOfBytes', 500 * 1024));
     readLog(props.connection.path);
-    sshOptions.value.numberOfBytes = Number(await api.Store.get('ssh.numberOfBytes', 1000));
 });
 
 const applicationStore = useApplicationStore();
@@ -171,7 +175,7 @@ const isLoading = ref(false);
 const errorMsg = ref('');
 
 const sshOptions = ref<SshOptions>({
-    numberOfBytes: 1000,
+    numberOfBytes: 500 * 1024,
 });
 const isDirectory = ref<boolean>(false);
 const currentPath = ref('');
