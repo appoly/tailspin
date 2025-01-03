@@ -1,7 +1,12 @@
 {
   "name": "laravel-log-viewer",
+  "description": "Easily view and manage your Laravel app's log files, across multiple servers and featuring Forge integration.",
+  "contributors": [
+    "Nathan James",
+    "Calum Chamberlain"
+  ],
   "productName": "Laravel Log Viewer",
-  "version": "0.0.10-alpha",
+  "version": "0.0.11-alpha",
   "main": "dist-electron/main/index.js",
   "license": "MIT",
   "private": true,
@@ -10,7 +15,8 @@
     "rollup",
     "vite",
     "vue3",
-    "vue"
+    "vue",
+    "laravel"
   ],
   "debug": {
     "env": {
@@ -22,9 +28,11 @@
     "pre-build": "vue-tsc --noEmit && vite build",
     "build": "npm run pre-build && electron-builder",
     "build:linux": "npm run pre-build && electron-builder -l --x64",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "afterSign": "scripts/notarize.js"
   },
   "devDependencies": {
+    "@electron/notarize": "^2.5.0",
     "@types/bootstrap": "^5.2.10",
     "@types/node-ssh": "^7.0.6",
     "@vitejs/plugin-vue": "^5.2.1",
