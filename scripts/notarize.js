@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: "./electron-builder.env" });
 const { notarize } = require("electron-notarize");
 
 exports.default = async function notarizing(context) {
@@ -7,14 +7,13 @@ exports.default = async function notarizing(context) {
     return;
   }
 
-  const appName = context.packager.appInfo.productFilename;;
+  const appName = context.packager.appInfo.productFilename;
 
   return await notarize({
-    tool: "notarytool",
-    teamId: process.env.APPLETEAMID,
     appBundleId: "com.appoly.log-viewer",
     appPath: `${appOutDir}/${appName}.app`,
-    appleId: process.env.APPLEID,
-    appleIdPassword: process.env.APPLEIDPASS,
+    teamId: process.env.APPLE_TEAM_ID,
+    appleId: process.env.APPLE_ID,
+    appleIdPassword: process.env.APPLE_ID_PASS,
   });
 };
