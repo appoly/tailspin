@@ -18,6 +18,6 @@
       "$/*": ["./shared/*"],
     }
   },
-  "include": ["src", "electron/preload/ipc-api", "index.d.ts", "shared"],
+  "include": ["src", "index.d.ts", "shared"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
