@@ -28,7 +28,9 @@
                 <textarea v-model="forgeApiKey" class="form-control" id="forge-api-key" placeholder="Forge API Key" />
                 <small class="text-muted">
                     We can pull your sites from Forge using an API key. You can create one <a
-                        href="https://forge.laravel.com/user-profile/api" target="_blank">here</a>.
+                        href="https://forge.laravel.com/profile/api" target="_blank">here</a>.
+                    <br>
+                    <strong>Note:</strong> When creating your API token, make sure to select the <code>server:view</code> scope only.
                 </small>
                 <button class="btn btn-primary w-100 mt-2" @click="submitKey">Save</button>
             </template>

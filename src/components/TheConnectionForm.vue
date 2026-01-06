@@ -75,6 +75,7 @@ const userStore = useUserStore();
 const connectionStore = useConnectionStore();
 const props = defineProps<{
     connection?: Connection;
+    initialValues?: BaseConnection;
 }>();
 
 const passwordIsChanged = ref(false);
@@ -115,6 +116,24 @@ onMounted(() => {
                 }
             }),
             iconColor: props.connection!.iconColor || 'currentColor'
+        }
+    } else if (props.initialValues) {
+        // Use initial values to pre-fill the form when adding a new connection
+        formFields.value = {
+            name: props.initialValues.name || baseFormFields.name,
+            icon: props.initialValues.icon || baseFormFields.icon,
+            path: props.initialValues.path || baseFormFields.path,
+            type: props.initialValues.type || baseFormFields.type,
+            ...(props.initialValues.type === 'remote' && {
+                ssh: {
+                    host: props.initialValues.ssh?.host || baseFormFields.ssh!.host,
+                    port: props.initialValues.ssh?.port || baseFormFields.ssh!.port,
+                    username: props.initialValues.ssh?.username || baseFormFields.ssh!.username,
+                    passwordType: props.initialValues.ssh?.passwordType || baseFormFields.ssh!.passwordType,
+                    password: props.initialValues.ssh?.password || baseFormFields.ssh!.password,
+                }
+            }),
+            iconColor: props.initialValues.iconColor || baseFormFields.iconColor
         }
     }
 });

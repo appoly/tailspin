@@ -36,8 +36,11 @@
                 </div>
             </div>
         </template>
-        <button v-if="connection" class="btn btn-secondary" @click="() => connection = undefined">&lArr; Back to
-            Sites List</button>
+        <div v-if="connection" class="d-flex gap-2 mb-3">
+            <button class="btn btn-secondary" @click="() => connection = undefined">&lArr; Back to
+                Sites List</button>
+            <button v-if="connection" class="btn btn-primary" @click="() => saveToMainConnections(connection as Connection)">Save to Main Connections</button>
+        </div>
         <SshLogViewer v-if="connection" :connection="connection" />
     </div>
 </template>
@@ -50,8 +53,10 @@ import { computed, onMounted, ref } from 'vue';
 import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore';
 import { Connection, ForgeServer, ForgeSite } from "$/interfaces"
 import SshLogViewer from '@/components/SshLogViewer.vue';
+import { useApplicationStore } from '@/stores/useApplicationStore';
 
 const forgeConnection = useForgeConnectionStore();
+const applicationStore = useApplicationStore();
 
 const currentKeyExists = ref(false);
 const searchTerm = ref('');
@@ -104,5 +109,19 @@ async function selectSite(site: ForgeSite, server: ForgeServer) {
         iconColor: 'blue',
         uid: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
     }
+}
+
+function saveToMainConnections(connection: Connection) {
+    // Store the connection data in routeParams to pre-fill the form
+    applicationStore.changePage('connections.add', {
+        prefillConnection: JSON.stringify({
+            name: connection.name,
+            icon: connection.icon,
+            iconColor: connection.iconColor,
+            path: connection.path,
+            type: connection.type,
+            ssh: connection.ssh,
+        })
+    });
 }
 </script>
