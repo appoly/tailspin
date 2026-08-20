@@ -15,7 +15,8 @@ export default () => {
       async (ssh) => {
         // Determine whether the path is a file, directory, or does not exist:
         let response = await ssh.exec(`test -d ${path} && echo "directory" || (test -f ${path} && echo "file")`);
-        return { success: true, message: response };
+        // The renderer compares this with strict equality, so strip the shell's trailing newline
+        return { success: true, message: typeof response === "string" ? response.trim() : response };
       },
       options,
       passwordIsEncrypted
@@ -24,10 +25,12 @@ export default () => {
   ipcMain.handle("ssh-get-files-in-directory", async (event, options, path: string, passwordIsEncrypted: boolean) =>
     handleSsh(
       async (ssh) => {
-        // Output one file per line, only .log files:
-        // Only look for .log files
+        // Output one ".log" file per line as "<size in bytes> <path>",
+        // which is the format the renderer's parser expects.
+        // Sorted by modification time, newest first (the leading mtime column
+        // is only used for sorting and stripped before returning).
         path = path.endsWith("/") ? path + "*.log" : path + "/*.log";
-        let response = await ssh.exec("ls -lr", [path]);
+        let response = await ssh.exec(`stat -c '%Y %s %n' ${path} | sort -rn | cut -d' ' -f2-`);
         return { success: true, message: response };
       },
       options,

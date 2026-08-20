@@ -1,406 +1,308 @@
 <template>
-    <div>
-        <div class="mt-2 mb-4">
-            <div class="d-flex mb-3">
-                <div class="flex-grow-1">
-                    <template v-if="isLoading">
-                        <input class="form-control" type="text" value="Loading..." readonly disabled />
-                    </template>
-                    <template v-else>
-                        <input v-if="!isDirectory" class="form-control" type="text" :value="currentPath" readonly
-                            disabled />
-                        <template v-else>
-                            <div v-if="!paths.length">
-                                <div class="alert alert-warning" role="alert">
-                                    No log files found in this directory.
-                                </div>
-                            </div>
-                            <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown"
-                                :disabled="downloading || isLoading">
-                                <option disabled value=''>Please select an option...</option>
-                                <option v-for="file in files" :value="file.path">
-                                    {{ getLastPathSegment(file.path) }}
-                                    ({{ kilobytesToHumanReadableFileSize(file.size) }})
-                                </option>
-                            </select>
-
-                        </template>
-                    </template>
-                </div>
-                <div class="ms-2">
-                    <button class="btn btn-outline-secondary me-2" type="button" @click="downloadLog"
-                        :disabled="!isReady">
-                        <i class="bi bi-download" aria-hidden="true"></i>
-                        <span class="visually-hidden">Download</span>
-                    </button>
-                    <div v-if="autoFetchInterval" class="btn-group">
-                        <button class="btn btn-outline-info" type="button" @click="stopAutoRefresh">
-                            <i class="bi bi-stop" aria-hidden="true"></i>
-                            <span class="visually-hidden">Stop Auto-fetch</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split"
-                            disabled>
-                        </button>
-                    </div>
-                    <div v-else class="btn-group">
-                        <button class="btn btn-outline-secondary" type="button" @click="fetchLogUpdates"
-                            :disabled="!isReady" title="Fetch New Entries">
-                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
-                            <span class="visually-hidden">Refresh</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
-                            :class="{ 'btn-outline-info': autoFetchInterval > 0 }" data-bs-toggle="dropdown"
-                            aria-expanded="false" data-bs-auto-close="true" :disabled="!isReady">
-                            <span class="visually-hidden">Toggle Dropdown</span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <button class="dropdown-item" @click="() => beginAutoRefresh(120000)">
-                                    Auto-fetch every 2 minutes
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item" @click="() => beginAutoRefresh(60000)">
-                                    Auto-fetch every 60 seconds
-                                </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item" @click="() => beginAutoRefresh(30000)">
-                                    Auto-fetch every 30 seconds
-                                </button>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><button class="dropdown-item" @click="refreshSsh">Full Refresh</button></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div>
-            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg" ref="theLogViewer"
-                :key="`log_viewer_${currentPath}`">
-                <template #additional-filters>
-                    <div class="ms-2">
-                        <button class="btn btn-outline-secondary" @click="() => showSshOptions = !showSshOptions"
-                            data-bs-toggle="tooltip" title="SSH Options">
-                            <i class="bi bi-terminal"></i>&nbsp;
-                            <i v-if="!showSshOptions" class="bi bi-chevron-down"></i>
-                            <i v-else class="bi bi-chevron-up"></i>
-                        </button>
-                    </div>
-                    <div v-if="countdownValue" class="ms-2">
-                        <button class="btn btn-outline-info" @click="stopAutoRefresh" data-bs-toggle="tooltip">
-                            <i class="bi bi-arrow-repeat"></i>&nbsp;
-                            <span class="visually-hidden">Refreshing in:</span>
-                            {{ countdownValue }}
-                            <span class="visually-hidden">Click to stop</span>
-                        </button>
-                    </div>
-                </template>
-
-                <template #above-table>
-                    <Transition>
-                        <TheLogViewerSshOptions v-show="showSshOptions" v-model="sshOptions"
-                            :originalOptions="sshOptions" :isLoading="isLoading" :currentFileSize="currentFileSize"
-                            @submitted="handleOptionsUpdate" />
-                    </Transition>
-                    <div v-if="isUpdating" class="alert alert-info" role="alert">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <i class="bi bi-arrow-repeat me-2" aria-hidden="true"></i>
-                                Fetching new entries...
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </TheLogViewer>
-
-            <div v-if="paths.length && !currentPath" class="my-2">
-                <div class="alert alert-info" role="alert">
-                    Please select a file from the dropdown above.
-                </div>
-            </div>
-            <template v-if="isReady">
-                <div v-if="!paths.length && isDirectory" class="my-2">
-                    <div class="alert alert-info" role="alert">
-                        <div class="d-flex justify-content-between align-items-center">
-                            No log entries found.
-                            <button class="btn btn-outline-light" type="button" @click="refreshSsh">Reload?</button>
-                        </div>
-                    </div>
-                </div>
-
-            </template>
-        </div>
-        <Teleport to="body">
-            <TheSshPassphraseModal v-model="passphrase" ref="passphraseModal" @submit="handlePassphraseSubmit" />
-        </Teleport>
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <h2 id="logViewerHeader" class="text-sm font-medium">{{ connection.name }}</h2>
+        <span class="text-xs text-muted-foreground font-mono">{{ connection.ssh?.host }}:{{ connection.path }}</span>
+        <span v-if="isUpdating" class="text-xs text-blue-400 animate-pulse">Updating...</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="downloadFile" :disabled="isLoading || isDownloading">
+          <Download class="h-3 w-3 mr-1" :class="{ 'animate-bounce': isDownloading }" />
+          Download
+        </Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="toggleSshOptions">
+          <Settings class="h-3 w-3 mr-1" />
+          Options
+        </Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="readLog" :disabled="isLoading">
+          <RefreshCw class="h-3 w-3 mr-1" :class="{ 'animate-spin': isLoading }" />
+          Refresh
+        </Button>
+      </div>
     </div>
+
+    <!-- Auto-fetch controls -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xs text-muted-foreground">Auto-fetch:</span>
+      <Button
+        v-for="interval in autoFetchIntervals"
+        :key="interval.value"
+        variant="outline"
+        size="sm"
+        class="h-6 text-[10px] px-2"
+        :class="{ 'bg-primary text-primary-foreground': autoFetchSeconds === interval.value }"
+        @click="setAutoFetch(interval.value)"
+      >
+        {{ interval.label }}
+      </Button>
+      <Button v-if="autoFetchSeconds" variant="ghost" size="sm" class="h-6 text-[10px] px-2" @click="stopAutoFetch">
+        Stop
+      </Button>
+      <span v-if="autoFetchSeconds && countdown > 0" class="text-xs text-muted-foreground">
+        Next in {{ countdown }}s
+      </span>
+    </div>
+
+    <!-- SSH Options panel -->
+    <LogSshOptions
+      v-if="showSshOptions"
+      :modelValue="sshOptions"
+      :isLoading="isLoading"
+      :currentFileSize="currentFileSize"
+      @update:modelValue="sshOptions = $event"
+      @submitted="readLog"
+    />
+
+    <!-- File selector for directories -->
+    <div v-if="isDirectory && remoteFiles.length" class="mb-3">
+      <select v-model="selectedFile" @change="readLog" class="w-full h-8 rounded-md border border-input bg-background px-2 text-xs">
+        <option value="" disabled>Select a log file...</option>
+        <option v-for="file in remoteFiles" :key="file.path" :value="file.path">
+          {{ file.path }} ({{ file.size }})
+        </option>
+      </select>
+    </div>
+
+    <LogViewer
+      :logEntries="logEntries"
+      :isLoading="isLoading"
+      :errorMsg="errorMsg"
+    />
+
+    <!-- Passphrase dialog -->
+    <ConnectionSshPassphraseDialog
+      :open="showPassphraseDialog"
+      @update:open="showPassphraseDialog = $event"
+      @submit="onPassphrase"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed, onUnmounted } from "vue";
-import { Connection, LogEntry, SshOptions } from "$/interfaces";
-import { useLogParser } from "@/composables/useLogParser";
-import { unproxify } from "@/helpers";
-import { useApplicationStore } from "@/stores/useApplicationStore";
-import TheSshPassphraseModal from "./TheSshPassphraseModal.vue";
-import TheLogViewer from "@/components/TheLogViewer.vue";
-import TheLogViewerSshOptions from "@/components/TheLogViewerSshOptions.vue";
-import { kilobytesToHumanReadableFileSize } from "@/helpers";
-import { MaxFileSizeToLoadKb } from "@/constants/Ssh";
+import { ref, onMounted, onUnmounted } from 'vue'
+import type { Connection, LogEntry, SshRequest, SshOptions } from '@/types/interfaces'
+import { SshAPI, CryptoAPI, StorageAPI } from '@/lib/backend'
+import { useLogParser } from '@/composables/useLogParser'
+import { useApplicationStore } from '@/stores/useApplicationStore'
+import { bytesToHumanReadableFileSize } from '@/helpers'
+import LogViewer from './LogViewer.vue'
+import LogSshOptions from './LogSshOptions.vue'
+import ConnectionSshPassphraseDialog from './ConnectionSshPassphraseDialog.vue'
+import { Button } from '@/components/ui/button'
+import { Download, Settings, RefreshCw } from 'lucide-vue-next'
 
-const props = defineProps<{
-    connection: Connection;
-}>();
+const props = defineProps<{ connection: Connection }>()
+
+const applicationStore = useApplicationStore()
+const logEntries = ref<LogEntry[]>([])
+const isLoading = ref(false)
+const isUpdating = ref(false)
+const isDownloading = ref(false)
+const errorMsg = ref('')
+const isDirectory = ref(false)
+const remoteFiles = ref<{ path: string; size: string }[]>([])
+const selectedFile = ref('')
+const showSshOptions = ref(false)
+const showPassphraseDialog = ref(false)
+const passphrase = ref('')
+const sshOptions = ref<SshOptions>({ numberOfBytes: 500 * 1024 })
+const currentFileSize = ref(0)
+const lastReadBytes = ref(0)
+const autoFetchSeconds = ref(0)
+const countdown = ref(0)
+let autoFetchIntervalId: ReturnType<typeof setInterval> | undefined
+let countdownIntervalId: ReturnType<typeof setInterval> | undefined
+
+const autoFetchIntervals = [
+  { label: '30s', value: 30 },
+  { label: '1m', value: 60 },
+  { label: '2m', value: 120 },
+]
 
 onMounted(async () => {
-    sshOptions.value.numberOfBytes = Number(await api.Store.get('ssh.numberOfBytes', 500 * 1024));
-    readLog(props.connection.path);
-});
+  const storedBytes = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024)
+  sshOptions.value.numberOfBytes = storedBytes as number
 
-const applicationStore = useApplicationStore();
-
-const passphrase = ref<string | null>(null);
-const passphraseModal = ref();
-const sshConfig = computed(() => ({
-    ...props.connection.ssh,
-    ...(props.connection.ssh?.passphraseRequired ? { passphrase: passphrase.value } : {})
-}))
-
-const logEntries = ref<LogEntry[]>([]);
-const isLoading = ref(false);
-const errorMsg = ref('');
-
-const sshOptions = ref<SshOptions>({
-    numberOfBytes: 500 * 1024,
-});
-const isDirectory = ref<boolean>(false);
-const currentPath = ref('');
-const files = ref<{ size: number, path: string }[]>([]);
-const paths = computed(() => {
-    return files.value.map((file) => file.path);
-});
-const currentFileSize = ref(0);
-const currentFile = computed(() => {
-    return files.value.find((file) => file.path === currentPath.value);
-});
-
-const showSshOptions = ref(false);
-
-const isReady = computed(() => !isLoading.value && currentPath.value && !downloading.value && !isUpdating.value);
-const theLogViewer = ref();
-
-function handleOptionsUpdate() {
-    if (currentPath.value) {
-        readLog(currentPath.value);
-        // Reset the page to 1 by making use of the exposed `page` variable on TheLogViewer:
-        theLogViewer.value.changePage(1);
-    }
-}
-async function readLog(path: string) {
-    isLoading.value = true;
-    errorMsg.value = '';
-    try {
-        // If the number of lines is set to 0 (ie. unlimited) and the file is larger than the max, abort:
-        if (sshOptions.value.numberOfBytes === 0 && currentFile.value!.size > MaxFileSizeToLoadKb) {
-            throw new Error('File too large to retrieve all lines. Please select a limited number of lines.');
-        }
-        if (props.connection.ssh?.passphraseRequired && !passphrase.value) {
-            passphraseModal.value!.open();
-            return;
-        }
-        const contentType: { success: boolean, message?: string } = await api.Ssh.isFileOrDirectory(unproxify(sshConfig.value), path);
-
-        if (!contentType.success) {
-            throw new Error(contentType.message);
-        }
-
-        if (!contentType.message) {
-            throw new Error("Path not valid");
-        }
-
-        let data: { success: boolean, message?: string, fileSize?: string };
-
-        if (contentType.message.trim() === 'directory') {
-            isDirectory.value = true;
-            data = await api.Ssh.getFilesInDirectory(unproxify(sshConfig.value), path);
-
-            if (!data.success) {
-                throw new Error(data.message);
-            }
-            files.value = (data.message as string).trim().split('\n').filter(line => line.trim() !== '').map((file: string) => {
-                const [permissions, links, owner, group, size, month, day, time, ...nameParts] = file
-                    .trim()
-                    .split(/\s+/);
-                return {
-                    size: parseInt(size) / 1024,
-                    path: nameParts.join(' ')
-                }
-            });
-            return;
-        };
-
-        currentPath.value = path;
-        data = await api.Ssh.readFromPath(unproxify(sshConfig.value), path, sshOptions.value.numberOfBytes)
-
-
-        if (!data.success) {
-            throw new Error(data.message);
-        }
-        logEntries.value = await useLogParser(data.message as string);
-        currentFileSize.value = parseInt(data.fileSize as string);
-        return;
-    } catch (error: any) {
-        errorMsg.value = error?.message ?? "Error reading log file";
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-const downloading = ref(false);
-
-async function downloadLog() {
-    /**
-     * TODO
-     * We either want to:
-     * 1. Block EVERYTHING whilst this is running, including changing pages
-     * 2. Send it to a queue instead of awaiting
-     */
-    downloading.value = true;
-    try {
-        // Let the file name be the concatenation of the connection name and the file name, made safe for file systems:
-
-        // For the connection name, we want to remove all whitespace and non-alphanumeric characters, and make it lowercase:
-        let connectionName = props.connection.name.trim().replace(/[\s]/gi, '').replace(/[^\w\-]/gi, '_').toLowerCase();
-
-        // For the filename, firstly, we only want the bit after the final '/':
-        let fileName = currentPath.value.split('/').slice(-1)[0];
-
-        // Then drop the .log extension, make safe, and then add it back on:
-        fileName = fileName.replace(/\.log$/i, '').replace(/[^\w\-]/gi, '_').toLowerCase() + '.log';
-
-        // Prepend 'log' to avoid any issues where the file name starts with non-alphanumeric characters:
-        fileName = 'log-' + connectionName + '-' + fileName;
-
-        // The max character limit on file names is 255, so we need to truncate it if it's too long, still keeping .log on the end:
-        if (fileName.length > 255) {
-            fileName = fileName.slice(0, 255 - 4) + '.log';
-        }
-
-        if (!applicationStore.updateDownloads(fileName, 'inProgress')) {
-            throw new Error("Download already in progress");
-        }
-        const data = await api.Ssh.downloadFromPath(unproxify(sshConfig.value), currentPath.value, fileName ?? 'Log');
-
-        if (!data.success) {
-            applicationStore.updateDownloads(fileName, 'failed');
-            throw new Error(data.message);
-        } else {
-            applicationStore.updateDownloads(fileName, 'completed');
-        }
-    } catch (error: any) {
-        alert(error?.message ?? "Error downloading log file");
-    } finally {
-        downloading.value = false;
-    }
-}
-
-async function handlePathDropdown() {
-    if (isThisConnectionAutoFetching.value) {
-        stopAutoRefresh();
-    }
-    nextTick(() => readLog(currentPath.value));
-}
-
-function refreshSsh() {
-    if (isThisConnectionAutoFetching.value) {
-        stopAutoRefresh();
-    }
-    readLog(props.connection.path);
-}
-
-function handlePassphraseSubmit() {
-    readLog(currentPath.value || props.connection.path);
-}
-
-function getLastPathSegment(path: string) {
-    return path.split('/').pop();
-}
-
-const isUpdating = ref(false);
-async function fetchLogUpdates() {
-    isUpdating.value = true;
-    try {
-        const data = await api.Ssh.readNextFromPath(unproxify(sshConfig.value), currentPath.value, currentFileSize.value);
-        if (!data.success) {
-            throw new Error(data.message);
-        }
-        const newEntries = await useLogParser(data.message as string);
-        logEntries.value = [...newEntries, ...logEntries.value]; // Add them to the front as the order is reversed
-        currentFileSize.value = parseInt(data.fileSize as string);
-        return;
-    } catch (error: any) {
-        errorMsg.value = error?.message ?? "Error reading log file";
-    } finally {
-        isUpdating.value = false;
-    }
-}
-
-// ------------------------------
-// Auto-fetching
-// ------------------------------
-
-const autoFetchInterval = ref(0);
-const isThisConnectionAutoFetching = computed(() => applicationStore.autoFetching.connectionId === props.connection.uid);
-const countdownValue = ref(0);
-const countdownInterval = ref<ReturnType<typeof setInterval>>();
-
-function stopAutoRefresh() {
-    applicationStore.autoFetching.connectionId = null;
-    autoFetchInterval.value = 0;
-    clearInterval(applicationStore.autoFetching!.intervalId);
-    clearInterval(countdownInterval.value);
-    countdownValue.value = 0;
-}
-
-function beginAutoRefresh(intervalTime = 60000) {
-    if (applicationStore.autoFetching.connectionId && !isThisConnectionAutoFetching.value) {
-        alert("You can only have one connection auto-fetching at a time. Please deactivate auto-fetching on the other connection first.");
-        return;
-    }
-    // If one is already running, stop it then start the next. This probably wont occur when not developing, but it's good to have here just in case:
-    if (applicationStore.autoFetching.intervalId) {
-        clearInterval(applicationStore.autoFetching.intervalId);
-    }
-
-    applicationStore.autoFetching.connectionId = props.connection.uid;
-    autoFetchInterval.value = intervalTime;
-
-    countdown(autoFetchInterval.value / 1000);
-    applicationStore.autoFetching.intervalId = setInterval(() => {
-        clearInterval(countdownInterval.value);
-        countdown(autoFetchInterval.value / 1000);
-        fetchLogUpdates();
-    }, autoFetchInterval.value);
-}
-
-function countdown(seconds: number) {
-    countdownValue.value = seconds;
-    countdownInterval.value = setInterval(() => {
-        countdownValue.value--;
-        if (countdownValue.value <= 0) {
-            clearInterval(countdownInterval.value);
-        }
-    }, 1000);
-}
+  if (props.connection.ssh?.passphraseRequired) {
+    showPassphraseDialog.value = true
+  } else {
+    await readLog()
+  }
+})
 
 onUnmounted(() => {
-    if (isThisConnectionAutoFetching.value) {
-        stopAutoRefresh();
-    }
-});
+  stopAutoFetch()
+})
 
+function buildSshRequest(): SshRequest {
+  const ssh = props.connection.ssh!
+  return {
+    host: ssh.host,
+    port: ssh.port,
+    username: ssh.username,
+    passwordType: ssh.passwordType,
+    password: ssh.password,
+    passwordIsEncrypted: ssh.passwordType === 'password',
+    passphrase: passphrase.value || undefined,
+  }
+}
+
+async function onPassphrase(p: string) {
+  passphrase.value = p
+  await readLog()
+}
+
+async function readLog() {
+  isLoading.value = true
+  errorMsg.value = ''
+  lastReadBytes.value = 0
+
+  try {
+    const req = buildSshRequest()
+    const typeRes = await SshAPI.IsFileOrDirectory(req, props.connection.path)
+
+    if (!typeRes.success) {
+      if (typeRes.message?.toLowerCase().includes('passphrase')) {
+        showPassphraseDialog.value = true
+        return
+      }
+      errorMsg.value = typeRes.message || 'Failed to connect'
+      return
+    }
+
+    isDirectory.value = typeRes.message === 'directory'
+
+    if (isDirectory.value) {
+      const dirRes = await SshAPI.GetFilesInDirectory(req, props.connection.path)
+      if (!dirRes.success) {
+        errorMsg.value = dirRes.message || 'Failed to list directory'
+        return
+      }
+      remoteFiles.value = parseLsOutput(dirRes.message || '')
+      if (remoteFiles.value.length && !selectedFile.value) {
+        selectedFile.value = remoteFiles.value[0].path
+      }
+    }
+
+    const filePath = isDirectory.value ? selectedFile.value : props.connection.path
+    if (!filePath) return
+
+    const res = await SshAPI.ReadFromPath(req, filePath, sshOptions.value.numberOfBytes)
+    if (!res.success) {
+      errorMsg.value = res.message || 'Failed to read file'
+      return
+    }
+
+    if (res.fileSize) {
+      currentFileSize.value = parseInt(res.fileSize, 10) || 0
+    }
+    lastReadBytes.value = currentFileSize.value
+
+    logEntries.value = await useLogParser(res.message || '')
+  } catch (e: any) {
+    errorMsg.value = e?.message ?? String(e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function fetchUpdates() {
+  if (isUpdating.value || isLoading.value) return
+  isUpdating.value = true
+  try {
+    const req = buildSshRequest()
+    const filePath = isDirectory.value ? selectedFile.value : props.connection.path
+    if (!filePath) return
+
+    const res = await SshAPI.ReadNextFromPath(req, filePath, lastReadBytes.value)
+    if (res.success && res.message) {
+      if (res.fileSize) {
+        lastReadBytes.value = parseInt(res.fileSize, 10) || lastReadBytes.value
+      }
+      const newEntries = await useLogParser(res.message)
+      if (newEntries.length) {
+        logEntries.value = [...newEntries, ...logEntries.value]
+      }
+    }
+  } catch {
+    // Silently fail on auto-fetch
+  } finally {
+    isUpdating.value = false
+  }
+}
+
+function parseLsOutput(output: string): { path: string; size: string }[] {
+  const lines = output.split('\n').filter(l => l.trim())
+  const files: { path: string; size: string }[] = []
+  for (const line of lines) {
+    const spaceIdx = line.trim().indexOf(' ')
+    if (spaceIdx === -1) continue
+    const size = line.trim().substring(0, spaceIdx)
+    const path = line.trim().substring(spaceIdx + 1)
+    if (path) {
+      files.push({
+        path,
+        size: bytesToHumanReadableFileSize(parseInt(size, 10) || 0),
+      })
+    }
+  }
+  return files
+}
+
+function toggleSshOptions() {
+  showSshOptions.value = !showSshOptions.value
+}
+
+function setAutoFetch(seconds: number) {
+  stopAutoFetch()
+  autoFetchSeconds.value = seconds
+  countdown.value = seconds
+
+  countdownIntervalId = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) countdown.value = seconds
+  }, 1000)
+
+  autoFetchIntervalId = setInterval(() => {
+    fetchUpdates()
+    countdown.value = seconds
+  }, seconds * 1000)
+
+  applicationStore.autoFetching = {
+    connectionId: props.connection.uid,
+    intervalId: autoFetchIntervalId,
+  }
+}
+
+function stopAutoFetch() {
+  autoFetchSeconds.value = 0
+  countdown.value = 0
+  if (autoFetchIntervalId) clearInterval(autoFetchIntervalId)
+  if (countdownIntervalId) clearInterval(countdownIntervalId)
+  autoFetchIntervalId = undefined
+  countdownIntervalId = undefined
+  applicationStore.autoFetching = { connectionId: null, intervalId: undefined }
+}
+
+async function downloadFile() {
+  const filePath = isDirectory.value ? selectedFile.value : props.connection.path
+  if (!filePath) return
+
+  const safeName = filePath.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^_+/, '')
+  const fileName = `${props.connection.ssh?.host}_${safeName}`
+
+  if (!applicationStore.updateDownloads(fileName, 'inProgress')) return
+  isDownloading.value = true
+
+  try {
+    const req = buildSshRequest()
+    const res = await SshAPI.DownloadFile(req, filePath, fileName)
+    applicationStore.updateDownloads(fileName, res.success ? 'completed' : 'failed')
+  } catch {
+    applicationStore.updateDownloads(fileName, 'failed')
+  } finally {
+    isDownloading.value = false
+  }
+}
 </script>

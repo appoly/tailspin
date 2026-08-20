@@ -1,121 +1,102 @@
 <template>
-    <div>
-        <div class="mt-2 mb-4">
-            <div class="d-flex mb-3">
-                <div class="flex-grow-1">
-                    <template v-if="isLoading">
-                        <input class="form-control" type="text" value="Loading..." readonly disabled />
-                    </template>
-                    <template v-else>
-                        <input v-if="!isDirectory" class="form-control" type="text" :value="currentPath" readonly
-                            disabled />
-                        <template v-else>
-                            <div v-if="!paths.length">
-                                <div class="alert alert-warning" role="alert">
-                                    No log files found in this directory.
-                                </div>
-                            </div>
-                            <select v-else class="form-select" v-model="currentPath" @change="handlePathDropdown">
-                                <option disabled value=''>Please select an option...</option>
-                                <option v-for="path in paths" :value="connection.path + '/' + path">{{ path }}</option>
-                            </select>
-
-                        </template>
-                    </template>
-                </div>
-                <div class="ms-2">
-                    <button v-if="isDirectory" class="btn btn-outline-secondary me-2" type="button" @click="goToFolder">
-                        <i class="bi bi-folder"></i>
-                        <span class="visually-hidden">Open Folder</span>
-                    </button>
-                    <button class="btn btn-outline-secondary" type="button" @click="refreshLog"
-                        :disabled="isLoading || !currentPath">
-                        <i class="bi bi-arrow-clockwise"></i>
-                        <span class="visually-hidden">Refresh Log</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div>
-            <TheLogViewer :logEntries="logEntries" :isLoading="isLoading" :errorMsg="errorMsg"
-                :key="`log_viewer_${currentPath}`" />
-
-            <template v-if="!isLoading && !errorMsg && !logEntries.length">
-
-                <div v-if="paths.length && !currentPath" class="my-2">
-                    <div class="alert alert-info" role="alert">
-                        Please select a file from the dropdown above.
-                    </div>
-                </div>
-
-            </template>
-        </div>
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <h2 id="logViewerHeader" class="text-sm font-medium">{{ connection.name }}</h2>
+        <span class="text-xs text-muted-foreground font-mono">{{ connection.path }}</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <Button v-if="isDirectory" variant="outline" size="sm" class="h-7 text-xs" @click="openFolder">
+          <FolderOpen class="h-3 w-3 mr-1" />
+          Open Folder
+        </Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="readLog" :disabled="isLoading">
+          <RefreshCw class="h-3 w-3 mr-1" :class="{ 'animate-spin': isLoading }" />
+          Refresh
+        </Button>
+      </div>
     </div>
+
+    <!-- File selector for directories -->
+    <div v-if="isDirectory && logFiles.length" class="mb-3">
+      <select v-model="selectedFile" @change="readLog" class="w-full h-8 rounded-md border border-input bg-background px-2 text-xs">
+        <option value="" disabled>Select a log file...</option>
+        <option v-for="file in logFiles" :key="file" :value="file">{{ file }}</option>
+      </select>
+    </div>
+
+    <div v-if="isDirectory && !logFiles.length && !isLoading" class="text-sm text-muted-foreground">
+      No log files found in this directory.
+    </div>
+
+    <LogViewer
+      :logEntries="logEntries"
+      :isLoading="isLoading"
+      :errorMsg="errorMsg"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from "vue";
-import { Connection, LogEntry } from "$/interfaces";
-import { useLogParser } from "@/composables/useLogParser";
-import TheLogViewer from "@/components/TheLogViewer.vue";
+import { ref, onMounted } from 'vue'
+import type { Connection, LogEntry } from '@/types/interfaces'
+import { FileAPI } from '@/lib/backend'
+import { useLogParser } from '@/composables/useLogParser'
+import LogViewer from './LogViewer.vue'
+import { Button } from '@/components/ui/button'
+import { FolderOpen, RefreshCw } from 'lucide-vue-next'
 
-const props = defineProps<{
-    connection: Connection;
-}>();
+const props = defineProps<{ connection: Connection }>()
 
-onMounted(() => {
-    readLog(props.connection.path);
-});
+const logEntries = ref<LogEntry[]>([])
+const isLoading = ref(false)
+const errorMsg = ref('')
+const isDirectory = ref(false)
+const logFiles = ref<string[]>([])
+const selectedFile = ref('')
 
-const logEntries = ref<LogEntry[]>([]);
-const isLoading = ref(false);
-const errorMsg = ref('');
+onMounted(async () => {
+  try {
+    const type = await FileAPI.IsFileOrDirectory(props.connection.path)
+    isDirectory.value = type === 'directory'
 
-const paths = ref<string[]>([]);
-const isDirectory = ref<boolean>(false);
-const currentPath = ref('');
-
-async function handlePathDropdown() {
-    nextTick(() => readLog(currentPath.value));
-}
-
-async function readLog(path: string) {
-    isLoading.value = true;
-    errorMsg.value = '';
-    try {
-        const contentType = await api.Application.isFileOrDirectory(path);
-        if (!contentType) {
-            throw new Error("File not found");
-        }
-
-        if (contentType === 'directory') {
-            isDirectory.value = true;
-            paths.value = (await api.Application.getFilesInDirectory(path)).sort().reverse();
-            return;
-        }
-
-        currentPath.value = path;
-        const fileContent = await api.Application.readFromPath(path);
-        logEntries.value = await useLogParser(fileContent);
-    } catch (error: any) {
-        errorMsg.value = error?.message ?? "Error reading log file";
-    } finally {
-        isLoading.value = false;
+    if (isDirectory.value) {
+      logFiles.value = await FileAPI.GetLogFilesInDirectory(props.connection.path)
+      if (logFiles.value.length) {
+        selectedFile.value = logFiles.value[0]
+        await readLog()
+      }
+    } else {
+      await readLog()
     }
-}
+  } catch (e: any) {
+    errorMsg.value = e?.message ?? String(e)
+  }
+})
 
-function refreshLog() {
-    if (currentPath.value) {
-        readLog(currentPath.value);
+async function readLog() {
+  isLoading.value = true
+  errorMsg.value = ''
+  try {
+    let filePath: string
+    if (isDirectory.value) {
+      if (!selectedFile.value) return
+      // GetLogFilesInDirectory returns filenames only, join with directory path
+      const dir = props.connection.path.endsWith('/') ? props.connection.path : props.connection.path + '/'
+      filePath = dir + selectedFile.value
+    } else {
+      filePath = props.connection.path
     }
+    const content = await FileAPI.ReadFile(filePath)
+    logEntries.value = await useLogParser(content)
+  } catch (e: any) {
+    errorMsg.value = e?.message ?? String(e)
+  } finally {
+    isLoading.value = false
+  }
 }
 
-function goToFolder() {
-    try {
-        api.Application.openFolderFromPath(props.connection.path);
-    } catch (error: any) {
-        alert(error?.message ?? 'Error opening folder');
-    }
+async function openFolder() {
+  await FileAPI.OpenFolderFromPath(props.connection.path)
 }
-
 </script>

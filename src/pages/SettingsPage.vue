@@ -1,100 +1,223 @@
 <template>
-    <div class="h-100 d-flex flex-column justify-content-between">
-        <div>
-            <h1>Settings</h1>
-            <div>
-                <div class="d-flex flex-column my-4">
-                    <h2 class="h4">User Settings</h2>
-                    <label for="theme-select">Theme</label>
-                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-                        <input type="radio" name="theme-radio" class="btn-check" id="theme-auto" value="auto"
-                            v-model="selectedTheme">
-                        <label class="btn btn-outline-primary" for="theme-auto">Auto (System)</label>
+  <div class="max-w-2xl">
+    <header class="mb-6">
+      <h1 class="text-lg font-semibold">Settings</h1>
+      <p class="text-xs text-muted-foreground mt-0.5">Preferences are saved automatically.</p>
+    </header>
 
-                        <input type="radio" name="theme-radio" class="btn-check" id="theme-light" value="light"
-                            v-model="selectedTheme">
-                        <label class="btn btn-outline-primary" for="theme-light">
-                            <i class="bi bi-sun"></i> Light
-                        </label>
-                        <input type="radio" name="theme-radio" class="btn-check" id="theme-dark" value="dark"
-                            v-model="selectedTheme">
-                        <label class="btn btn-outline-primary" for="theme-dark">
-                            <i class="bi bi-moon"></i> Dark
-                        </label>
-                    </div>
-                </div>
-                <hr />
-                <h2 class="h4">SSH</h2>
-                <TheDefaultKeyPathForm class="mb-2" />
-                <TheFileSizeForSshForm class="mb-2" />
-                <hr />
-                <h2 class="h4">Laravel Forge</h2>
-                <TheForgeApiKeyForm class="mt-2 mb-3" />
-                <hr />
-            </div>
+    <!-- Appearance -->
+    <section class="flex items-start gap-6 py-5">
+      <div class="w-52 shrink-0">
+        <h3 class="text-sm font-medium">Appearance</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">How the app looks on this machine.</p>
+      </div>
+      <div class="flex-1 min-w-0">
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          :model-value="userStore.theme"
+          @update:model-value="v => v && userStore.changeTheme(String(v))"
+        >
+          <ToggleGroupItem value="auto" class="text-xs px-3">Auto</ToggleGroupItem>
+          <ToggleGroupItem value="light" class="text-xs px-3">Light</ToggleGroupItem>
+          <ToggleGroupItem value="dark" class="text-xs px-3">Dark</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+    </section>
+
+    <Separator />
+
+    <!-- SSH -->
+    <section class="py-5 space-y-5">
+      <div class="flex items-start gap-6">
+        <div class="w-52 shrink-0">
+          <h3 class="text-sm font-medium">Default private key</h3>
+          <p class="text-xs text-muted-foreground mt-0.5">Pre-fills the key path on new SSH connections.</p>
         </div>
-        <!-- bottom -->
-        <div class="mt-5 mb-2">
-            <div class="mb-1 d-flex gap-3">
-                <button @click="deleteAllConnections" class="col btn btn-outline-danger">Delete All Connections</button>
-                <button @click="deleteAllConfirm" class="col btn btn-danger">Delete All Config Data</button>
-            </div>
-            <div class="d-flex justify-content-center mb-1">
-                <small class="text-muted">Version: {{ version }}</small>
-            </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <Input
+              v-model="sshKeyPath"
+              placeholder="~/.ssh/id_rsa"
+              class="h-8 text-xs font-mono flex-1"
+              @update:model-value="queueSaveKeyPath"
+            />
+            <Button variant="outline" size="sm" class="h-8" type="button" @click="browseSshKey">Browse</Button>
+          </div>
+          <SavedTick :visible="sshKeyPathSaved" />
         </div>
-        <GenericBootstrapModal ref="modal">
-            <div v-if="deleting" class="d-flex justify-content-center">
-                <div class="spinner-border text-danger" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                Please wait...
-            </div>
-        </GenericBootstrapModal>
+      </div>
+
+      <div class="flex items-start gap-6">
+        <div class="w-52 shrink-0">
+          <h3 class="text-sm font-medium">Log fetch size</h3>
+          <p class="text-xs text-muted-foreground mt-0.5">How much of a remote log is read per fetch.</p>
+        </div>
+        <div class="flex-1 min-w-0">
+          <select
+            :value="sshDefaultBytes"
+            @change="saveSshDefaultBytes(($event.target as HTMLSelectElement).value)"
+            class="h-8 w-40 rounded-md border border-input bg-background px-2 text-xs"
+          >
+            <option v-for="size in FileSizesInKb" :key="size" :value="size * 1024">
+              {{ kilobytesToHumanReadableFileSize(size) }}
+            </option>
+          </select>
+          <SavedTick :visible="sshBytesSaved" />
+        </div>
+      </div>
+    </section>
+
+    <Separator />
+
+    <!-- Forge -->
+    <section class="flex items-start gap-6 py-5">
+      <div class="w-52 shrink-0">
+        <h3 class="text-sm font-medium">Laravel Forge</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">Sync servers and sites straight from Forge.</p>
+      </div>
+      <div class="flex-1 min-w-0">
+        <ForgeApiKeyForm :showToggle="true" bare />
+      </div>
+    </section>
+
+    <!-- Danger Zone -->
+    <section class="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+      <h3 class="text-sm font-medium text-destructive">Danger zone</h3>
+      <div class="mt-3 space-y-3">
+        <div class="flex items-center justify-between gap-6">
+          <p class="text-xs text-muted-foreground">Remove every saved connection, keeping other settings.</p>
+          <Button variant="destructive" size="sm" class="shrink-0" @click="showDeleteConnectionsDialog = true">
+            Delete connections
+          </Button>
+        </div>
+        <div class="flex items-center justify-between gap-6">
+          <p class="text-xs text-muted-foreground">Wipe all settings, connections and stored data.</p>
+          <Button variant="destructive" size="sm" class="shrink-0" @click="showDeleteConfigDialog = true">
+            Delete everything
+          </Button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Delete Connections Dialog -->
+    <Dialog :open="showDeleteConnectionsDialog" @update:open="showDeleteConnectionsDialog = $event">
+      <DialogContent class="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete All Connections?</DialogTitle>
+          <DialogDescription>This will permanently remove all saved connections. This cannot be undone.</DialogDescription>
+        </DialogHeader>
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" size="sm" @click="showDeleteConnectionsDialog = false">Cancel</Button>
+          <Button variant="destructive" size="sm" @click="deleteAllConnections">Delete</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Delete Config Dialog -->
+    <Dialog :open="showDeleteConfigDialog" @update:open="showDeleteConfigDialog = $event">
+      <DialogContent class="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete All Config Data?</DialogTitle>
+          <DialogDescription>This will remove all settings, connections, and stored data. This cannot be undone.</DialogDescription>
+        </DialogHeader>
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" size="sm" @click="showDeleteConfigDialog = false">Cancel</Button>
+          <Button variant="destructive" size="sm" @click="deleteAllConfig">Delete</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <div class="text-xs text-muted-foreground text-center mt-10">
+      Laravel Log Viewer v{{ appVersion }}
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
-import { useUserStore } from '@/stores/useUserStore';
-import { useConnectionStore } from '@/stores/useConnectionStore';
-import { useApplicationStore } from '@/stores/useApplicationStore';
-import TheForgeApiKeyForm from '@/components/settings/TheForgeApiKeyForm.vue';
-import TheDefaultKeyPathForm from '@/components/settings/TheDefaultKeyPathForm.vue';
-import TheFileSizeForSshForm from '@/components/settings/TheFileSizeForSshForm.vue';
-import GenericBootstrapModal from '@/components/GenericBootstrapModal.vue';
-const userStore = useUserStore();
-const connectionStore = useConnectionStore();
-const applicationStore = useApplicationStore();
+import { ref, onMounted, h, type FunctionalComponent } from 'vue'
+import { StorageAPI, FileAPI } from '@/lib/backend'
+import { useUserStore } from '@/stores/useUserStore'
+import { useConnectionStore } from '@/stores/useConnectionStore'
+import { useApplicationStore } from '@/stores/useApplicationStore'
+import { FileSizesInKb } from '@/constants/Ssh'
+import { kilobytesToHumanReadableFileSize, debounce } from '@/helpers'
+import ForgeApiKeyForm from '@/components/ForgeApiKeyForm.vue'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Check } from 'lucide-vue-next'
 
-const selectedTheme = computed({
-    get: () => userStore.theme,
-    set: (val) => userStore.changeTheme(val),
-});
-// get the version from the package.json file
-const version = ref(APP_VERSION);
-// APP_VERSION is defined in the vite config
+const userStore = useUserStore()
+const connectionStore = useConnectionStore()
+const applicationStore = useApplicationStore()
 
-const deleting = ref(false);
-const modal = ref();
+const appVersion = APP_VERSION
 
-function deleteAllConnections() {
-    if (confirm('Are you sure you want to delete all connections?')) {
-        connectionStore.deleteAllConnections();
-    }
+const sshKeyPath = ref('')
+const sshKeyPathSaved = ref(false)
+const sshDefaultBytes = ref(500 * 1024)
+const sshBytesSaved = ref(false)
+const showDeleteConnectionsDialog = ref(false)
+const showDeleteConfigDialog = ref(false)
+
+// Transient "Saved" confirmation shown under a control
+const SavedTick: FunctionalComponent<{ visible: boolean }> = (props) =>
+  h(
+    'p',
+    {
+      class: [
+        'flex items-center gap-1 text-xs text-emerald-500 mt-1 transition-opacity duration-300',
+        props.visible ? 'opacity-100' : 'opacity-0',
+      ],
+    },
+    [h(Check, { class: 'h-3 w-3' }), 'Saved']
+  )
+SavedTick.props = { visible: { type: Boolean, required: true } }
+
+onMounted(async () => {
+  sshKeyPath.value = await StorageAPI.Get('app.sshKeyPath', '') as string
+  sshDefaultBytes.value = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024) as number
+})
+
+const queueSaveKeyPath = debounce(saveSshKeyPath, 600)
+
+async function saveSshKeyPath() {
+  await StorageAPI.Set('app.sshKeyPath', sshKeyPath.value)
+  await userStore.initDefaultSshPath()
+  flash(sshKeyPathSaved)
 }
 
-async function deleteAllConfirm() {
-    if (confirm('Are you sure you want to delete all connections?')) {
-        deleting.value = true;
-        modal.value!.open();
-        try {
-            await applicationStore.deleteAllConfigData();
-            alert('All config data has been deleted. App will now reload.');
-            location.reload();
-        } catch (error) {
-            alert('Error deleting config data.');
-        }
-    }
+async function browseSshKey() {
+  const path = await FileAPI.OpenAnyFileDialog('Select SSH private key')
+  if (path) {
+    sshKeyPath.value = path
+    await saveSshKeyPath()
+  }
+}
+
+async function saveSshDefaultBytes(value: string) {
+  sshDefaultBytes.value = Number(value)
+  await StorageAPI.Set('ssh.numberOfBytes', sshDefaultBytes.value)
+  flash(sshBytesSaved)
+}
+
+function flash(flag: { value: boolean }) {
+  flag.value = true
+  setTimeout(() => { flag.value = false }, 2000)
+}
+
+async function deleteAllConnections() {
+  await connectionStore.deleteAllConnections()
+  showDeleteConnectionsDialog.value = false
+  applicationStore.changePage('connections', { success: 'All connections deleted.' })
+}
+
+async function deleteAllConfig() {
+  await applicationStore.deleteAllConfigData()
+  showDeleteConfigDialog.value = false
+  applicationStore.changePage('connections', { success: 'All config data deleted.' })
 }
 </script>

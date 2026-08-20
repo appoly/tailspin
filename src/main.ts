@@ -1,14 +1,8 @@
-import { createApp } from "vue";
-import "./app.scss";
-import "bootstrap-icons/font/bootstrap-icons.css";
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+import './assets/index.css'
 
-import App from "./App.vue";
-import { createPinia } from "pinia";
-
-const app = createApp(App);
-
-app.use(createPinia());
-
-app.mount("#app").$nextTick(() => {
-  postMessage({ payload: "removeLoading" }, "*");
-});
+const app = createApp(App)
+app.use(createPinia())
+app.mount('#app')

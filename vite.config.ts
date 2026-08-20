@@ -5,6 +5,11 @@ import electron from "vite-plugin-electron";
 import pkg from "./package.json";
 import { fileURLToPath, URL } from "node:url";
 
+// Only packages that can't be bundled into the main-process build (native addons)
+// should be external — they must also be listed in "dependencies" so
+// electron-builder packages them.
+const mainProcessExternals = Object.keys("dependencies" in pkg ? pkg.dependencies : {});
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   rmSync("dist-electron", { recursive: true, force: true });
@@ -33,7 +38,7 @@ export default defineConfig(({ command }) => {
               minify: isBuild,
               outDir: "dist-electron/main",
               rollupOptions: {
-                external: Object.keys("dependencies" in pkg ? pkg.dependencies : {}),
+                external: mainProcessExternals,
               },
             },
           },
@@ -51,7 +56,7 @@ export default defineConfig(({ command }) => {
               minify: isBuild,
               outDir: "dist-electron/preload",
               rollupOptions: {
-                external: Object.keys("dependencies" in pkg ? pkg.dependencies : {}),
+                external: mainProcessExternals,
               },
             },
           },

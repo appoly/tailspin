@@ -42,15 +42,21 @@ const indexHtml = join(process.env.DIST, "index.html");
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: "Main window",
+    title: "Laravel Log Viewer",
     icon: join(process.env.PUBLIC, "logo-min.png"),
     minWidth: 800,
+    minHeight: 500,
     webPreferences: {
       preload,
       nodeIntegration: false,
       contextIsolation: true,
     },
     autoHideMenuBar: true,
+    // The renderer draws its own titlebar (tabs live in it), so hide the native
+    // one on macOS but keep the traffic lights.
+    ...(process.platform === "darwin"
+      ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 12, y: 12 } }
+      : {}),
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {

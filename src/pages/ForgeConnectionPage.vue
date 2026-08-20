@@ -1,127 +1,155 @@
 <template>
-    <div>
-        <h1>Laravel Forge Connections</h1>
-
-        <template v-if="!currentKeyExists">
-            <div class="alert alert-warning" role="alert">
-                <h4 class="alert-heading">No API Key</h4>
-                <p>You have not yet set your Laravel Forge API key. You can do so below.</p>
-            </div>
-            <TheForgeApiKeyForm @submit="handleFormSubmit" />
-        </template>
-        <template v-else-if="forgeConnection.servers.length === 0">
-            <div class="alert alert-warning" role="alert">
-                <h4 class="alert-heading">No Servers</h4>
-                <p>We could not find any servers associated with your API key. You can add one below.</p>
-            </div>
-            <TheForgeApiHandler />
-        </template>
-        <template v-else-if="!connection">
-            <div>
-                <TheForgeApiHandler />
-                <SearchBar v-model:search-term="searchTerm" placeholder="Search for a Site" />
-                <div class="my-3">
-                    <div v-for="server in forgeConnection.servers" :key="'server' + server.id">
-                        <template v-if="Object.keys(sitesByServerId[server.id] ?? {}).length">
-                            <h4>{{ server.name }}</h4>
-                            <ul>
-                                <li v-for="site in sitesByServerId[server.id]" :key="`site-${server.id}-${site.id}`">
-                                    <button class="btn btn-link btn-sm" @click="() => selectSite(site, server)">
-                                        <span>{{ site.name }}</span>
-                                    </button>
-                                </li>
-                            </ul>
-                        </template>
-                    </div>
-                </div>
-            </div>
-        </template>
-        <div v-if="connection" class="d-flex gap-2 mb-3">
-            <button class="btn btn-secondary" @click="() => connection = undefined">&lArr; Back to
-                Sites List</button>
-            <button v-if="connection" class="btn btn-primary" @click="() => saveToMainConnections(connection as Connection)">Save to Main Connections</button>
-        </div>
-        <SshLogViewer v-if="connection" :connection="connection" />
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-lg font-semibold">Forge Connections</h1>
+      <Button variant="ghost" size="sm" class="h-7 text-xs" @click="applicationStore.changePage('connections')">
+        <ArrowLeft class="h-3 w-3 mr-1" />
+        Back
+      </Button>
     </div>
+
+    <!-- No API Key -->
+    <div v-if="!hasApiKey">
+      <ForgeApiKeyForm @updated="checkApiKey" />
+    </div>
+
+    <!-- Has API key but no servers -->
+    <div v-else-if="!forgeStore.servers.length && !selectedSite">
+      <div class="text-sm text-muted-foreground mb-3">No servers synced yet.</div>
+      <ForgeApiHandler />
+    </div>
+
+    <!-- Viewing a site log -->
+    <div v-else-if="selectedSite">
+      <div class="flex items-center justify-between mb-3">
+        <Button variant="ghost" size="sm" class="h-7 text-xs" @click="selectedSite = null">
+          <ArrowLeft class="h-3 w-3 mr-1" />
+          Back to Sites
+        </Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="saveToConnections">
+          <Plus class="h-3 w-3 mr-1" />
+          Save to Connections
+        </Button>
+      </div>
+      <SshLogViewer :connection="siteConnection!" />
+    </div>
+
+    <!-- Server/site list -->
+    <div v-else>
+      <div class="flex items-center justify-between mb-3">
+        <ForgeApiHandler />
+      </div>
+
+      <div class="mb-3">
+        <Input
+          v-model="searchQuery"
+          placeholder="Search servers or sites..."
+          class="h-8 text-sm"
+        />
+      </div>
+
+      <div v-for="server in filteredServers" :key="server.id" class="mb-4">
+        <h3 class="text-xs font-medium text-muted-foreground mb-1.5">
+          {{ server.name }}
+          <span class="font-mono ml-1">{{ server.ipAddress }}</span>
+        </h3>
+        <div class="border rounded-md divide-y">
+          <div
+            v-for="site in getSitesForServer(server.id)"
+            :key="site.id"
+            class="flex items-center justify-between px-3 py-2 hover:bg-muted/50 cursor-pointer transition-colors"
+            @click="selectSite(server, site)"
+          >
+            <span class="text-sm">{{ site.name }}</span>
+            <ChevronRight class="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!filteredServers.length" class="text-sm text-muted-foreground text-center py-8">
+        No servers or sites match your search.
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import SearchBar from '@/components/SearchBar.vue';
-import TheForgeApiKeyForm from '@/components/settings/TheForgeApiKeyForm.vue';
-import TheForgeApiHandler from '@/components/forge/TheForgeApiHandler.vue';
-import { computed, onMounted, ref } from 'vue';
-import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore';
-import { Connection, ForgeServer, ForgeSite } from "$/interfaces"
-import SshLogViewer from '@/components/SshLogViewer.vue';
-import { useApplicationStore } from '@/stores/useApplicationStore';
+import { ref, computed, onMounted } from 'vue'
+import type { Connection, ForgeServer, ForgeSite } from '@/types/interfaces'
+import { StorageAPI } from '@/lib/backend'
+import { useApplicationStore } from '@/stores/useApplicationStore'
+import { useUserStore } from '@/stores/useUserStore'
+import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore'
+import ForgeApiKeyForm from '@/components/ForgeApiKeyForm.vue'
+import ForgeApiHandler from '@/components/ForgeApiHandler.vue'
+import SshLogViewer from '@/components/SshLogViewer.vue'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { ArrowLeft, ChevronRight, Plus } from 'lucide-vue-next'
 
-const forgeConnection = useForgeConnectionStore();
-const applicationStore = useApplicationStore();
+const applicationStore = useApplicationStore()
+const userStore = useUserStore()
+const forgeStore = useForgeConnectionStore()
 
-const currentKeyExists = ref(false);
-const searchTerm = ref('');
-
-const filteredSites = computed(() => {
-    return forgeConnection.sites.filter((site) => {
-        return site.name.toLowerCase().includes(searchTerm.value.toLowerCase());
-    });
-});
-
-// Group the array of site objects by their serverId property
-const sitesByServerId = computed(() => {
-    return filteredSites.value.reduce((group, site) => {
-        group[site.serverId] = group[site.serverId] || [];
-        group[site.serverId].push(site);
-        return group;
-    }, {} as Record<number, ForgeSite[]>)
-});
+const hasApiKey = ref(false)
+const searchQuery = ref('')
+const selectedSite = ref<ForgeSite | null>(null)
+const selectedServer = ref<ForgeServer | null>(null)
 
 onMounted(async () => {
-    currentKeyExists.value = await api.Store.has('app.forgeApiKey');
+  await checkApiKey()
 })
 
-async function handleFormSubmit() {
-    currentKeyExists.value = await api.Store.has('app.forgeApiKey');
+async function checkApiKey() {
+  hasApiKey.value = await StorageAPI.Has('app.forgeApiKey')
 }
 
-// Hacky for now as a POC
-const connection = ref<Connection>();
-const hideSelector = ref(false);
-async function selectSite(site: ForgeSite, server: ForgeServer) {
-    const sshKeyPath = await api.Store.get('app.sshKeyPath', '');
-    if (!sshKeyPath) {
-        alert('You must set your default SSH key path in the settings first.');
-        return;
-    }
-    connection.value = {
-        name: site.name,
-        icon: 'server',
-        path: '~/' + site.name + '/storage/logs',
-        type: 'remote',
-        ssh: {
-            host: server.ipAddress,
-            username: site.username,
-            port: 22,
-            passwordType: 'key',
-            password: sshKeyPath,
-        },
-        isFavorite: false,
-        iconColor: 'blue',
-        uid: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-    }
+const filteredServers = computed(() => {
+  if (!searchQuery.value) return forgeStore.servers
+  const q = searchQuery.value.toLowerCase()
+  return forgeStore.servers.filter(server => {
+    if (server.name.toLowerCase().includes(q) || server.ipAddress.toLowerCase().includes(q)) return true
+    return forgeStore.sites.some(site => site.serverId === server.id && site.name.toLowerCase().includes(q))
+  })
+})
+
+function getSitesForServer(serverId: number) {
+  const q = searchQuery.value.toLowerCase()
+  return forgeStore.sites.filter(site => {
+    if (site.serverId !== serverId) return false
+    if (!q) return true
+    return site.name.toLowerCase().includes(q)
+  })
 }
 
-function saveToMainConnections(connection: Connection) {
-    // Store the connection data in routeParams to pre-fill the form
-    applicationStore.changePage('connections.add', {
-        prefillConnection: JSON.stringify({
-            name: connection.name,
-            icon: connection.icon,
-            iconColor: connection.iconColor,
-            path: connection.path,
-            type: connection.type,
-            ssh: connection.ssh,
-        })
-    });
+function selectSite(server: ForgeServer, site: ForgeSite) {
+  selectedServer.value = server
+  selectedSite.value = site
+}
+
+const siteConnection = computed<Connection | null>(() => {
+  if (!selectedSite.value || !selectedServer.value) return null
+  return {
+    uid: `forge-${selectedSite.value.id}`,
+    name: selectedSite.value.name,
+    icon: 'server',
+    path: `/home/${selectedSite.value.username}/${selectedSite.value.name}/storage/logs`,
+    type: 'remote',
+    ssh: {
+      host: selectedServer.value.ipAddress,
+      port: 22,
+      username: selectedSite.value.username,
+      passwordType: 'key',
+      password: userStore.defaultSshPath || '',
+    },
+  }
+})
+
+function saveToConnections() {
+  if (!siteConnection.value) return
+  const { uid, ...base } = siteConnection.value
+  applicationStore.changePage('connections.add', {
+    prefillConnection: JSON.stringify(base),
+  })
 }
 </script>

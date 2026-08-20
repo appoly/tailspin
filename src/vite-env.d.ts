@@ -5,4 +5,5 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
-declare const APP_VERSION: string;
+
+declare const APP_VERSION: string
