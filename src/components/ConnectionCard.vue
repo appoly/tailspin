@@ -1,115 +1,140 @@
 <template>
-    <div class="connection mb-1" :class="[viewMode === 'grid' ? 'col-12 col-sm-6 col-md-4 col-lg-3' : 'col-12']"
-        @contextmenu.prevent="showMenu" @click="applicationStore.goToConnection(connection.uid)">
-        <!-- grid -->
-        <div class="connection-card card h-100" role="button" v-if="viewMode === 'grid'">
-            <div class="text-center font-weight-bold">
-                <div class="icon">
-                    <i :class="['h3 bi', `bi-${connection.icon}`]" :style="{ 'color': connection.iconColor ?? '' }"></i>
-                </div>
-
-                <span class="d-block fs-5">{{ connection.name ?? '?' }}</span>
-                <small class="d-block text-truncate">{{ connection.path }}</small>
-            </div>
+  <ContextMenu>
+    <ContextMenuTrigger>
+      <div
+        class="flex items-center gap-3 px-2.5 py-2 rounded-md cursor-pointer transition-colors hover:bg-muted/70 group"
+        @click="applicationStore.goToConnection(connection.uid)"
+      >
+        <!-- Icon tile -->
+        <div
+          class="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
+          :style="{ backgroundColor: iconTint }"
+        >
+          <component
+            :is="getIcon(connection.icon)"
+            class="h-4 w-4"
+            :style="{ color: connection.iconColor || 'currentColor' }"
+          />
         </div>
 
-        <!-- list -->
-        <div class="list-group-item my-1" role="button" v-if="viewMode === 'list'">
-            <div class="d-flex w-100 align-items-center">
-                <i :class="['h3 bi', `bi-${connection.icon}`]" :style="{ 'color': connection.iconColor ?? '' }"></i>
-                <h5 class="ms-3">{{ connection.name ?? '?' }}</h5>
-            </div>
-            <small class="text-muted">
-                {{ connection.path }}
-            </small>
+        <!-- Name + location -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="text-sm font-medium truncate">{{ connection.name }}</span>
+            <Star
+              v-if="connection.isFavorite"
+              class="h-3 w-3 shrink-0 fill-amber-400 text-amber-400"
+            />
+          </div>
+          <div class="text-[11px] font-mono text-muted-foreground truncate">{{ location }}</div>
         </div>
-    </div>
 
-    <div v-show="isMenuVisible" class="menu w-auto" ref="menu">
-        <div class="list-group">
-            <button v-for="option in menuOptions" :key="option.value" class="list-group-item list-group-item-action"
-                @click="selectOption(option)">
-                {{ option.label }}
-            </button>
+        <!-- Quick actions (hover) -->
+        <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button variant="ghost" size="icon" class="h-7 w-7" @click="toggleFavorite">
+                <Star class="h-3.5 w-3.5" :class="connection.isFavorite ? 'fill-amber-400 text-amber-400' : ''" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" class="text-xs">
+              {{ connection.isFavorite ? 'Remove from favorites' : 'Add to favorites' }}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button variant="ghost" size="icon" class="h-7 w-7" @click="editConnection">
+                <Pencil class="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" class="text-xs">Edit connection</TooltipContent>
+          </Tooltip>
         </div>
-    </div>
+
+        <Badge :variant="connection.type === 'remote' ? 'secondary' : 'outline'" class="text-[10px] px-1.5 py-0 shrink-0">
+          {{ connection.type === 'remote' ? 'SSH' : 'Local' }}
+        </Badge>
+      </div>
+    </ContextMenuTrigger>
+    <ContextMenuContent>
+      <ContextMenuItem @select="applicationStore.goToConnection(connection.uid)">
+        <FolderOpen class="mr-2 h-3.5 w-3.5" />
+        Open
+      </ContextMenuItem>
+      <ContextMenuItem @select="toggleFavorite">
+        <Star class="mr-2 h-3.5 w-3.5" :class="connection.isFavorite ? 'fill-current' : ''" />
+        {{ connection.isFavorite ? 'Remove from Favorites' : 'Add to Favorites' }}
+      </ContextMenuItem>
+      <ContextMenuItem @select="editConnection">
+        <Pencil class="mr-2 h-3.5 w-3.5" />
+        Edit Connection
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem class="text-destructive" @select="deleteConnection">
+        <Trash2 class="mr-2 h-3.5 w-3.5" />
+        Delete Connection
+      </ContextMenuItem>
+    </ContextMenuContent>
+  </ContextMenu>
 </template>
 
 <script setup lang="ts">
-import { Connection } from "$/interfaces";
-import { useApplicationStore } from '@/stores/useApplicationStore';
-import { useConnectionStore } from '@/stores/useConnectionStore';
+import { computed } from 'vue'
+import type { Connection } from '@/types/interfaces'
+import { useApplicationStore } from '@/stores/useApplicationStore'
+import { useConnectionStore } from '@/stores/useConnectionStore'
+import {
+  ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
+} from '@/components/ui/context-menu'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import {
+  Star, Pencil, Trash2, FolderOpen, Terminal, Server, Database, Globe, Cloud, Monitor,
+  HardDrive, Folder, Shield, Zap, Code, Wifi, Lock, Key, Box, Cpu,
+  Layers, Network, Radio, Rocket, Tag, Wrench, Activity, Briefcase,
+  Coffee, Compass, Hash, Heart, Home,
+} from 'lucide-vue-next'
 
-import { ref, Ref, ComputedRef, computed, onMounted, onUnmounted } from 'vue';
+const props = defineProps<{ connection: Connection }>()
+const applicationStore = useApplicationStore()
+const connectionStore = useConnectionStore()
 
-interface Option {
-    label: string;
-    value: string;
-}
-const applicationStore = useApplicationStore();
-const connectionStore = useConnectionStore();
+const location = computed(() => {
+  if (props.connection.type === 'remote' && props.connection.ssh) {
+    return `${props.connection.ssh.username}@${props.connection.ssh.host} · ${props.connection.path}`
+  }
+  return props.connection.path
+})
 
-const props = defineProps<{
-    connection: Connection;
-    viewMode: string;
-}>();
+// Soft tint of the connection's icon color for the icon tile background
+const iconTint = computed(() => {
+  const color = props.connection.iconColor
+  return color ? `color-mix(in srgb, ${color} 14%, transparent)` : 'hsl(var(--muted))'
+})
 
-const emit = defineEmits(["delete"]);
-const menu = ref<HTMLElement>();
-
-const isFavoriteMenuOption: Ref = computed(() => {
-    return props.connection.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'
-
-});
-
-const menuOptions: ComputedRef<Option[]> = computed(() => {
-    return [
-        { label: isFavoriteMenuOption.value, value: 'favorite' },
-        { label: 'Delete Connection', value: 'delete' },
-        { label: 'Edit Connection', value: 'edit' },
-    ];
-});
-
-// We need a custom right click menu for the connection card
-const isMenuVisible = ref<boolean>(false);
-
-function showMenu(event: MouseEvent): void {
-    event.preventDefault();
-    isMenuVisible.value = true;
-    // Set the position of the menu
-    menu.value!.style.left = `${event.clientX}px`;
-    menu.value!.style.top = `${event.clientY}px`;
-}
-
-function selectOption(option: Option): void {
-    isMenuVisible.value = false;
-    // on next tick, so the menu can be hidden before the alert is shown
-    setTimeout(() => {
-        if (option.value === 'delete' && confirm('Are you sure you want to delete this connection?')) {
-            emit('delete');
-        }
-        if (option.value === 'edit') {
-            applicationStore.changePage('connections.edit', { connectionUid: props.connection.uid });
-        }
-        if (option.value === 'favorite') {
-            props.connection.isFavorite = !props.connection.isFavorite;
-            connectionStore.updateConnection(props.connection);
-        }
-    }, 0);
+function getIcon(name: string) {
+  const map: Record<string, any> = {
+    terminal: Terminal, server: Server, database: Database, globe: Globe,
+    cloud: Cloud, monitor: Monitor, 'hard-drive': HardDrive, folder: Folder,
+    shield: Shield, zap: Zap, code: Code, wifi: Wifi, lock: Lock,
+    key: Key, box: Box, cpu: Cpu, layers: Layers, network: Network,
+    radio: Radio, rocket: Rocket, star: Star, tag: Tag, wrench: Wrench,
+    activity: Activity, briefcase: Briefcase, coffee: Coffee, compass: Compass,
+    hash: Hash, heart: Heart, home: Home,
+  }
+  return map[name] || Terminal
 }
 
-function handleClickOutside(event: MouseEvent): void {
-    if (menu.value && !menu.value!.contains(event.target as HTMLElement)) {
-        isMenuVisible.value = false;
-    }
+function toggleFavorite() {
+  connectionStore.updateConnection({ ...props.connection, isFavorite: !props.connection.isFavorite })
 }
 
-onMounted(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-});
+function editConnection() {
+  applicationStore.changePage('connections.edit', { connectionUid: props.connection.uid })
+}
 
-onUnmounted(() => {
-    document.removeEventListener('mousedown', handleClickOutside);
-});
-
+function deleteConnection() {
+  connectionStore.removeConnection(props.connection.uid)
+}
 </script>

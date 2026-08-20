@@ -1,41 +1,38 @@
 <template>
-    <div>
-        <h1>Edit Connection</h1>
-        <div v-if="isLoading">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-        <TheConnectionForm v-else :connection="connection" @saved="handleSave" />
+  <div class="space-y-4">
+    <div class="flex items-center gap-2">
+      <Button variant="ghost" size="icon" class="h-7 w-7" @click="applicationStore.changePage('connections')">
+        <ArrowLeft class="h-4 w-4" />
+      </Button>
+      <h1 class="text-lg font-semibold">Edit Connection</h1>
     </div>
+
+    <template v-if="connection">
+      <ConnectionForm :connection="connection" />
+    </template>
+    <template v-else>
+      <div class="space-y-3">
+        <Skeleton class="h-9 w-full" />
+        <Skeleton class="h-8 w-full" />
+        <Skeleton class="h-8 w-2/3" />
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { useApplicationStore } from '@/stores/useApplicationStore';
-import { useConnectionStore } from '@/stores/useConnectionStore';
-import { Connection } from "$/interfaces";
-import { onMounted, ref } from 'vue';
-import TheConnectionForm from '@/components/TheConnectionForm.vue';
+import { computed } from 'vue'
+import { useApplicationStore } from '@/stores/useApplicationStore'
+import { useConnectionStore } from '@/stores/useConnectionStore'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ArrowLeft } from 'lucide-vue-next'
+import ConnectionForm from '@/components/ConnectionForm.vue'
 
-const applicationStore = useApplicationStore();
-const connectionStore = useConnectionStore();
+const applicationStore = useApplicationStore()
+const connectionStore = useConnectionStore()
 
-const isLoading = ref(true);
-const connection = ref<Connection>();
-
-onMounted(() => {
-    connection.value = connectionStore.getById(applicationStore.routeParams.connectionUid);
-    if (!connection.value) {
-        applicationStore.changePage('connections', { error: 'Connection not found' });
-        return;
-    }
-    isLoading.value = false;
-})
-
-function handleSave() {
-    applicationStore.changePage('connections', { success: `Connection '${connection.value!.name}' Updated` });
-}
-
+const connection = computed(() =>
+  connectionStore.getById(applicationStore.routeParams.connectionUid)
+)
 </script>
-
-<style scoped></style>

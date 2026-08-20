@@ -28,34 +28,39 @@
     "pre-build": "vue-tsc --noEmit && vite build",
     "build": "npm run pre-build && electron-builder",
     "build:linux": "npm run pre-build && electron-builder -l --x64",
-    "preview": "vite preview",
-    "afterSign": "scripts/notarize.js"
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "@electron/notarize": "^2.5.0",
-    "@types/bootstrap": "^5.2.10",
-    "@types/node-ssh": "^7.0.6",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "electron": "^33.3.0",
-    "electron-builder": "^25.1.8",
+    "@electron/notarize": "^3.1.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.3.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vueuse/core": "^14.2.1",
+    "axios": "^1.19.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "electron": "^42.9.2",
+    "electron-builder": "^26.15.3",
     "electron-devtools-installer": "^4.0.0",
-    "sass": "^1.83.0",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.7",
-    "vite-plugin-electron": "^0.29.0",
-    "vite-plugin-electron-renderer": "^0.14.6",
-    "vue": "^3.5.13",
-    "vue-tsc": "^2.2.0"
+    "electron-store": "^11.0.2",
+    "lucide-vue-next": "^0.577.0",
+    "pinia": "^4.0.3",
+    "postcss": "^8.5.8",
+    "reka-ui": "^2.10.3",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.3.3",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.1",
+    "vite-plugin-electron": "^1.1.1",
+    "vue": "^3.5.41",
+    "vue-tsc": "^3.3.10",
+    "vuedraggable": "^4.1.0"
   },
   "dependencies": {
-    "@babel/types": "^7.26.3",
-    "axios": "^1.7.9",
-    "bootstrap": "^5.3.3",
-    "bootstrap-icons": "^1.11.3",
-    "electron-store": "^8.2.0",
-    "fs-extra": "^11.2.0",
-    "pinia": "^2.3.0",
-    "ssh2-promise": "^1.0.3",
-    "vuedraggable": "^4.1.0"
+    "ssh2-promise": "^1.0.3"
+  },
+  "overrides": {
+    "ip-address": "^10.5.0"
   }
 }

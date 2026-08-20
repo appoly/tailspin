@@ -1,34 +1,35 @@
 <template>
-    <div>
-        <h1>Add Connection</h1>
-
-        <TheConnectionForm @saved="handleSave" :initialValues="initialValues" />
+  <div class="space-y-4">
+    <div class="flex items-center gap-2">
+      <Button variant="ghost" size="icon" class="h-7 w-7" @click="applicationStore.changePage('connections')">
+        <ArrowLeft class="h-4 w-4" />
+      </Button>
+      <h1 class="text-lg font-semibold">Add Connection</h1>
     </div>
+
+    <ConnectionForm :initial-values="prefillConnection" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import TheConnectionForm from '@/components/TheConnectionForm.vue';
-import { useApplicationStore } from '@/stores/useApplicationStore';
-import { computed } from 'vue';
-import { BaseConnection } from '$/interfaces';
+import { computed } from 'vue'
+import type { BaseConnection } from '@/types/interfaces'
+import { useApplicationStore } from '@/stores/useApplicationStore'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-vue-next'
+import ConnectionForm from '@/components/ConnectionForm.vue'
 
-const applicationStore = useApplicationStore();
+const applicationStore = useApplicationStore()
 
-const initialValues = computed<BaseConnection | undefined>(() => {
-    const prefillData = applicationStore.routeParams.prefillConnection;
-    if (prefillData) {
-        try {
-            return JSON.parse(prefillData) as BaseConnection;
-        } catch (e) {
-            console.error('Failed to parse prefill connection data:', e);
-            return undefined;
-        }
+const prefillConnection = computed(() => {
+  const params = applicationStore.routeParams
+  if (params.prefillConnection) {
+    try {
+      return JSON.parse(params.prefillConnection) as BaseConnection
+    } catch {
+      return undefined
     }
-    return undefined;
-});
-
-function handleSave() {
-    applicationStore.changePage('connections', { success: 'Connection saved' });
-}
-
+  }
+  return undefined
+})
 </script>

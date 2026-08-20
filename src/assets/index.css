@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@config '../../tailwind.config.cjs';
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer base {
+  :root {
+    --background: 220 16% 97%;
+    --foreground: 220 14% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 20%;
+    --primary: 220 14% 28%;
+    --primary-foreground: 220 16% 97%;
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 220 14% 28%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 8% 50%;
+    --accent: 220 14% 93%;
+    --accent-foreground: 220 14% 28%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 12% 89%;
+    --input: 220 12% 89%;
+    --ring: 220 14% 28%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 12% 13%;
+    --foreground: 220 14% 90%;
+    --card: 224 12% 15%;
+    --card-foreground: 220 14% 90%;
+    --popover: 224 12% 15%;
+    --popover-foreground: 220 14% 90%;
+    --primary: 220 14% 90%;
+    --primary-foreground: 224 12% 13%;
+    --secondary: 224 10% 20%;
+    --secondary-foreground: 220 14% 90%;
+    --muted: 224 10% 20%;
+    --muted-foreground: 220 8% 56%;
+    --accent: 224 10% 20%;
+    --accent-foreground: 220 14% 90%;
+    --destructive: 0 55% 42%;
+    --destructive-foreground: 220 14% 90%;
+    --border: 224 10% 22%;
+    --input: 224 10% 22%;
+    --ring: 220 10% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.875rem;
+  }
+}
+
+/* Desktop app: prevent text selection on UI elements */
+*:not(input):not(textarea):not(pre):not(code):not(.selectable) {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Allow selection in specific areas */
+input, textarea, pre, code, .selectable {
+  user-select: text;
+  -webkit-user-select: text;
+}

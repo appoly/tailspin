@@ -1,120 +1,150 @@
 <template>
-    <div>
-        <div class="d-flex">
-            <h1>Connections</h1>
-            <span class="ms-2 align-self-center">
-                <div class="add-new-button" @click="() => applicationStore.changePage('connections.add')">
-                    <i class="bi bi-plus-lg hoverable"></i>
-                </div>
-            </span>
-        </div>
-
-        <div class="input-group mb-3">
-            <SearchBar placeholder="Search for a connection" v-model:search-term="searchTerm" />
-        </div>
-
-        <small v-if="hasNoConnections" class="text-muted">
-            You don't have any connections yet. Click the button above to add a new connection.
-        </small>
-
-        <template v-else-if="searchTerm == ''">
-            <!-- search for a connection -->
-
-
-            <h2>Favorite Connections</h2>
-            <small class="text-muted" v-if="favoriteConnections.length == 0">
-                You don't have any favorite connections yet. Right click on a connection to add it to your favorites.
-            </small>
-            <div class="row">
-                <ConnectionCard v-for="connection in favoriteConnections" :connection="connection"
-                    @delete="() => connectionStore.removeConnection(connection.uid)" view-mode="grid" />
-            </div>
-
-            <hr />
-
-            <h2>All Connections</h2>
-            <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]">
-                <draggable v-model="allConnections" @start="drag = true" @end="drag = false" item-key="uid">
-                    <template #item="{ element }">
-                        <span>
-                            <ConnectionCard :connection="element"
-                                @delete="() => connectionStore.removeConnection(element.uid)" view-mode="list" />
-                        </span>
-                    </template>
-                </draggable>
-            </div>
-
-        </template>
-        <template v-else>
-            <!-- Search results -->
-            <h2>Search Results</h2>
-            <div :class="['d-flex flex-wrap', { 'list-group': viewMode === 'list' }]" v-if="filteredConnections.length > 0">
-                <ConnectionCard v-for="connection in filteredConnections" :connection="connection"
-                    @delete="() => connectionStore.removeConnection(connection.uid)" view-mode="list" />
-            </div>
-            <small v-else class="text-muted">
-                No connections found.
-            </small>
-        </template>
-        <div class="row my-2">
-            <!-- Block button to add new connections -->
-            <div class="d-grid gap-2 my-2">
-                <button class="btn btn-primary" type="button" @click="() => applicationStore.changePage('connections.add')">
-                    Add new connection
-                    <i class="bi bi-plus-circle-fill"></i>
-                </button>
-            </div>
-        </div>
+  <div class="max-w-3xl">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-lg font-semibold">Connections</h1>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          {{ countLabel }}
+        </p>
+      </div>
+      <Button size="sm" class="h-8" @click="applicationStore.changePage('connections.add')">
+        <Plus class="h-3.5 w-3.5 mr-1.5" />
+        New connection
+      </Button>
     </div>
+
+    <!-- Search -->
+    <div v-if="connectionStore.connections.length" class="relative mb-4">
+      <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      <Input
+        v-model="search"
+        placeholder="Search by name, host or path..."
+        class="h-8 text-sm pl-8 pr-8"
+        @keydown.esc="search = ''"
+      />
+      <button
+        v-if="search"
+        class="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+        @click="search = ''"
+      >
+        <X class="h-3.5 w-3.5" />
+      </button>
+    </div>
+
+    <!-- Empty state: nothing saved yet -->
+    <div v-if="connectionStore.connections.length === 0" class="rounded-lg border border-dashed py-14 flex flex-col items-center text-center">
+      <div class="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+        <Server class="h-5 w-5 text-muted-foreground" />
+      </div>
+      <h2 class="text-sm font-medium">No connections yet</h2>
+      <p class="text-xs text-muted-foreground mt-1 mb-4 max-w-[280px]">
+        Add a local log file or connect to a server over SSH to start viewing logs.
+      </p>
+      <div class="flex items-center gap-2">
+        <Button size="sm" @click="applicationStore.changePage('connections.add')">
+          <Plus class="h-3.5 w-3.5 mr-1.5" />
+          Add connection
+        </Button>
+        <Button
+          v-if="applicationStore.forgeSectionEnabled && applicationStore.canUseSafeStorage"
+          variant="outline"
+          size="sm"
+          @click="applicationStore.changePage('connections.forge')"
+        >
+          Browse Forge
+        </Button>
+      </div>
+    </div>
+
+    <!-- Search results -->
+    <template v-else-if="search">
+      <div class="space-y-0.5">
+        <SectionLabel>Results</SectionLabel>
+        <ConnectionCard v-for="conn in filteredConnections" :key="conn.uid" :connection="conn" />
+        <div v-if="filteredConnections.length === 0" class="py-10 text-center">
+          <p class="text-xs text-muted-foreground">No connections match "{{ search }}"</p>
+          <Button variant="link" size="sm" class="text-xs h-auto mt-1" @click="search = ''">Clear search</Button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Lists -->
+    <template v-else>
+      <div v-if="favorites.length > 0" class="space-y-0.5 mb-5">
+        <SectionLabel>
+          <Star class="h-2.5 w-2.5 fill-current" />
+          Favorites
+        </SectionLabel>
+        <ConnectionCard v-for="conn in favorites" :key="conn.uid" :connection="conn" />
+      </div>
+
+      <div class="space-y-0.5">
+        <SectionLabel v-if="favorites.length > 0">All connections</SectionLabel>
+        <draggable
+          :model-value="connectionStore.connections"
+          @update:model-value="connectionStore.reorderConnections"
+          item-key="uid"
+          handle=".drag-handle"
+          ghost-class="opacity-30"
+        >
+          <template #item="{ element }">
+            <div class="flex items-center group/drag">
+              <GripVertical class="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover/drag:opacity-100 transition-opacity cursor-grab drag-handle mr-0.5 shrink-0" />
+              <div class="flex-1 min-w-0">
+                <ConnectionCard :connection="element" />
+              </div>
+            </div>
+          </template>
+        </draggable>
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
-import ConnectionCard from '@/components/ConnectionCard.vue';
-import { useApplicationStore } from '@/stores/useApplicationStore';
-import { useConnectionStore } from '@/stores/useConnectionStore';
-import { computed, ref } from "vue";
-import SearchBar from '@/components/SearchBar.vue';
+import { ref, computed, h, type FunctionalComponent } from 'vue'
+import { useConnectionStore } from '@/stores/useConnectionStore'
+import { useApplicationStore } from '@/stores/useApplicationStore'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Plus, GripVertical, Search, X, Server, Star } from 'lucide-vue-next'
 import draggable from 'vuedraggable'
+import ConnectionCard from '@/components/ConnectionCard.vue'
 
+const connectionStore = useConnectionStore()
+const applicationStore = useApplicationStore()
 
-const connectionStore = useConnectionStore();
-const applicationStore = useApplicationStore();
+const search = ref('')
 
-const searchTerm = ref('');
-const viewMode = ref('list');
-const drag = ref(false);
+const SectionLabel: FunctionalComponent = (_, { slots }) =>
+  h(
+    'p',
+    { class: 'flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5' },
+    slots.default?.()
+  )
 
-// all connections get and set from the store
-const allConnections = computed({
-    get: () => connectionStore.connections,
-    set: (val) => connectionStore.reorderConnections(val)
-});
+const countLabel = computed(() => {
+  const total = connectionStore.connections.length
+  if (total === 0) return 'Nothing saved yet'
+  const favs = favorites.value.length
+  const conns = `${total} connection${total === 1 ? '' : 's'}`
+  return favs ? `${conns} · ${favs} favorite${favs === 1 ? '' : 's'}` : conns
+})
 
-const favoriteConnections = computed(() => {
-    // filter and sort favorite connections
-    return connectionStore.connections.filter(connection => connection.isFavorite).sort((a, b) => {
-        if (a.name < b.name) {
-            return -1;
-        } else if (a.name > b.name) {
-            return 1;
-        } else {
-            return 0;
-        }
-        return 0;
-    });
-});
+const favorites = computed(() =>
+  connectionStore.connections
+    .filter((c) => c.isFavorite)
+    .sort((a, b) => a.name.localeCompare(b.name))
+)
 
 const filteredConnections = computed(() => {
-    // filter connections by search term
-    return connectionStore.connections.filter(connection => {
-        return connection.name.toLowerCase().includes(searchTerm.value.toLowerCase());
-    });
-});
-
-const hasNoConnections = computed(() => {
-    return connectionStore.connections.length == 0;
-});
-
+  const q = search.value.toLowerCase()
+  return connectionStore.connections.filter(
+    (c) =>
+      c.name.toLowerCase().includes(q) ||
+      c.path.toLowerCase().includes(q) ||
+      c.ssh?.host?.toLowerCase().includes(q)
+  )
+})
 </script>
-
-<style scoped></style>

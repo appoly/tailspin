@@ -1,42 +1,43 @@
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { StorageAPI } from '@/lib/backend'
 
-export const useUserStore = defineStore("user", {
-  state: () => ({
-    theme: "dark",
-    defaultSshPath: "",
-  }),
-  actions: {
-    init() {
-      this.initTheme(); // Light or dark mode
-      this.initDefaultSshPath();
-    },
-    async initTheme() {
-      this.theme = window.localStorage.getItem("theme") || this.theme;
-      this.setTheme();
-    },
-    changeTheme(value: string) {
-      this.theme = value;
-      this.setTheme();
-    },
-    async setTheme() {
-      window.localStorage.setItem("theme", this.theme);
-      if (this.theme === "auto") {
-        const theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        document.documentElement.setAttribute("data-bs-theme", theme);
+export const useUserStore = defineStore('user', () => {
+  const theme = ref('dark')
+  const defaultSshPath = ref('')
 
-        // watch for changes
-        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-          const newColorScheme = e.matches ? "dark" : "light";
-          document.documentElement.setAttribute("data-bs-theme", newColorScheme);
-        });
-      } else if (this.theme === "dark") {
-        document.documentElement.setAttribute("data-bs-theme", "dark");
-      } else {
-        document.documentElement.setAttribute("data-bs-theme", "light");
-      }
-    },
-    async initDefaultSshPath() {
-      this.defaultSshPath = await api.Store.get("app.sshKeyPath", "");
-    },
-  },
-});
+  async function init() {
+    await initTheme()
+    await initDefaultSshPath()
+  }
+
+  async function initTheme() {
+    theme.value = window.localStorage.getItem('theme') || theme.value
+    setTheme()
+  }
+
+  function changeTheme(value: string) {
+    theme.value = value
+    setTheme()
+  }
+
+  function setTheme() {
+    window.localStorage.setItem('theme', theme.value)
+    const html = document.documentElement
+    if (theme.value === 'auto') {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      html.classList.toggle('dark', isDark)
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        html.classList.toggle('dark', e.matches)
+      })
+    } else {
+      html.classList.toggle('dark', theme.value === 'dark')
+    }
+  }
+
+  async function initDefaultSshPath() {
+    defaultSshPath.value = await StorageAPI.Get('app.sshKeyPath', '')
+  }
+
+  return { theme, defaultSshPath, init, changeTheme, setTheme, initDefaultSshPath }
+})

@@ -1,33 +1,28 @@
-import { defineStore } from "pinia";
-import { ForgeServer, ForgeSite } from "$/interfaces";
-import { unproxify } from "@/helpers";
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { StorageAPI } from '@/lib/backend'
+import type { ForgeServer, ForgeSite } from '@/types/interfaces'
 
-export const useForgeConnectionStore = defineStore("forgeConnection", {
-  state: () => ({
-    servers: [] as ForgeServer[],
-    sites: [] as ForgeSite[],
-  }),
-  actions: {
-    init() {
-      this.initConnections();
-    },
-    async initConnections() {
-      this.servers = (await api.Store.get("forge.servers", [])) as ForgeServer[];
-      this.sites = (await api.Store.get("forge.sites", [])) as ForgeSite[];
-    },
-    async setSitesAndServers(sites: ForgeSite[], servers: ForgeServer[]) {
-      // Update the store
-      api.Store.set("forge", { servers, sites });
-      // Then update the state
-      this.servers = servers;
-      this.sites = sites;
-    },
-    async clearSitesAndServers() {
-      // Update the store
-      api.Store.set("forge", { servers: [], sites: [] });
-      // Then update the state
-      this.servers = [];
-      this.sites = [];
-    },
-  },
-});
+export const useForgeConnectionStore = defineStore('forgeConnection', () => {
+  const servers = ref<ForgeServer[]>([])
+  const sites = ref<ForgeSite[]>([])
+
+  async function init() {
+    servers.value = (await StorageAPI.Get('forge.servers', [])) as ForgeServer[]
+    sites.value = (await StorageAPI.Get('forge.sites', [])) as ForgeSite[]
+  }
+
+  async function setSitesAndServers(newSites: ForgeSite[], newServers: ForgeServer[]) {
+    await StorageAPI.Set('forge', { servers: newServers, sites: newSites })
+    servers.value = newServers
+    sites.value = newSites
+  }
+
+  async function clearSitesAndServers() {
+    await StorageAPI.Set('forge', { servers: [], sites: [] })
+    servers.value = []
+    sites.value = []
+  }
+
+  return { servers, sites, init, setSitesAndServers, clearSitesAndServers }
+})
