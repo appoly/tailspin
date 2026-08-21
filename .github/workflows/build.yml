@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -31,11 +31,66 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Upload to S3
+        if: ${{ secrets.AWS_S3_BUCKET != '' }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
+            --recursive --exclude "*" \
+            --include "*.yml" --include "*.dmg" --include "*.dmg.blockmap" --include "*.zip" --include "*.zip.blockmap"
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/v${VERSION}/ \
+            --recursive --exclude "*" --include "*.yml"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
       - uses: softprops/action-gh-release@v2
         with:
           draft: false
           generate_release_notes: true
-          files: release/**/*.dmg
+          files: |
+            release/*.dmg
+            release/*.zip
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run pre-build
+
+      - run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to S3
+        if: ${{ secrets.AWS_S3_BUCKET != '' }}
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
+            --recursive --exclude "*" \
+            --include "*.yml" --include "*.exe" --include "*.exe.blockmap"
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/v${VERSION}/ \
+            --recursive --exclude "*" --include "*.yml"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          generate_release_notes: true
+          files: release/*.exe
 
   build-linux:
     runs-on: ubuntu-latest
@@ -44,7 +99,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.12.0
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -55,8 +110,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Upload to S3
+        if: ${{ secrets.AWS_S3_BUCKET != '' }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
+            --recursive --exclude "*" \
+            --include "*.yml" --include "*.AppImage" --include "*.blockmap"
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/v${VERSION}/ \
+            --recursive --exclude "*" --include "*.yml"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
       - uses: softprops/action-gh-release@v2
         with:
           draft: false
           generate_release_notes: true
-          files: release/**/*.AppImage
+          files: release/*.AppImage

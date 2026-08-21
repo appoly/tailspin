@@ -81,6 +81,40 @@
       </div>
     </section>
 
+    <Separator />
+
+    <!-- Updates -->
+    <section class="flex items-start gap-6 py-5">
+      <div class="w-52 shrink-0">
+        <h3 class="text-sm font-medium">Updates</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">Installed: v{{ updaterStore.currentVersion || appVersion }}</p>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div v-if="updaterStore.status === 'downloaded'" class="flex items-center gap-2">
+          <Button size="sm" @click="updaterStore.install()">Restart to update</Button>
+          <span class="text-xs text-muted-foreground">v{{ updaterStore.availableVersion }} is ready.</span>
+        </div>
+        <div v-else-if="updaterStore.status === 'available'" class="flex items-center gap-2">
+          <Button size="sm" @click="updaterStore.download()">Download v{{ updaterStore.availableVersion }}</Button>
+        </div>
+        <div v-else-if="updaterStore.status === 'downloading'" class="text-xs text-muted-foreground">
+          Downloading v{{ updaterStore.availableVersion }}... {{ updaterStore.progress }}%
+        </div>
+        <div v-else class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="updaterStore.status === 'checking'"
+            @click="updaterStore.check()"
+          >
+            {{ updaterStore.status === 'checking' ? 'Checking...' : 'Check for updates' }}
+          </Button>
+          <span v-if="updaterStore.status === 'up-to-date'" class="text-xs text-muted-foreground">You're up to date.</span>
+          <span v-else-if="updaterStore.status === 'error'" class="text-xs text-destructive">{{ updaterStore.errorMessage }}</span>
+        </div>
+      </div>
+    </section>
+
     <!-- Danger Zone -->
     <section class="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
       <h3 class="text-sm font-medium text-destructive">Danger zone</h3>
@@ -140,6 +174,7 @@ import { StorageAPI, FileAPI } from '@/lib/backend'
 import { useUserStore } from '@/stores/useUserStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useApplicationStore } from '@/stores/useApplicationStore'
+import { useUpdaterStore } from '@/stores/useUpdaterStore'
 import { FileSizesInKb } from '@/constants/Ssh'
 import { kilobytesToHumanReadableFileSize, debounce } from '@/helpers'
 import ForgeApiKeyForm from '@/components/ForgeApiKeyForm.vue'
@@ -153,6 +188,7 @@ import { Check } from 'lucide-vue-next'
 const userStore = useUserStore()
 const connectionStore = useConnectionStore()
 const applicationStore = useApplicationStore()
+const updaterStore = useUpdaterStore()
 
 const appVersion = APP_VERSION
 
