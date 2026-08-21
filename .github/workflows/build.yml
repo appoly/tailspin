@@ -32,6 +32,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload to S3
+        if: ${{ secrets.AWS_S3_BUCKET != '' }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
           aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
@@ -71,6 +72,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to S3
+        if: ${{ secrets.AWS_S3_BUCKET != '' }}
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
@@ -109,6 +111,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to S3
+        if: ${{ secrets.AWS_S3_BUCKET != '' }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
           aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
