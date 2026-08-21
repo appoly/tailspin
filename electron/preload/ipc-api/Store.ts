@@ -15,3 +15,22 @@ export function deleteByKey(key: string) {
 export function clear() {
   return ipcRenderer.invoke("config-clear");
 }
+
+export interface ConfigTransferResult {
+  success: boolean;
+  canceled?: boolean;
+  message?: string;
+}
+
+export function exportConfig(): Promise<ConfigTransferResult> {
+  return ipcRenderer.invoke("config-export");
+}
+export function importConfig(): Promise<ConfigTransferResult> {
+  return ipcRenderer.invoke("config-import");
+}
+export function hasLegacyConfig(): Promise<boolean> {
+  return ipcRenderer.invoke("config-has-legacy");
+}
+export function restoreLegacyConfig(): Promise<ConfigTransferResult> {
+  return ipcRenderer.invoke("config-restore-legacy");
+}

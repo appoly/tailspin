@@ -110,6 +110,13 @@ function throwOnForgeError<T extends { error?: string }>(response: T): T {
   return response;
 }
 
+export const ConfigAPI = {
+  Export: () => bridge.Store.exportConfig(),
+  Import: () => bridge.Store.importConfig(),
+  HasLegacy: () => bridge.Store.hasLegacyConfig(),
+  RestoreLegacy: () => bridge.Store.restoreLegacyConfig(),
+};
+
 export const UpdaterAPI = {
   Check: () => bridge.Updater.check(),
   Download: () => bridge.Updater.download(),
