@@ -1,6 +1,15 @@
 import { ipcMain } from "electron";
 import Store from "electron-store";
-const store = new Store();
+
+// Lazy so the legacy-userData migration can run before the file is created
+let _store: Store | undefined;
+const store = new Proxy({} as Store, {
+  get(_target, prop) {
+    _store ??= new Store();
+    const value = (_store as any)[prop];
+    return typeof value === "function" ? value.bind(_store) : value;
+  },
+});
 
 export default () => {
   ipcMain.handle("config-get", (event, key, defaultValue) => {

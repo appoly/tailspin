@@ -4,6 +4,7 @@ import { join } from "node:path";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 import ipcHandlers from "./ipc-handlers";
 import setupAutoUpdater from "./updater";
+import migrateLegacyUserData from "./migrate-legacy-data";
 
 // The built directory structure
 //
@@ -126,6 +127,9 @@ ipcMain.handle("open-win", (_, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg });
   }
 });
+
+// Bring settings across from the pre-rename app before anything opens the store
+migrateLegacyUserData();
 
 // Initialize ipcHandlers
 ipcHandlers();
