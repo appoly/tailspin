@@ -6,7 +6,7 @@
     "Calum Chamberlain"
   ],
   "productName": "Laravel Log Viewer",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "main": "dist-electron/main/index.js",
   "license": "MIT",
   "private": true,
