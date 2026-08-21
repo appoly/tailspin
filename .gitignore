@@ -26,5 +26,6 @@ electron-builder.env
 *.sln
 *.sw?
 
+# lockfile (package-lock.json is committed for reproducible CI builds)
 pnpm-lock.yaml
 yarn.lock
