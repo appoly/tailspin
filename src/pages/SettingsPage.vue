@@ -163,7 +163,7 @@
     </Dialog>
 
     <div class="text-xs text-muted-foreground text-center mt-10">
-      Laravel Log Viewer v{{ appVersion }}
+      Tailspin v{{ appVersion }}
     </div>
   </div>
 </template>
