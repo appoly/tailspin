@@ -43,8 +43,8 @@ const indexHtml = join(process.env.DIST, "index.html");
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: "Laravel Log Viewer",
-    icon: join(process.env.PUBLIC, "logo-min.png"),
+    title: "Tailspin",
+    icon: join(process.env.PUBLIC, "tailspin-min.png"),
     minWidth: 800,
     minHeight: 500,
     webPreferences: {

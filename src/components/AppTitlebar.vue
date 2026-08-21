@@ -32,7 +32,7 @@
 
     <!-- Window title (when no tabs) -->
     <div v-if="connectionStore.openConnections.length === 0" class="flex-1 text-center text-xs text-muted-foreground" style="-webkit-app-region: drag">
-      Laravel Log Viewer
+      Tailspin
     </div>
   </div>
 </template>

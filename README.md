@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="public/logo-min.png" alt="Laravel Log Viewer" width="96" />
+  <img src="public/tailspin-min.png" alt="Tailspin" width="96" />
 </p>
 
-# Laravel Log Viewer
+# Tailspin — Log Viewer for Laravel
 
-A desktop app for reading Laravel logs without SSHing into servers and squinting at `storage/logs`. Point it at a local log file or a server over SSH and it parses everything into a searchable, filterable list — with severity filters, auto-refresh while you debug, and one-click downloads of remote logs.
+A desktop app for reading Laravel logs without SSHing into servers and squinting at `storage/logs`. Point Tailspin at a local log file or a server over SSH and it parses everything into a searchable, filterable list — with severity filters, auto-refresh while you debug, and one-click downloads of remote logs.
 
 Built by Nathan James and Calum Chamberlain at [Appoly](https://www.appoly.co.uk).
 

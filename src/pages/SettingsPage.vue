@@ -90,7 +90,11 @@
         <p class="text-xs text-muted-foreground mt-0.5">Installed: v{{ updaterStore.currentVersion || appVersion }}</p>
       </div>
       <div class="flex-1 min-w-0">
-        <div v-if="updaterStore.status === 'downloaded'" class="flex items-center gap-2">
+        <div v-if="!UPDATES_ENABLED" class="flex items-center gap-2">
+          <Button variant="outline" size="sm" disabled>Check for updates</Button>
+          <span class="text-xs text-muted-foreground italic">Coming soon — for now, grab new versions from GitHub.</span>
+        </div>
+        <div v-else-if="updaterStore.status === 'downloaded'" class="flex items-center gap-2">
           <Button size="sm" @click="updaterStore.install()">Restart to update</Button>
           <span class="text-xs text-muted-foreground">v{{ updaterStore.availableVersion }} is ready.</span>
         </div>
@@ -112,6 +116,31 @@
           <span v-if="updaterStore.status === 'up-to-date'" class="text-xs text-muted-foreground">You're up to date.</span>
           <span v-else-if="updaterStore.status === 'error'" class="text-xs text-destructive">{{ updaterStore.errorMessage }}</span>
         </div>
+      </div>
+    </section>
+
+    <Separator />
+
+    <!-- Backup -->
+    <section class="flex items-start gap-6 py-5">
+      <div class="w-52 shrink-0">
+        <h3 class="text-sm font-medium">Backup</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Export or import your connections and settings as JSON.
+          Secrets — SSH passwords and the Forge API key — are never included; you'll re-enter them after importing.
+        </p>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" @click="exportConfig">Export config</Button>
+          <Button variant="outline" size="sm" @click="importConfig">Import config</Button>
+          <Button v-if="hasLegacyConfig" variant="outline" size="sm" @click="restoreLegacy">
+            Restore from Laravel Log Viewer
+          </Button>
+        </div>
+        <p v-if="transferMessage" class="text-xs mt-1.5" :class="transferOk ? 'text-emerald-500' : 'text-destructive'">
+          {{ transferMessage }}
+        </p>
       </div>
     </section>
 
@@ -163,18 +192,19 @@
     </Dialog>
 
     <div class="text-xs text-muted-foreground text-center mt-10">
-      Laravel Log Viewer v{{ appVersion }}
+      Tailspin v{{ appVersion }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, h, type FunctionalComponent } from 'vue'
-import { StorageAPI, FileAPI } from '@/lib/backend'
+import { StorageAPI, FileAPI, ConfigAPI } from '@/lib/backend'
+import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore'
 import { useUserStore } from '@/stores/useUserStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useApplicationStore } from '@/stores/useApplicationStore'
-import { useUpdaterStore } from '@/stores/useUpdaterStore'
+import { useUpdaterStore, UPDATES_ENABLED } from '@/stores/useUpdaterStore'
 import { FileSizesInKb } from '@/constants/Ssh'
 import { kilobytesToHumanReadableFileSize, debounce } from '@/helpers'
 import ForgeApiKeyForm from '@/components/ForgeApiKeyForm.vue'
@@ -213,10 +243,44 @@ const SavedTick: FunctionalComponent<{ visible: boolean }> = (props) =>
   )
 SavedTick.props = { visible: { type: Boolean, required: true } }
 
+const hasLegacyConfig = ref(false)
+const transferMessage = ref('')
+const transferOk = ref(true)
+
 onMounted(async () => {
   sshKeyPath.value = await StorageAPI.Get('app.sshKeyPath', '') as string
   sshDefaultBytes.value = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024) as number
+  hasLegacyConfig.value = await ConfigAPI.HasLegacy()
 })
+
+async function exportConfig() {
+  const result = await ConfigAPI.Export()
+  if (result.canceled) return
+  transferOk.value = result.success
+  transferMessage.value = result.message ?? ''
+}
+
+async function importConfig() {
+  await applyTransfer(await ConfigAPI.Import())
+}
+
+async function restoreLegacy() {
+  await applyTransfer(await ConfigAPI.RestoreLegacy())
+}
+
+async function applyTransfer(result: { success: boolean; canceled?: boolean; message?: string }) {
+  if (result.canceled) return
+  transferOk.value = result.success
+  transferMessage.value = result.message ?? ''
+  if (result.success) {
+    // Reload everything that reads from the store
+    const forgeStore = useForgeConnectionStore()
+    await Promise.all([connectionStore.init(), forgeStore.init(), userStore.init()])
+    await applicationStore.initForgeSectionEnabled()
+    sshKeyPath.value = await StorageAPI.Get('app.sshKeyPath', '') as string
+    sshDefaultBytes.value = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024) as number
+  }
+}
 
 const queueSaveKeyPath = debounce(saveSshKeyPath, 600)
 

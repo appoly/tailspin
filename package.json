@@ -1,12 +1,12 @@
 {
-  "name": "laravel-log-viewer",
-  "description": "Easily view and manage your Laravel app's log files, across multiple servers and featuring Forge integration.",
+  "name": "tailspin",
+  "description": "Tailspin — Log Viewer for Laravel. View and manage your Laravel logs across multiple servers, with Forge integration.",
   "contributors": [
     "Nathan James",
     "Calum Chamberlain"
   ],
-  "productName": "Laravel Log Viewer",
-  "version": "0.0.13",
+  "productName": "Tailspin",
+  "version": "0.0.14",
   "main": "dist-electron/main/index.js",
   "license": "MIT",
   "private": true,
