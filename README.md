@@ -20,7 +20,7 @@ Built by Nathan James and Calum Chamberlain at [Appoly](https://www.appoly.co.uk
 
 ## Install
 
-Grab the latest release from the [releases page](https://github.com/appoly/tailspin/releases/latest):
+Grab the latest release from the [releases page](https://github.com/appoly/electron-log-viewer/releases/latest):
 
 - **macOS** — `…_arm64.dmg` (Apple Silicon) or `…_x64.dmg` (Intel). Builds are signed and notarized, so they open without Gatekeeper warnings
 - **Windows** — `…​.exe` NSIS installer
