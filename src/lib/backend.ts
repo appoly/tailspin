@@ -110,6 +110,19 @@ function throwOnForgeError<T extends { error?: string }>(response: T): T {
   return response;
 }
 
+export const UpdaterAPI = {
+  Check: () => bridge.Updater.check(),
+  Download: () => bridge.Updater.download(),
+  Install: () => bridge.Updater.install(),
+  Version: () => bridge.Updater.version(),
+  OnChecking: (cb: () => void) => bridge.Updater.onChecking(cb),
+  OnAvailable: (cb: (info: { version: string }) => void) => bridge.Updater.onAvailable(cb),
+  OnNotAvailable: (cb: () => void) => bridge.Updater.onNotAvailable(cb),
+  OnProgress: (cb: (p: { percent: number }) => void) => bridge.Updater.onProgress(cb),
+  OnDownloaded: (cb: () => void) => bridge.Updater.onDownloaded(cb),
+  OnError: (cb: (message: string) => void) => bridge.Updater.onError(cb),
+};
+
 export const ForgeAPI = {
   async GetServers(encryptedApiKey: string): Promise<any> {
     return throwOnForgeError(await bridge.Forge.getServerList(encryptedApiKey));

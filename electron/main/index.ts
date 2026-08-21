@@ -3,6 +3,7 @@ import { release } from "node:os";
 import { join } from "node:path";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 import ipcHandlers from "./ipc-handlers";
+import setupAutoUpdater from "./updater";
 
 // The built directory structure
 //
@@ -128,3 +129,5 @@ ipcMain.handle("open-win", (_, arg) => {
 
 // Initialize ipcHandlers
 ipcHandlers();
+
+setupAutoUpdater(() => win);
