@@ -2,16 +2,16 @@
  * @see https://www.electron.build/configuration/configuration
  */
 {
-  appId: "com.appoly.log-viewer",
+  appId: "com.appoly.tailspin",
   asar: true,
-  icon: "public/logo.png",
+  icon: "public/tailspin.png",
   directories: {
     output: "release",
   },
   files: ["dist-electron", "dist"],
   publish: {
     provider: "generic",
-    url: "https://appoly-rest-web-pcondrod.on-forge.com/api/app/update/log-viewer",
+    url: "https://appoly-rest-web-pcondrod.on-forge.com/api/app/update/tailspin",
   },
   mac: {
     artifactName: "${productName}_${version}_${arch}.${ext}",
@@ -19,7 +19,7 @@
       { target: "dmg", arch: ["x64", "arm64"] },
       { target: "zip", arch: ["x64", "arm64"] },
     ],
-    icon: "public/logo-mac.png",
+    icon: "build/icon.icns",
     identity: "Appoly Ltd (X439R68L28)",
     hardenedRuntime: true,
     notarize: true,
