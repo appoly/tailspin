@@ -11,8 +11,13 @@
   files: ["dist-electron", "dist"],
   mac: {
     artifactName: "${productName}_${version}.${ext}",
-    target: ["dmg", "zip"],
+    target: [
+      { target: "dmg", arch: ["x64", "arm64"] },
+      { target: "zip", arch: ["x64", "arm64"] },
+    ],
     icon: "public/logo-mac.png",
+    identity: "Appoly Ltd (X439R68L28)",
+    hardenedRuntime: true,
     notarize: true,
     entitlements: "build/entitlements.mac.plist",
     entitlementsInherit: "build/entitlements.mac.plist",
