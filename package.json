@@ -58,6 +58,7 @@
     "vuedraggable": "^4.1.0"
   },
   "dependencies": {
+    "electron-updater": "^6.8.3",
     "ssh2-promise": "^1.0.3"
   },
   "overrides": {
