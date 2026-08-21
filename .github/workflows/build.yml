@@ -1,0 +1,128 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run pre-build
+
+      - run: npx electron-builder --mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload to S3
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
+            --recursive --exclude "*" \
+            --include "*.yml" --include "*.dmg" --include "*.dmg.blockmap" --include "*.zip" --include "*.zip.blockmap"
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/v${VERSION}/ \
+            --recursive --exclude "*" --include "*.yml"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          generate_release_notes: true
+          files: |
+            release/*.dmg
+            release/*.zip
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run pre-build
+
+      - run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to S3
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
+            --recursive --exclude "*" \
+            --include "*.yml" --include "*.exe" --include "*.exe.blockmap"
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/v${VERSION}/ \
+            --recursive --exclude "*" --include "*.yml"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          generate_release_notes: true
+          files: release/*.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run pre-build
+
+      - run: npx electron-builder --linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to S3
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
+            --recursive --exclude "*" \
+            --include "*.yml" --include "*.AppImage" --include "*.blockmap"
+          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/v${VERSION}/ \
+            --recursive --exclude "*" --include "*.yml"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          generate_release_notes: true
+          files: release/*.AppImage

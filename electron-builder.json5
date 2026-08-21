@@ -6,13 +6,22 @@
   asar: true,
   icon: "public/logo.png",
   directories: {
-    output: "release/${platform}/${version}",
+    output: "release",
   },
   files: ["dist-electron", "dist"],
+  publish: {
+    provider: "generic",
+    url: "https://appoly-rest-web-pcondrod.on-forge.com/api/app/update/log-viewer",
+  },
   mac: {
-    artifactName: "${productName}_${version}.${ext}",
-    target: ["dmg", "zip"],
+    artifactName: "${productName}_${version}_${arch}.${ext}",
+    target: [
+      { target: "dmg", arch: ["x64", "arm64"] },
+      { target: "zip", arch: ["x64", "arm64"] },
+    ],
     icon: "public/logo-mac.png",
+    identity: "Appoly Ltd (X439R68L28)",
+    hardenedRuntime: true,
     notarize: true,
     entitlements: "build/entitlements.mac.plist",
     entitlementsInherit: "build/entitlements.mac.plist",
