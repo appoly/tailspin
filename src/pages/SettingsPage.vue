@@ -90,7 +90,11 @@
         <p class="text-xs text-muted-foreground mt-0.5">Installed: v{{ updaterStore.currentVersion || appVersion }}</p>
       </div>
       <div class="flex-1 min-w-0">
-        <div v-if="updaterStore.status === 'downloaded'" class="flex items-center gap-2">
+        <div v-if="!UPDATES_ENABLED" class="flex items-center gap-2">
+          <Button variant="outline" size="sm" disabled>Check for updates</Button>
+          <span class="text-xs text-muted-foreground italic">Coming soon — for now, grab new versions from GitHub.</span>
+        </div>
+        <div v-else-if="updaterStore.status === 'downloaded'" class="flex items-center gap-2">
           <Button size="sm" @click="updaterStore.install()">Restart to update</Button>
           <span class="text-xs text-muted-foreground">v{{ updaterStore.availableVersion }} is ready.</span>
         </div>
@@ -200,7 +204,7 @@ import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore'
 import { useUserStore } from '@/stores/useUserStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useApplicationStore } from '@/stores/useApplicationStore'
-import { useUpdaterStore } from '@/stores/useUpdaterStore'
+import { useUpdaterStore, UPDATES_ENABLED } from '@/stores/useUpdaterStore'
 import { FileSizesInKb } from '@/constants/Ssh'
 import { kilobytesToHumanReadableFileSize, debounce } from '@/helpers'
 import ForgeApiKeyForm from '@/components/ForgeApiKeyForm.vue'
