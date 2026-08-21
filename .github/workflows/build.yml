@@ -10,6 +10,8 @@ permissions:
 jobs:
   build-mac:
     runs-on: macos-latest
+    env:
+      HAS_AWS_SECRETS: ${{ secrets.AWS_S3_BUCKET != '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -32,7 +34,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload to S3
-        if: ${{ secrets.AWS_S3_BUCKET != '' }}
+        if: env.HAS_AWS_SECRETS == 'true'
         run: |
           VERSION=$(node -p "require('./package.json').version")
           aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
@@ -55,6 +57,8 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
+    env:
+      HAS_AWS_SECRETS: ${{ secrets.AWS_S3_BUCKET != '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -72,7 +76,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to S3
-        if: ${{ secrets.AWS_S3_BUCKET != '' }}
+        if: env.HAS_AWS_SECRETS == 'true'
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
@@ -94,6 +98,8 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
+    env:
+      HAS_AWS_SECRETS: ${{ secrets.AWS_S3_BUCKET != '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -111,7 +117,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload to S3
-        if: ${{ secrets.AWS_S3_BUCKET != '' }}
+        if: env.HAS_AWS_SECRETS == 'true'
         run: |
           VERSION=$(node -p "require('./package.json').version")
           aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/log-viewer/releases/ \
