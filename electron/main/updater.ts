@@ -29,8 +29,12 @@ export default function setupAutoUpdater(getWindow: () => BrowserWindow | null) 
     autoUpdater.on("update-downloaded", () => send("updater:downloaded"));
     autoUpdater.on("error", (err) => send("updater:error", err.message));
 
-    // Check once shortly after launch
-    setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000);
+    // Check once shortly after launch — disabled until the update service is
+    // deployed (flip with its twin UPDATES_ENABLED in useUpdaterStore.ts).
+    const UPDATES_ENABLED = false;
+    if (UPDATES_ENABLED) {
+      setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000);
+    }
   }
 
   ipcMain.handle("updater:check", () => {
