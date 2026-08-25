@@ -1,18 +1,45 @@
 <p align="center">
-  <img src="public/tailspin-min.png" alt="Tailspin" width="96" />
+  <img src="public/tailspin-min.png" alt="" width="96" />
 </p>
 
-# Tailspin — Log Viewer for Laravel
+<h1 align="center">Tailspin</h1>
 
-A desktop app for reading Laravel logs without SSHing into servers and squinting at `storage/logs`. Point Tailspin at a local log file or a server over SSH and it parses everything into a searchable, filterable list — with severity filters, auto-refresh while you debug, and one-click downloads of remote logs.
+<p align="center">
+  <strong>Read production Laravel logs like they're on your own machine.</strong><br>
+  Local files, servers over SSH, and every site on your Forge account — parsed, searchable, and readable.
+</p>
 
-Built by Nathan James and Calum Chamberlain at [Appoly](https://www.appoly.co.uk).
+<p align="center">
+  <a href="https://github.com/appoly/tailspin/releases/latest">Download</a>
+  ·
+  <a href="#features">Features</a>
+  ·
+  <a href="#development">Development</a>
+</p>
 
-![Tailspin viewing a Laravel log](docs/media/log-viewer.png)
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/appoly/tailspin?style=flat-square&color=f97316" alt="Latest release" />
+  <img src="https://img.shields.io/badge/macOS%20·%20Windows%20·%20Linux-flat?style=flat-square&color=52525b" alt="Platforms" />
+  <img src="https://img.shields.io/badge/licence-MIT-flat?style=flat-square&color=52525b" alt="MIT licence" />
+</p>
+
+---
+
+Something breaks in production. You `ssh` into the box, `cd storage/logs`, `tail -n 500 laravel.log`,
+and then squint at a forty-line stack trace wrapping through your terminal — interleaved with the
+twelve other exceptions thrown that minute. You find the one you want, lose it scrolling, and start
+again. Repeat for the queue worker. Repeat for the other server.
+
+Tailspin is that loop, minus the terminal. Point it at a log file or a server, and every entry
+becomes a row with its timestamp, environment and severity: filter to just the errors, search the
+text, expand one to read its full stack trace without losing your place, and leave auto-fetch
+running while you reproduce the bug.
 
 <p align="center">
   <img src="docs/media/tour.gif" alt="Opening a connection, filtering to errors and expanding an entry" width="900" />
 </p>
+
+![Tailspin viewing a Laravel log](docs/media/log-viewer.png)
 
 Light and dark, same screen:
 
@@ -20,13 +47,15 @@ Light and dark, same screen:
 
 ## Features
 
-- **Local & remote logs** — open log files on disk, or connect over SSH (password or private key, passphrase supported) and browse a server's `.log` files
-- **Proper log parsing** — multi-line Laravel log entries become structured entries with timestamp, severity and environment; filter by severity or search the text
-- **Auto-fetch** — poll a remote log on an interval while debugging and see new entries appear at the top
-- **Laravel Forge integration** — add a Forge API token and pull in all servers and sites, then open any site's logs in a couple of clicks
-- **Saved connections** — favourites, drag-to-reorder, custom icons/colours, and multiple connections open at once in tabs
-- **Safe credential storage** — SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`); nothing is stored in plain text
-- **Command palette** — quick-switch between connections and pages
+- **No SSH session needed** — open a log file on disk, or connect over SSH (password or private key, passphrase supported) and browse a server's `.log` files from the app
+- **Stack traces you can actually read** — multi-line Laravel entries are parsed into rows with timestamp, environment and severity, and expand in place for the full trace
+- **Find the one that matters** — filter by severity, search the text, and page through without scrolling past everything else
+- **Watch it happen live** — auto-fetch polls a remote log while you reproduce the bug, new entries appearing at the top
+- **Your whole Forge account** — add an API token and every server and site is two clicks from its logs
+- **Several logs at once** — saved connections with favourites, drag-to-reorder and custom icons, each open in its own tab
+- **Credentials stay in the keychain** — SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`), never written in plain text
+- **Keyboard-first** — ⌘K opens a command palette for jumping between connections and pages
+- **Yours to keep** — one signed download per platform, updates in place, no account and nothing phoning home
 
 <details>
 <summary>More screenshots</summary>
