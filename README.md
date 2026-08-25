@@ -28,6 +28,17 @@ Light and dark, same screen:
 - **Safe credential storage** — SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`); nothing is stored in plain text
 - **Command palette** — quick-switch between connections and pages
 
+<details>
+<summary>More screenshots</summary>
+
+|  |  |
+|---|---|
+| **Connections** — favourites, drag-to-reorder, local and SSH side by side<br><img src="docs/media/connections.png" alt="Connections list" /> | **An expanded entry** — filtered to errors, stack trace in full<br><img src="docs/media/log-entry.png" alt="Expanded log entry with stack trace" /> |
+| **Laravel Forge** — pull in servers and sites with an API token<br><img src="docs/media/forge.png" alt="Forge servers and sites" /> | **Command palette** — ⌘K to jump between connections and pages<br><img src="docs/media/command-palette.png" alt="Command palette" /> |
+| **Settings** — theme, default key, Forge token, config export/import<br><img src="docs/media/settings.png" alt="Settings" /> | |
+
+</details>
+
 ## Install
 
 Grab the latest release from the [releases page](https://github.com/appoly/tailspin/releases/latest):

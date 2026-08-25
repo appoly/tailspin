@@ -53,12 +53,6 @@ export function defineScenes({ scenes, cdp, shot, record, sleep, write }) {
     await shot("log-viewer");
   };
 
-  scenes["log-filtered"] = async () => {
-    await openProduction();
-    await filterErrors();
-    await shot("log-filtered");
-  };
-
   scenes["log-entry"] = async () => {
     await openProduction();
     await filterErrors();
