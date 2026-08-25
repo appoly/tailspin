@@ -16,6 +16,10 @@ release
 .env
 electron-builder.env
 
+# Generated demo dataset + captured screenshots (scripts/demo-data.mjs,
+# scripts/capture.mjs) — regenerate rather than commit.
+demo
+
 # Editor directories and files
 .vscode/.debug.env
 .idea
