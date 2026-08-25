@@ -8,10 +8,22 @@ permissions:
   contents: write
 
 jobs:
-  build-mac:
-    runs-on: macos-latest
-    env:
-      HAS_AWS_SECRETS: ${{ secrets.AWS_S3_BUCKET != '' }}
+  # electron-builder publishes to a draft GitHub release named after the tag.
+  # Each platform job adds its own artifacts to that same draft, including the
+  # latest*.yml manifests electron-updater reads — softprops/action-gh-release
+  # uploaded the installers but not those manifests, so update checks 404'd.
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: --mac
+          - os: windows-latest
+            platform: --win
+          - os: ubuntu-latest
+            platform: --linux
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
 
@@ -24,114 +36,40 @@ jobs:
 
       - run: npm run pre-build
 
-      - run: npx electron-builder --mac
+      # Forks have no certificate, so the mac build falls back to unsigned and
+      # skips notarization instead of failing.
+      - name: Package
+        shell: bash
+        run: |
+          EXTRA=""
+          if [ "${{ matrix.platform }}" = "--mac" ] && [ -z "$CSC_LINK" ]; then
+            echo "::warning::No signing certificate configured — building unsigned and unnotarized."
+            EXTRA="-c.mac.identity=null -c.mac.notarize=false"
+          fi
+          npx electron-builder ${{ matrix.platform }} $EXTRA --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS signing/notarization; ignored by the other platforms.
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_NAME: ${{ secrets.CSC_NAME }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Upload to S3
-        if: env.HAS_AWS_SECRETS == 'true'
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/tailspin/releases/ \
-            --recursive --exclude "*" \
-            --include "*.yml" --include "*.dmg" --include "*.dmg.blockmap" --include "*.zip" --include "*.zip.blockmap"
-          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/tailspin/releases/v${VERSION}/ \
-            --recursive --exclude "*" --include "*.yml"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-
-      - uses: softprops/action-gh-release@v3
-        with:
-          draft: false
-          generate_release_notes: true
-          files: |
-            release/*.dmg
-            release/*.zip
-
-  build-windows:
-    runs-on: windows-latest
-    env:
-      HAS_AWS_SECRETS: ${{ secrets.AWS_S3_BUCKET != '' }}
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run pre-build
-
-      - run: npx electron-builder --win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload to S3
-        if: env.HAS_AWS_SECRETS == 'true'
-        shell: bash
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/tailspin/releases/ \
-            --recursive --exclude "*" \
-            --include "*.yml" --include "*.exe" --include "*.exe.blockmap"
-          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/tailspin/releases/v${VERSION}/ \
-            --recursive --exclude "*" --include "*.yml"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-
-      - uses: softprops/action-gh-release@v3
-        with:
-          draft: false
-          generate_release_notes: true
-          files: release/*.exe
-
-  build-linux:
+  # Only once every platform has uploaded: generate release notes and flip the
+  # draft live. Publishing earlier would offer an update to clients before the
+  # other platforms' binaries exist.
+  publish:
+    needs: build
     runs-on: ubuntu-latest
-    env:
-      HAS_AWS_SECRETS: ${{ secrets.AWS_S3_BUCKET != '' }}
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - run: npm run pre-build
-
-      - run: npx electron-builder --linux
+      - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload to S3
-        if: env.HAS_AWS_SECRETS == 'true'
+          TAG: ${{ github.ref_name }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/tailspin/releases/ \
-            --recursive --exclude "*" \
-            --include "*.yml" --include "*.AppImage" --include "*.blockmap"
-          aws s3 cp release/ s3://${{ secrets.AWS_S3_BUCKET }}/tailspin/releases/v${VERSION}/ \
-            --recursive --exclude "*" --include "*.yml"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-
-      - uses: softprops/action-gh-release@v3
-        with:
-          draft: false
-          generate_release_notes: true
-          files: release/*.AppImage
+          NOTES=$(gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$TAG" --jq .body)
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --draft=false --latest --notes "$NOTES"

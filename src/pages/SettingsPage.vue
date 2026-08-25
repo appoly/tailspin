@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-2xl">
+  <div class="w-full">
     <header class="mb-6">
       <h1 class="text-lg font-semibold">Settings</h1>
       <p class="text-xs text-muted-foreground mt-0.5">Preferences are saved automatically.</p>
@@ -11,7 +11,7 @@
         <h3 class="text-sm font-medium">Appearance</h3>
         <p class="text-xs text-muted-foreground mt-0.5">How the app looks on this machine.</p>
       </div>
-      <div class="flex-1 min-w-0">
+      <div class="flex-1 min-w-0 max-w-2xl">
         <ToggleGroup
           type="single"
           variant="outline"
@@ -34,7 +34,7 @@
           <h3 class="text-sm font-medium">Default private key</h3>
           <p class="text-xs text-muted-foreground mt-0.5">Pre-fills the key path on new SSH connections.</p>
         </div>
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 max-w-2xl">
           <div class="flex items-center gap-2">
             <Input
               v-model="sshKeyPath"
@@ -53,7 +53,7 @@
           <h3 class="text-sm font-medium">Log fetch size</h3>
           <p class="text-xs text-muted-foreground mt-0.5">How much of a remote log is read per fetch.</p>
         </div>
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 max-w-2xl">
           <select
             :value="sshDefaultBytes"
             @change="saveSshDefaultBytes(($event.target as HTMLSelectElement).value)"
@@ -76,7 +76,7 @@
         <h3 class="text-sm font-medium">Laravel Forge</h3>
         <p class="text-xs text-muted-foreground mt-0.5">Sync servers and sites straight from Forge.</p>
       </div>
-      <div class="flex-1 min-w-0">
+      <div class="flex-1 min-w-0 max-w-2xl">
         <ForgeApiKeyForm :showToggle="true" bare />
       </div>
     </section>
@@ -89,12 +89,8 @@
         <h3 class="text-sm font-medium">Updates</h3>
         <p class="text-xs text-muted-foreground mt-0.5">Installed: v{{ updaterStore.currentVersion || appVersion }}</p>
       </div>
-      <div class="flex-1 min-w-0">
-        <div v-if="!UPDATES_ENABLED" class="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>Check for updates</Button>
-          <span class="text-xs text-muted-foreground italic">Coming soon — for now, grab new versions from GitHub.</span>
-        </div>
-        <div v-else-if="updaterStore.status === 'downloaded'" class="flex items-center gap-2">
+      <div class="flex-1 min-w-0 max-w-2xl">
+        <div v-if="updaterStore.status === 'downloaded'" class="flex items-center gap-2">
           <Button size="sm" @click="updaterStore.install()">Restart to update</Button>
           <span class="text-xs text-muted-foreground">v{{ updaterStore.availableVersion }} is ready.</span>
         </div>
@@ -130,7 +126,7 @@
           Secrets — SSH passwords and the Forge API key — are never included; you'll re-enter them after importing.
         </p>
       </div>
-      <div class="flex-1 min-w-0">
+      <div class="flex-1 min-w-0 max-w-2xl">
         <div class="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" @click="exportConfig">Export config</Button>
           <Button variant="outline" size="sm" @click="importConfig">Import config</Button>
@@ -204,7 +200,7 @@ import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore'
 import { useUserStore } from '@/stores/useUserStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useApplicationStore } from '@/stores/useApplicationStore'
-import { useUpdaterStore, UPDATES_ENABLED } from '@/stores/useUpdaterStore'
+import { useUpdaterStore } from '@/stores/useUpdaterStore'
 import { FileSizesInKb } from '@/constants/Ssh'
 import { kilobytesToHumanReadableFileSize, debounce } from '@/helpers'
 import ForgeApiKeyForm from '@/components/ForgeApiKeyForm.vue'
