@@ -44,25 +44,31 @@
     --radius: 0.5rem;
   }
 
+  /*
+   * Surfaces step up in roughly four-point increments (15 → 18 → 23 → 27): the
+   * old palette put the page at 13% and cards at 15%, and two points of
+   * separation read as one flat sheet. Lifting the base also takes the edge off
+   * how dark the whole thing felt.
+   */
   .dark {
-    --background: 224 12% 13%;
-    --foreground: 220 14% 90%;
-    --card: 224 12% 15%;
-    --card-foreground: 220 14% 90%;
-    --popover: 224 12% 15%;
-    --popover-foreground: 220 14% 90%;
-    --primary: 220 14% 90%;
-    --primary-foreground: 224 12% 13%;
-    --secondary: 224 10% 20%;
-    --secondary-foreground: 220 14% 90%;
-    --muted: 224 10% 20%;
-    --muted-foreground: 220 8% 56%;
-    --accent: 224 10% 20%;
-    --accent-foreground: 220 14% 90%;
-    --destructive: 0 55% 42%;
-    --destructive-foreground: 220 14% 90%;
-    --border: 224 10% 22%;
-    --input: 224 10% 22%;
+    --background: 224 13% 15%;
+    --foreground: 220 16% 93%;
+    --card: 224 12% 18%;
+    --card-foreground: 220 16% 93%;
+    --popover: 224 12% 18%;
+    --popover-foreground: 220 16% 93%;
+    --primary: 220 16% 93%;
+    --primary-foreground: 224 13% 15%;
+    --secondary: 224 11% 23%;
+    --secondary-foreground: 220 16% 93%;
+    --muted: 224 11% 23%;
+    --muted-foreground: 220 10% 63%;
+    --accent: 224 11% 25%;
+    --accent-foreground: 220 16% 93%;
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 220 16% 93%;
+    --border: 224 10% 27%;
+    --input: 224 10% 27%;
     --ring: 220 10% 70%;
   }
 }
@@ -76,6 +82,28 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 0.875rem;
   }
+}
+
+/* The platform scrollbar renders as a bright slab over dark surfaces; tie it to
+   the theme tokens instead. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.6);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Desktop app: prevent text selection on UI elements */

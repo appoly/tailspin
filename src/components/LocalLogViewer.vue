@@ -2,8 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
-        <h2 id="logViewerHeader" class="text-sm font-medium">{{ connection.name }}</h2>
-        <span class="text-xs text-muted-foreground font-mono">{{ connection.path }}</span>
+        <span id="logViewerHeader" class="text-xs text-muted-foreground font-mono">{{ connection.path }}</span>
       </div>
       <div class="flex items-center gap-1.5">
         <Button v-if="isDirectory" variant="outline" size="sm" class="h-7 text-xs" @click="openFolder">

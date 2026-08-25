@@ -2,8 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
-        <h2 id="logViewerHeader" class="text-sm font-medium">{{ connection.name }}</h2>
-        <span class="text-xs text-muted-foreground font-mono">{{ connection.ssh?.host }}:{{ connection.path }}</span>
+        <span id="logViewerHeader" class="text-xs text-muted-foreground font-mono">{{ connection.ssh?.host }}:{{ connection.path }}</span>
         <span v-if="isUpdating" class="text-xs text-blue-400 animate-pulse">Updating...</span>
       </div>
       <div class="flex items-center gap-1.5">

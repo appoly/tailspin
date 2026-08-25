@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-3xl">
+  <div class="w-full">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div>
@@ -15,7 +15,7 @@
     </div>
 
     <!-- Search -->
-    <div v-if="connectionStore.connections.length" class="relative mb-4">
+    <div v-if="connectionStore.connections.length" class="relative mb-4 max-w-xl">
       <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
       <Input
         v-model="search"
@@ -59,9 +59,11 @@
 
     <!-- Search results -->
     <template v-else-if="search">
-      <div class="space-y-0.5">
+      <div>
         <SectionLabel>Results</SectionLabel>
-        <ConnectionCard v-for="conn in filteredConnections" :key="conn.uid" :connection="conn" />
+        <div :class="gridClass">
+          <ConnectionCard v-for="conn in filteredConnections" :key="conn.uid" :connection="conn" />
+        </div>
         <div v-if="filteredConnections.length === 0" class="py-10 text-center">
           <p class="text-xs text-muted-foreground">No connections match "{{ search }}"</p>
           <Button variant="link" size="sm" class="text-xs h-auto mt-1" @click="search = ''">Clear search</Button>
@@ -71,15 +73,17 @@
 
     <!-- Lists -->
     <template v-else>
-      <div v-if="favorites.length > 0" class="space-y-0.5 mb-5">
+      <div v-if="favorites.length > 0" class="mb-5">
         <SectionLabel>
           <Star class="h-2.5 w-2.5 fill-current" />
           Favorites
         </SectionLabel>
-        <ConnectionCard v-for="conn in favorites" :key="conn.uid" :connection="conn" />
+        <div :class="gridClass">
+          <ConnectionCard v-for="conn in favorites" :key="conn.uid" :connection="conn" />
+        </div>
       </div>
 
-      <div class="space-y-0.5">
+      <div>
         <SectionLabel v-if="favorites.length > 0">All connections</SectionLabel>
         <draggable
           :model-value="connectionStore.connections"
@@ -87,6 +91,7 @@
           item-key="uid"
           handle=".drag-handle"
           ghost-class="opacity-30"
+          :class="gridClass"
         >
           <template #item="{ element }">
             <div class="flex items-center group/drag">
@@ -116,6 +121,10 @@ const connectionStore = useConnectionStore()
 const applicationStore = useApplicationStore()
 
 const search = ref('')
+
+// One card per row until there's room for two side by side; the sidebar eats
+// 48px, so xl is the first breakpoint where two columns still read well.
+const gridClass = 'grid grid-cols-1 xl:grid-cols-2 min-[1800px]:grid-cols-3 gap-x-4 gap-y-0.5'
 
 const SectionLabel: FunctionalComponent = (_, { slots }) =>
   h(
