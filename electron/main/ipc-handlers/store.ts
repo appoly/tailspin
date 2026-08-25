@@ -3,7 +3,13 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import Store from "electron-store";
 
-const store = new Store();
+// Lazily constructed: electron-store resolves its path at construction time,
+// and in dev that path is redirected (see electron/main/user-data.ts).
+let storeInstance: Store | null = null;
+function store(): any {
+  if (!storeInstance) storeInstance = new Store();
+  return storeInstance;
+}
 
 // Secrets never travel in config files: exported files must be safe to share,
 // and encrypted values from another install couldn't be decrypted here anyway
@@ -26,7 +32,7 @@ async function exportConfig() {
   });
   if (canceled || !filePath) return { success: false, canceled: true };
 
-  const data = stripSecrets(JSON.parse(JSON.stringify((store as any).store)));
+  const data = stripSecrets(JSON.parse(JSON.stringify(store().store)));
   writeFileSync(filePath, JSON.stringify(data, null, "\t"));
   return { success: true, message: `Exported to ${filePath}` };
 }
@@ -59,10 +65,10 @@ function applyConfigFile(path: string) {
 
   // Merge app settings over current ones so an existing Forge key survives;
   // connections and forge lists are replaced wholesale.
-  if (imported.app) store.set("app", { ...((store as any).get("app") ?? {}), ...imported.app });
-  if (imported.connections) store.set("connections", imported.connections);
-  if (imported.forge) store.set("forge", imported.forge);
-  if (imported.ssh) store.set("ssh", imported.ssh);
+  if (imported.app) store().set("app", { ...(store().get("app") ?? {}), ...imported.app });
+  if (imported.connections) store().set("connections", imported.connections);
+  if (imported.forge) store().set("forge", imported.forge);
+  if (imported.ssh) store().set("ssh", imported.ssh);
 
   const count = Array.isArray(imported.connections) ? imported.connections.length : 0;
   return { success: true, message: `Imported ${count} connection${count === 1 ? "" : "s"}.` };
@@ -75,19 +81,19 @@ const LEGACY_CONFIG_PATH = join(app.getPath("appData"), "Laravel Log Viewer", "c
 
 export default () => {
   ipcMain.handle("config-get", (event, key, defaultValue) => {
-    return store.get(key, defaultValue);
+    return store().get(key, defaultValue);
   });
   ipcMain.handle("config-set", (event, key, value) => {
-    store.set(key, value);
+    store().set(key, value);
   });
   ipcMain.handle("config-has", (event, key) => {
-    return store.has(key);
+    return store().has(key);
   });
   ipcMain.handle("config-delete", (event, key) => {
-    store.delete(key);
+    store().delete(key);
   });
   ipcMain.handle("config-clear", () => {
-    store.clear();
+    store().clear();
   });
   ipcMain.handle("config-export", () => exportConfig());
   ipcMain.handle("config-import", () => importConfig());
