@@ -51,21 +51,72 @@ Stack: Electron, Vue 3 + Pinia, Tailwind CSS 4 with [reka-ui](https://reka-ui.co
 
 ## Releasing
 
-Releases are built by CI — never locally. Push a version tag and GitHub Actions builds all
-three platforms, signs and notarizes the macOS builds, and uploads everything to a draft
-GitHub release; a final job generates the release notes and publishes it once every platform
-has finished.
+Releases are built by CI — never locally. **You push a tag; you never create the GitHub release
+by hand.** The tag triggers the workflow, electron-builder opens a draft release and fills it
+from all three platforms, and a final job publishes it.
+
+### 1. Bump the version and commit it
 
 ```bash
-npm version 0.0.x --no-git-tag-version   # bump package.json, commit it
-git tag v0.0.x
-git push origin main v0.0.x
+npm version 1.1.0 --no-git-tag-version
+git commit -am "chore: release v1.1.0"
+git push
 ```
 
-Signing needs these repository secrets: `CSC_LINK`, `CSC_KEY_PASSWORD`, `CSC_NAME`, `APPLE_ID`,
-`APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID` (see `electron-builder.env.example` for what each
-one is). `GITHUB_TOKEN` is provided by Actions. Forks without a certificate still build — the
-macOS job drops to an unsigned, unnotarized app rather than failing.
+The version in `package.json` has to match the tag you are about to push. electron-builder names
+its draft release after `package.json`, while the publishing job edits the release named after
+the tag — if they disagree, the assets land on one release and the publish step fails on another.
+
+### 2. Push the tag
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+That push is the trigger (`on: push: tags: ['v*']`). Nothing else starts a release.
+
+### 3. Wait for CI
+
+```bash
+gh run watch
+```
+
+Three jobs run in parallel; macOS is the slow one because notarization is a round trip to Apple,
+so budget 15–25 minutes. A draft release shows up in the Releases tab within a few minutes and
+gains assets as each platform finishes. Once all three succeed, the `publish` job generates
+release notes from the commits since the last release, flips the draft public and marks it
+latest.
+
+### 4. Check the assets
+
+Nine files. The three `.yml` manifests are the ones that matter — without them installed apps
+have nothing to read, and update checks 404:
+
+- `Tailspin_<version>_arm64.dmg`, `Tailspin_<version>_x64.dmg`
+- `Tailspin_<version>_arm64.zip`, `Tailspin_<version>_x64.zip` — macOS updates from the zips; the
+  dmg is only for people downloading by hand
+- `Tailspin_<version>.exe`, `Tailspin-<version>.AppImage`
+- `latest-mac.yml`, `latest.yml`, `latest-linux.yml`
+
+### If a platform fails
+
+`publish` only runs when all three builds succeed, so a failure leaves the release as a draft and
+nothing is offered to users. Delete the draft and the tag before re-tagging, or electron-builder
+appends to the half-filled draft:
+
+```bash
+gh release delete v1.1.0 --yes
+git push --delete origin v1.1.0
+git tag -d v1.1.0
+```
+
+### Signing secrets
+
+`CSC_LINK`, `CSC_KEY_PASSWORD`, `CSC_NAME`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`,
+`APPLE_TEAM_ID` — see `electron-builder.env.example` for what each one is. `GITHUB_TOKEN` is
+provided by Actions. Forks without a certificate still build: the macOS job drops to an unsigned,
+unnotarized app rather than failing.
 
 ## Auto-updates
 
@@ -78,6 +129,14 @@ Because the repository is public, no token is needed for update checks. `publish
 `publish.repo` in `electron-builder.json5` must match the repository name — installed builds keep
 asking for the name they shipped with, so renaming the repository breaks updates for anyone
 already running it.
+
+Note that v1.0.0 cannot update itself: it shipped with update checks disabled and pointed at an
+update service that was never deployed. Anyone on v1.0.0 has to install the next version by hand,
+once; updates flow automatically from there.
+
+To verify the round trip after changing anything in this area, install a release, cut a throwaway
+patch version, then launch the older build — the update banner should appear within a few seconds
+of startup.
 
 ## Demo data and screenshots
 
