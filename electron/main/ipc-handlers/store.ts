@@ -80,6 +80,11 @@ function applyConfigFile(path: string) {
 const LEGACY_CONFIG_PATH = join(app.getPath("appData"), "Laravel Log Viewer", "config.json");
 
 export default () => {
+  // Construct the store now rather than on the renderer's first config-get:
+  // electron-store reads and parses config.json in its constructor, and paying
+  // that while the window is still opening keeps it off the boot path.
+  store();
+
   ipcMain.handle("config-get", (event, key, defaultValue) => {
     return store().get(key, defaultValue);
   });

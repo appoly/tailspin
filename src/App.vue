@@ -101,11 +101,20 @@ const forgeStore = useForgeConnectionStore()
 const updaterStore = useUpdaterStore()
 
 onMounted(async () => {
-  await userStore.init()
-  await connectionStore.init()
-  await forgeStore.init()
-  await applicationStore.init()
-  await updaterStore.init()
+  try {
+    // Independent of each other, and each one is an IPC round trip.
+    await Promise.all([
+      userStore.init(),
+      connectionStore.init(),
+      forgeStore.init(),
+      applicationStore.init(),
+      updaterStore.init(),
+    ])
+  } finally {
+    // Only now drop the boot loader. Removing it at mount painted an empty
+    // connections list that filled in a moment later.
+    window.postMessage({ payload: 'removeLoading' }, '*')
+  }
 })
 </script>
 

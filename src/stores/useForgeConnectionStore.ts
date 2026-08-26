@@ -8,8 +8,9 @@ export const useForgeConnectionStore = defineStore('forgeConnection', () => {
   const sites = ref<ForgeSite[]>([])
 
   async function init() {
-    servers.value = (await StorageAPI.Get('forge.servers', [])) as ForgeServer[]
-    sites.value = (await StorageAPI.Get('forge.sites', [])) as ForgeSite[]
+    const forge = (await StorageAPI.Get('forge', {})) as { servers?: ForgeServer[]; sites?: ForgeSite[] }
+    servers.value = forge.servers ?? []
+    sites.value = forge.sites ?? []
   }
 
   async function setSitesAndServers(newSites: ForgeSite[], newServers: ForgeServer[]) {
