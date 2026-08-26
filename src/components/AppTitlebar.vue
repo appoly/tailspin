@@ -1,5 +1,5 @@
 <template>
-  <div class="h-10 flex items-center border-b border-border bg-background/80 backdrop-blur-xs"
+  <div class="relative h-10 flex items-center border-b border-border bg-background/80 backdrop-blur-xs"
        style="-webkit-app-region: drag">
     <!-- macOS traffic light spacer -->
     <div v-if="isMac" class="w-[72px] shrink-0" />
@@ -31,7 +31,7 @@
     </div>
 
     <!-- Window title (when no tabs) -->
-    <div v-if="connectionStore.openConnections.length === 0" class="flex-1 text-center text-xs text-muted-foreground" style="-webkit-app-region: drag">
+    <div v-if="connectionStore.openConnections.length === 0" class="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground pointer-events-none">
       Tailspin
     </div>
   </div>
