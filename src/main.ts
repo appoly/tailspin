@@ -7,6 +7,5 @@ const app = createApp(App)
 app.use(createPinia())
 app.mount('#app')
 
-// Tell the preload script the app has rendered so it can remove the boot
-// loader — without this it stays up until its 5s fallback timeout.
-window.postMessage({ payload: 'removeLoading' }, '*')
+// App.vue posts 'removeLoading' once the stores have loaded; the preload
+// script drops the loader then, or after its own 5s fallback.
