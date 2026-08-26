@@ -45,7 +45,7 @@
           </div>
 
           <!-- Core pages (v-if for single instance) -->
-          <Transition name="page" mode="out-in">
+          <Transition name="page">
             <LogViewerPage v-if="applicationStore.page === 'log-viewer'" key="log-viewer" />
             <ConnectionsPage v-else-if="applicationStore.page === 'connections'" key="connections" />
             <AddConnectionPage v-else-if="applicationStore.page === 'connections.add'" key="connections-add" />
@@ -110,15 +110,17 @@ onMounted(async () => {
 </script>
 
 <style>
-.page-enter-active,
-.page-leave-active {
+/*
+ * Enter-only, and deliberately not mode="out-in": with out-in the incoming page
+ * never rendered — the app was left showing an empty <main> after any sidebar
+ * navigation. Without a leave transition the old page is removed immediately,
+ * so nothing overlaps and there is nothing to wait on.
+ */
+.page-enter-active {
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .page-enter-from {
   opacity: 0;
   transform: translateY(-8px);
-}
-.page-leave-to {
-  opacity: 0;
 }
 </style>

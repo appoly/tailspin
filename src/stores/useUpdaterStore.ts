@@ -2,10 +2,6 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { UpdaterAPI } from '@/lib/backend'
 
-// Flip to true (with its twin in electron/main/updater.ts) once the update
-// service is deployed and publish.url points at it.
-export const UPDATES_ENABLED = false
-
 export type UpdaterStatus =
   | 'idle'
   | 'checking'

@@ -1,3 +1,5 @@
+// Must be first: redirects userData in dev before any Store is constructed.
+import "./user-data";
 import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { release } from "node:os";
 import { join } from "node:path";
@@ -25,6 +27,12 @@ if (release().startsWith("6.1")) app.disableHardwareAcceleration();
 // Set application name for Windows 10+ notifications
 if (process.platform === "win32") app.setAppUserModelId(app.getName());
 
+// Opt-in DevTools protocol endpoint so scripts/capture.mjs can drive the app
+// and grab README screenshots/GIFs. Dev only, and off unless asked for.
+if (!app.isPackaged && process.env.TAILSPIN_CAPTURE) {
+  app.commandLine.appendSwitch("remote-debugging-port", process.env.TAILSPIN_CAPTURE_PORT ?? "9222");
+}
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   process.exit(0);
@@ -44,6 +52,8 @@ const indexHtml = join(process.env.DIST, "index.html");
 async function createWindow() {
   win = new BrowserWindow({
     title: "Tailspin",
+    // Fixed window size while capturing so screenshots are reproducible.
+    ...(process.env.TAILSPIN_CAPTURE ? { width: 1280, height: 800 } : {}),
     icon: join(process.env.PUBLIC, "tailspin-min.png"),
     minWidth: 800,
     minHeight: 500,
@@ -51,6 +61,9 @@ async function createWindow() {
       preload,
       nodeIntegration: false,
       contextIsolation: true,
+      // While capturing, the window sits behind the terminal driving it; without
+      // this Chromium throttles frames and page transitions freeze mid-fade.
+      ...(process.env.TAILSPIN_CAPTURE ? { backgroundThrottling: false } : {}),
     },
     autoHideMenuBar: true,
     // The renderer draws its own titlebar (tabs live in it), so hide the native
@@ -60,11 +73,20 @@ async function createWindow() {
       : {}),
   });
 
+  // An occluded window stops painting and stops firing animation frames, which
+  // freezes Vue's page transitions mid-swap and yields blank screenshots. Keep
+  // the capture window on top and unthrottled.
+  if (process.env.TAILSPIN_CAPTURE) {
+    win.setAlwaysOnTop(true);
+    win.webContents.setBackgroundThrottling(false);
+  }
+
   if (process.env.VITE_DEV_SERVER_URL) {
     // electron-vite-vue#298
     win.loadURL(url);
-    // Open devTool if the app is not packaged
-    win.webContents.openDevTools();
+    // Open devTool if the app is not packaged — but not while capturing
+    // screenshots, where a docked inspector gets in the way.
+    if (!process.env.TAILSPIN_CAPTURE) win.webContents.openDevTools();
     // Install vue devtools
     installExtension(VUEJS_DEVTOOLS)
       .then((name) => console.log(`Added Extension:  ${name}`))

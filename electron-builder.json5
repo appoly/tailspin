@@ -9,9 +9,18 @@
     output: "release",
   },
   files: ["dist-electron", "dist"],
+  // Auto-updates read this repo's GitHub releases: CI publishes the installers
+  // plus the latest*.yml manifests electron-updater needs. Public repo, so the
+  // app needs no token to check.
+  //
+  // NOTE: this must match the repo name at release time. The repo is being
+  // renamed to appoly/tailspin before go-live; if that rename is delayed, put
+  // the old name back before tagging, because installed builds keep asking the
+  // name they shipped with.
   publish: {
-    provider: "generic",
-    url: "https://updates.invalid/api/app/update/tailspin",
+    provider: "github",
+    owner: "appoly",
+    repo: "tailspin",
   },
   mac: {
     artifactName: "${productName}_${version}_${arch}.${ext}",
@@ -20,7 +29,9 @@
       { target: "zip", arch: ["x64", "arm64"] },
     ],
     icon: "build/icon.icns",
-    identity: "Appoly Ltd (X439R68L28)",
+    // Signing identity comes from the CSC_NAME env var (or is derived from the
+    // certificate in CSC_LINK). Hardcoding it broke `npm run build` for anyone
+    // without Appoly's certificate in their keychain.
     hardenedRuntime: true,
     notarize: true,
     entitlements: "build/entitlements.mac.plist",

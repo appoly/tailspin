@@ -1,30 +1,80 @@
 <p align="center">
-  <img src="public/tailspin-min.png" alt="Tailspin" width="96" />
+  <img src="public/tailspin-min.png" alt="" width="96" />
 </p>
 
-# Tailspin — Log Viewer for Laravel
+<h1 align="center">Tailspin</h1>
 
-A desktop app for reading Laravel logs without SSHing into servers and squinting at `storage/logs`. Point Tailspin at a local log file or a server over SSH and it parses everything into a searchable, filterable list — with severity filters, auto-refresh while you debug, and one-click downloads of remote logs.
+<p align="center">
+  <strong>Read production Laravel logs like they're on your own machine.</strong><br>
+  Local files, servers over SSH, and every site on your Forge account, parsed into something you can search.
+</p>
 
-Built by Nathan James and Calum Chamberlain at [Appoly](https://www.appoly.co.uk).
+<p align="center">
+  <a href="https://github.com/appoly/tailspin/releases/latest">Download</a>
+  ·
+  <a href="#features">Features</a>
+  ·
+  <a href="#development">Development</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/appoly/tailspin?style=flat-square&color=f97316" alt="Latest release" />
+  <img src="https://img.shields.io/badge/macOS%20·%20Windows%20·%20Linux-flat?style=flat-square&color=52525b" alt="Platforms" />
+  <img src="https://img.shields.io/badge/licence-MIT-flat?style=flat-square&color=52525b" alt="MIT licence" />
+</p>
+
+---
+
+Something breaks in production. You `ssh` into the box, `cd storage/logs`, `tail -n 500 laravel.log`,
+and then squint at a forty-line stack trace wrapping through your terminal, interleaved with the
+twelve other exceptions thrown that minute. You find the one you want, lose it while scrolling, and
+start again, then do the same for the queue worker and again on the other server.
+
+Tailspin is that loop without the terminal. Point it at a log file or a server and every entry
+becomes a row with its timestamp, environment and severity. Filter to just the errors, search the
+text, expand one to read its full stack trace without losing your place, and leave auto-fetch
+running while you reproduce the bug.
+
+<p align="center">
+  <img src="docs/media/tour.gif" alt="Opening a connection, filtering to errors and expanding an entry" width="900" />
+</p>
+
+![Tailspin viewing a Laravel log](docs/media/log-viewer.png)
+
+The same screen in light and dark:
+
+![Light and dark themes](docs/media/themes.png)
 
 ## Features
 
-- **Local & remote logs** — open log files on disk, or connect over SSH (password or private key, passphrase supported) and browse a server's `.log` files
-- **Proper log parsing** — multi-line Laravel log entries become structured entries with timestamp, severity and environment; filter by severity or search the text
-- **Auto-fetch** — poll a remote log on an interval while debugging and see new entries appear at the top
-- **Laravel Forge integration** — add a Forge API token and pull in all servers and sites, then open any site's logs in a couple of clicks
-- **Saved connections** — favourites, drag-to-reorder, custom icons/colours, and multiple connections open at once in tabs
-- **Safe credential storage** — SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`); nothing is stored in plain text
-- **Command palette** — quick-switch between connections and pages
+- **No SSH session needed.** Open a log file on disk, or connect over SSH (password or private key, passphrase supported) and browse a server's `.log` files from the app.
+- **Stack traces you can actually read.** Multi-line Laravel entries are parsed into rows with timestamp, environment and severity, and expand in place for the full trace.
+- **Find the one that matters.** Filter by severity, search the text, and page through without scrolling past everything else.
+- **Watch it happen live.** Auto-fetch polls a remote log while you reproduce the bug, with new entries appearing at the top.
+- **Your whole Forge account.** Add an API token and every server and site is two clicks from its logs.
+- **Several logs at once.** Saved connections with favourites, drag-to-reorder and custom icons, each open in its own tab.
+- **Credentials stay in the keychain.** SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`) rather than written to disk in plain text.
+- **Keyboard-first.** ⌘K opens a command palette for jumping between connections and pages.
+- **Yours to keep.** One signed download per platform that updates itself. It needs no account and talks to nothing but GitHub.
+
+<details>
+<summary>More screenshots</summary>
+
+|  |  |
+|---|---|
+| **Connections.** Favourites, drag-to-reorder, local and SSH side by side.<br><img src="docs/media/connections.png" alt="Connections list" /> | **An expanded entry.** Filtered to errors, stack trace in full.<br><img src="docs/media/log-entry.png" alt="Expanded log entry with stack trace" /> |
+| **Laravel Forge.** Pull in servers and sites with an API token.<br><img src="docs/media/forge.png" alt="Forge servers and sites" /> | **Command palette.** ⌘K to jump between connections and pages.<br><img src="docs/media/command-palette.png" alt="Command palette" /> |
+| **Settings.** Theme, default key, Forge token, config export and import.<br><img src="docs/media/settings.png" alt="Settings" /> | |
+
+</details>
 
 ## Install
 
-Grab the latest release from the [releases page](https://github.com/appoly/electron-log-viewer/releases/latest):
+Grab the latest release from the [releases page](https://github.com/appoly/tailspin/releases/latest):
 
-- **macOS** — `…_arm64.dmg` (Apple Silicon) or `…_x64.dmg` (Intel). Builds are signed and notarized, so they open without Gatekeeper warnings
-- **Windows** — `…​.exe` NSIS installer
-- **Linux** — `…​.AppImage`
+- **macOS:** `…_arm64.dmg` (Apple Silicon) or `…_x64.dmg` (Intel). Builds are signed and notarized, so they open without Gatekeeper warnings.
+- **Windows:** `…​.exe` NSIS installer.
+- **Linux:** `…​.AppImage`.
 
 ## Development
 
@@ -41,16 +91,111 @@ Stack: Electron, Vue 3 + Pinia, Tailwind CSS 4 with [reka-ui](https://reka-ui.co
 
 ## Releasing
 
-Releases are built by CI — never locally. Push a version tag and GitHub Actions builds all platforms, signs and notarizes the macOS builds, and publishes a GitHub release:
+Releases are built by CI, never locally. **You push a tag; you never create the GitHub release
+by hand.** The tag triggers the workflow, electron-builder opens a draft release and fills it
+from all three platforms, and a final job publishes it.
+
+### 1. Bump the version and commit it
 
 ```bash
-npm version 0.0.x --no-git-tag-version   # bump package.json, commit it
-git tag v0.0.x
-git push origin main v0.0.x
+npm version 1.1.0 --no-git-tag-version
+git commit -am "chore: release v1.1.0"
+git push
 ```
 
-Signing needs these repository secrets (see the shared credential store for the shared values): `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`. The optional S3 upload steps (auto-update feed) also want `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION` and `AWS_S3_BUCKET`, and skip themselves when those are absent.
+The version in `package.json` has to match the tag you are about to push. electron-builder names
+its draft release after `package.json`, while the publishing job edits the release named after
+the tag. If they disagree, the assets land on one release and the publish step fails on another.
+
+### 2. Push the tag
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+That push is the trigger (`on: push: tags: ['v*']`). Nothing else starts a release.
+
+### 3. Wait for CI
+
+```bash
+gh run watch
+```
+
+Three jobs run in parallel; macOS is the slow one because notarization is a round trip to Apple,
+so budget 15 to 25 minutes. A draft release shows up in the Releases tab within a few minutes and
+gains assets as each platform finishes. Once all three succeed, the `publish` job generates
+release notes from the commits since the last release, flips the draft public and marks it
+latest.
+
+### 4. Check the assets
+
+Nine files. The three `.yml` manifests are the ones that matter: without them installed apps
+have nothing to read, and update checks 404.
+
+- `Tailspin_<version>_arm64.dmg`, `Tailspin_<version>_x64.dmg`
+- `Tailspin_<version>_arm64.zip`, `Tailspin_<version>_x64.zip`. macOS updates from the zips; the
+  dmg is only for people downloading by hand
+- `Tailspin_<version>.exe`, `Tailspin-<version>.AppImage`
+- `latest-mac.yml`, `latest.yml`, `latest-linux.yml`
+
+### If a platform fails
+
+`publish` only runs when all three builds succeed, so a failure leaves the release as a draft and
+nothing is offered to users. Delete the draft and the tag before re-tagging, or electron-builder
+appends to the half-filled draft:
+
+```bash
+gh release delete v1.1.0 --yes
+git push --delete origin v1.1.0
+git tag -d v1.1.0
+```
+
+### Signing secrets
+
+`CSC_LINK`, `CSC_KEY_PASSWORD`, `CSC_NAME`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`,
+`APPLE_TEAM_ID`. See `electron-builder.env.example` for what each one is. `GITHUB_TOKEN` is
+provided by Actions. Forks without a certificate still build: the macOS job drops to an unsigned,
+unnotarized app rather than failing.
 
 ## Auto-updates
 
-The app ships with `electron-updater` wired in (update banner in-app, plus a check in Settings). It reads a generic update feed that will be served by the upcoming `appoly-updater` service; until that's deployed, update checks fail quietly and installs simply don't self-update.
+The app checks this repository's GitHub releases through `electron-updater`: a check runs a few
+seconds after launch and on demand from Settings, downloads only happen when you ask, and a
+downloaded update installs on quit. CI publishes the `latest-mac.yml` / `latest.yml` /
+`latest-linux.yml` manifests alongside the installers, which is what the updater actually reads.
+
+Because the repository is public, no token is needed for update checks. `publish.owner` and
+`publish.repo` in `electron-builder.json5` must match the repository name. Installed builds keep
+asking for the name they shipped with, so renaming the repository breaks updates for anyone
+already running it.
+
+Note that v1.0.0 cannot update itself: it shipped with update checks disabled and pointed at an
+update service that was never deployed. Anyone on v1.0.0 has to install the next version by hand,
+once; updates flow automatically from there.
+
+To verify the round trip after changing anything in this area, install a release, cut a throwaway
+patch version, then launch the older build. The update banner should appear within a few seconds
+of startup.
+
+## Demo data and screenshots
+
+The screenshots above are generated, not hand-captured, so they never contain real hostnames:
+
+```bash
+node scripts/demo-data.mjs --out /Users/Shared   # fake Laravel logs + a demo config
+node scripts/capture.mjs --seed --config /Users/Shared/tailspin-demo-config.json
+TAILSPIN_CAPTURE=1 npm run dev                   # app with a DevTools endpoint
+node scripts/capture.mjs                         # writes docs/media
+```
+
+`--seed` writes to the dev config only. Dev and the installed app keep separate `userData`
+directories, so nothing you do in `npm run dev` can touch your real connections.
+`scripts/capture.mjs --only <scene>` re-cuts a single shot; the storyboard is in
+`scripts/scenes.mjs`.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The software is
+provided as-is, without warranty of any kind; Appoly does not offer support for it and accepts no
+liability for its use.
