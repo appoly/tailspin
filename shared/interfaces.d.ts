@@ -46,6 +46,15 @@ export interface LocalLogRead {
   compressed: boolean;
 }
 
+export interface LocalLogTailRead {
+  success: boolean;
+  message?: string;
+  /** Only the bytes appended since the requested offset */
+  content: string;
+  /** Size of the file at the moment it was read, so the next read knows where to start */
+  fileSize: number;
+}
+
 export interface BaseConnection {
   name: string;
   icon: string;

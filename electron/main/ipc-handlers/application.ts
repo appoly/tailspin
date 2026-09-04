@@ -2,7 +2,7 @@ import { ipcMain, dialog, safeStorage, app, shell } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import * as zlib from "zlib";
-import type { LocalLogRead, LogFile } from "../../../shared/interfaces";
+import type { LocalLogRead, LocalLogTailRead, LogFile } from "../../../shared/interfaces";
 
 // Mirrors src/constants/Ssh.ts, same as the SSH handler does.
 const MaxFileSizeToLoadBytes = 1024 * 250 * 1024;
@@ -20,6 +20,9 @@ export default () => {
   });
   ipcMain.handle("read-log-file-from-path", (event, filePath: string, maxBytes: number) => {
     return readLogFile(filePath, maxBytes);
+  });
+  ipcMain.handle("read-log-file-from-offset", (event, filePath: string, offset: number) => {
+    return readLogFileFromOffset(filePath, offset);
   });
   ipcMain.handle("is-file-or-directory", (event, path) => {
     if (!fs.existsSync) {
@@ -163,6 +166,45 @@ function readTail(filePath: string, size: number, budget: number): string {
     fs.closeSync(fd);
   }
   return buffer.toString("utf-8");
+}
+
+/**
+ * Everything appended since `offset`, plus the size it was read at. Only the
+ * delta is ever buffered, so an auto-fetch tick on a gigabyte log costs the few
+ * lines that arrived rather than a re-read. A file shorter than the offset was
+ * truncated or rotated: report the size and let the renderer start over.
+ */
+function readLogFileFromOffset(filePath: string, offset: number): LocalLogTailRead {
+  try {
+    const { size } = fs.statSync(filePath);
+    const from = Math.max(0, Math.floor(offset) || 0);
+
+    if (size <= from) {
+      return { success: true, content: "", fileSize: size };
+    }
+
+    // A delta this large means the log was rewritten rather than appended to;
+    // keep the tail so the read stays bounded either way.
+    const delta = size - from;
+    const length = Math.min(delta, MaxFileSizeToLoadBytes);
+    const start = size - length;
+
+    const buffer = Buffer.alloc(length);
+    const fd = fs.openSync(filePath, "r");
+    try {
+      const read = fs.readSync(fd, buffer, 0, length, start);
+      return { success: true, content: buffer.subarray(0, read).toString("utf-8"), fileSize: size };
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      message: typeof err === "string" ? err : err?.message ?? "Could not read the file",
+      content: "",
+      fileSize: 0,
+    };
+  }
 }
 
 async function readLogFile(filePath: string, maxBytes: number): Promise<LocalLogRead> {
