@@ -53,7 +53,7 @@ The same screen in light and dark:
 - **Stack traces you can actually read.** Multi-line Laravel entries are parsed into rows with timestamp, environment and severity. Expand one and frames are laid out one per line with the file and line number emphasised, vendor frames dimmed and trailing JSON context pretty-printed.
 - **Find the one that matters.** Filter by severity, search the text with matches highlighted, and narrow by time range with quick presets or an exact from/to. Timestamps with an offset can be shown in server or local time.
 - **Watch it happen live.** Auto-fetch polls a remote or local log while you reproduce the bug, with new entries appearing at the top. A new error while you are on another tab gets an OS notification and a dot on the tab.
-- **Keyboard-first.** ⌘K opens a command palette for jumping between connections and pages. `/` focuses search, `j`/`k` move between rows, `enter` expands, `c` copies.
+- **Keyboard-first.** ⌘K opens a palette that searches connections, open tabs and actions in one list. `⌘1`–`⌘9` switch tabs and middle-click closes them. `/` focuses search, `j`/`k` move between rows, `enter` expands, `c` copies.
 - **Take it with you.** Export the filtered entries as text or JSON, download the remote file, or copy the `ssh` command and open the server in your terminal straight from the connection.
 - **Your whole Forge account.** Add an API token and every server and site is two clicks from its logs. If a site rejects your key, the app tells you where in Forge to add it.
 - **Several logs at once.** Saved connections with favourites, drag-to-reorder and custom icons, each open in its own tab.

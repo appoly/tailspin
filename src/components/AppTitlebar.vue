@@ -7,8 +7,9 @@
     <!-- Open connection tabs -->
     <div class="flex-1 flex items-center gap-0.5 overflow-x-auto px-1" style="-webkit-app-region: no-drag">
       <button
-        v-for="conn in connectionStore.openConnections"
+        v-for="(conn, index) in connectionStore.openConnections"
         :key="conn.uid"
+        :title="tabTitle(conn.name, index)"
         class="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors max-w-[160px] truncate"
         :class="[
           applicationStore.page === 'connections.page.' + conn.uid
@@ -16,6 +17,8 @@
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         ]"
         @click="applicationStore.goToConnection(conn.uid)"
+        @mousedown.middle.prevent
+        @auxclick.middle.prevent="closeTab(conn.uid)"
         @contextmenu.prevent
       >
         <component :is="getIcon(conn.icon)" class="h-3 w-3 shrink-0" :style="{ color: conn.iconColor }" />
@@ -46,13 +49,49 @@
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { X, Terminal } from 'lucide-vue-next'
-import { nextTick, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, watch } from 'vue'
 import * as icons from 'lucide-vue-next'
 
 const applicationStore = useApplicationStore()
 const connectionStore = useConnectionStore()
 
 const isMac = navigator.userAgent.includes('Mac')
+const modifierLabel = isMac ? '⌘' : 'Ctrl+'
+
+// Browser-style tab shortcuts: ⌘1–⌘8 pick a tab, ⌘9 the last one, and
+// Ctrl+Tab / Ctrl+Shift+Tab cycle. Digits use the platform modifier;
+// Ctrl+Tab is Ctrl everywhere, as in Chrome.
+function handleKeydown(event: KeyboardEvent) {
+  const tabs = connectionStore.openConnections
+  if (!tabs.length) return
+
+  const platformModifier = isMac ? event.metaKey : event.ctrlKey
+  if (platformModifier && !event.altKey && !event.shiftKey && /^[1-9]$/.test(event.key)) {
+    const index = event.key === '9' ? tabs.length - 1 : Number(event.key) - 1
+    if (index < tabs.length) {
+      event.preventDefault()
+      applicationStore.goToConnection(tabs[index].uid)
+    }
+    return
+  }
+
+  if (event.ctrlKey && event.key === 'Tab') {
+    event.preventDefault()
+    const current = tabs.findIndex(conn => applicationStore.page === connectionPagePrefix + conn.uid)
+    const step = event.shiftKey ? -1 : 1
+    const next = current === -1 ? 0 : (current + step + tabs.length) % tabs.length
+    applicationStore.goToConnection(tabs[next].uid)
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+
+function tabTitle(name: string, index: number): string {
+  const total = connectionStore.openConnections.length
+  const digit = index < 8 ? index + 1 : index === total - 1 ? 9 : null
+  return digit ? `${name} (${modifierLabel}${digit}, middle-click to close)` : `${name} (middle-click to close)`
+}
 
 const connectionPagePrefix = 'connections.page.'
 

@@ -2,7 +2,13 @@
   <div>
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2 min-w-0">
-        <span id="logViewerHeader" class="text-xs text-muted-foreground font-mono truncate">{{ headerPath }}</span>
+        <span id="logViewerHeader" class="flex items-baseline gap-1 min-w-0 text-xs font-mono" :title="headerPath">
+          <span class="text-muted-foreground truncate">{{ headerBase }}</span>
+          <template v-if="headerFile">
+            <span class="shrink-0 text-muted-foreground">·</span>
+            <span class="shrink-0 text-foreground">{{ headerFile }}</span>
+          </template>
+        </span>
         <span v-if="isUpdating" class="text-xs text-blue-400 animate-pulse shrink-0">Updating...</span>
       </div>
       <div class="flex items-center gap-1.5">
@@ -147,11 +153,10 @@ const isRotatedSelection = computed(() => {
   return !!path && isRotatedLogName(basename(path))
 })
 
-const headerPath = computed(() => {
-  const base = `${props.connection.ssh?.host}:${props.connection.path}`
-  if (!isDirectory.value || !selectedFile.value) return base
-  return `${base} · ${basename(selectedFile.value)}`
-})
+// The directory can be long, so it gets to truncate while the file name stays whole.
+const headerBase = computed(() => `${props.connection.ssh?.host}:${props.connection.path}`)
+const headerFile = computed(() => (isDirectory.value && selectedFile.value ? basename(selectedFile.value) : ''))
+const headerPath = computed(() => (headerFile.value ? `${headerBase.value} · ${headerFile.value}` : headerBase.value))
 
 const showAuthFailureHint = computed(() => {
   if (!errorMsg.value || !props.authFailureHint) return false
