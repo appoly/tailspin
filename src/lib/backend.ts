@@ -2,7 +2,7 @@
 // implemented over the Electron preload bridge (window.api).
 
 import type { OpenDialogOptions } from "electron";
-import type { SshRequest, SshResponse } from "@/types/interfaces";
+import type { LocalLogRead, LogFile, SshRequest, SshResponse } from "@/types/interfaces";
 
 const bridge = window.api;
 
@@ -65,10 +65,14 @@ export const FileAPI = {
   ReadFile(path: string): Promise<string> {
     return bridge.Application.readFromPath(path);
   },
+  // Gunzips .gz files and tails anything oversized, unlike ReadFile.
+  ReadLogFile(path: string, maxBytes?: number): Promise<LocalLogRead> {
+    return bridge.Application.readLogFromPath(path, maxBytes);
+  },
   async IsFileOrDirectory(path: string): Promise<string> {
     return (await bridge.Application.isFileOrDirectory(path)) ?? "";
   },
-  GetLogFilesInDirectory(path: string): Promise<string[]> {
+  GetLogFilesInDirectory(path: string): Promise<LogFile[]> {
     return bridge.Application.getFilesInDirectory(path);
   },
   OpenFolderToFile(fileName: string): Promise<void> {

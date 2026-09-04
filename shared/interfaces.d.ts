@@ -23,6 +23,29 @@ export interface SshIpcResponse {
   message?: string;
 }
 
+// Kept in sync by hand with src/types/interfaces.ts — the renderer cannot import
+// from shared/ through the preload bridge, so the two copies are deliberate.
+export interface LogFile {
+  /** Basename, eg "laravel-2026-08-24.log.gz" */
+  name: string;
+  /** Absolute path on whichever machine holds the file */
+  path: string;
+  /** Bytes on disk. For a .gz this is the compressed size */
+  size: number;
+  /** Modification time, unix seconds */
+  modified: number;
+  compressed: boolean;
+}
+
+export interface LocalLogRead {
+  success: boolean;
+  message?: string;
+  content: string;
+  /** Uncompressed size in bytes, so the renderer's size guards mean something */
+  fileSize: number;
+  compressed: boolean;
+}
+
 export interface BaseConnection {
   name: string;
   icon: string;

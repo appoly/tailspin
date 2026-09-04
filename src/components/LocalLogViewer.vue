@@ -1,32 +1,29 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center gap-2">
-        <span id="logViewerHeader" class="text-xs text-muted-foreground font-mono">{{ connection.path }}</span>
+      <div class="flex items-center gap-2 min-w-0">
+        <span id="logViewerHeader" class="text-xs text-muted-foreground font-mono truncate">{{ headerPath }}</span>
       </div>
       <div class="flex items-center gap-1.5">
         <Button v-if="isDirectory" variant="outline" size="sm" class="h-7 text-xs" @click="openFolder">
           <FolderOpen class="h-3 w-3 mr-1" />
           Open Folder
         </Button>
-        <Button variant="outline" size="sm" class="h-7 text-xs" @click="readLog" :disabled="isLoading">
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="refresh" :disabled="isLoading">
           <RefreshCw class="h-3 w-3 mr-1" :class="{ 'animate-spin': isLoading }" />
           Refresh
         </Button>
       </div>
     </div>
 
-    <!-- File selector for directories -->
-    <div v-if="isDirectory && logFiles.length" class="mb-3">
-      <select v-model="selectedFile" @change="readLog" class="w-full h-8 rounded-md border border-input bg-background px-2 text-xs">
-        <option value="" disabled>Select a log file...</option>
-        <option v-for="file in logFiles" :key="file" :value="file">{{ file }}</option>
-      </select>
-    </div>
+    <LogFileBrowser
+      v-if="isDirectory"
+      :files="logFiles"
+      :selected="selectedFile"
+      @select="selectFile"
+    />
 
-    <div v-if="isDirectory && !logFiles.length && !isLoading" class="text-sm text-muted-foreground">
-      No log files found in this directory.
-    </div>
+    <p v-if="isRotatedSelection" class="text-xs text-muted-foreground mb-3">Rotated file, won't change</p>
 
     <LogViewer
       :logEntries="logEntries"
@@ -37,11 +34,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import type { Connection, LogEntry } from '@/types/interfaces'
+import { ref, computed, onMounted } from 'vue'
+import type { Connection, LogEntry, LogFile } from '@/types/interfaces'
 import { FileAPI } from '@/lib/backend'
 import { useLogParser } from '@/composables/useLogParser'
+import { basename, isRotatedLogName } from '@/helpers'
 import LogViewer from './LogViewer.vue'
+import LogFileBrowser from './LogFileBrowser.vue'
 import { Button } from '@/components/ui/button'
 import { FolderOpen, RefreshCw } from 'lucide-vue-next'
 
@@ -51,43 +50,75 @@ const logEntries = ref<LogEntry[]>([])
 const isLoading = ref(false)
 const errorMsg = ref('')
 const isDirectory = ref(false)
-const logFiles = ref<string[]>([])
+const hasProbedPath = ref(false)
+const logFiles = ref<LogFile[]>([])
 const selectedFile = ref('')
 
-onMounted(async () => {
+const currentPath = computed(() => (isDirectory.value ? selectedFile.value : props.connection.path))
+
+const isRotatedSelection = computed(() => {
+  if (!hasProbedPath.value) return false
+  const path = currentPath.value
+  return !!path && isRotatedLogName(basename(path))
+})
+
+const headerPath = computed(() => {
+  if (!isDirectory.value || !selectedFile.value) return props.connection.path
+  return `${props.connection.path} · ${basename(selectedFile.value)}`
+})
+
+onMounted(refresh)
+
+/** Re-read the directory listing (if any) and then whatever is selected. */
+async function refresh() {
+  isLoading.value = true
+  errorMsg.value = ''
+
   try {
-    const type = await FileAPI.IsFileOrDirectory(props.connection.path)
-    isDirectory.value = type === 'directory'
+    isDirectory.value = (await FileAPI.IsFileOrDirectory(props.connection.path)) === 'directory'
+    hasProbedPath.value = true
 
     if (isDirectory.value) {
       logFiles.value = await FileAPI.GetLogFilesInDirectory(props.connection.path)
-      if (logFiles.value.length) {
-        selectedFile.value = logFiles.value[0]
-        await readLog()
+      // Newest file by default, and again if whatever was open has rotated away.
+      if (!logFiles.value.some(file => file.path === selectedFile.value)) {
+        selectedFile.value = logFiles.value[0]?.path ?? ''
       }
-    } else {
-      await readLog()
     }
+
+    await loadSelected()
   } catch (e: any) {
     errorMsg.value = e?.message ?? String(e)
+  } finally {
+    isLoading.value = false
   }
-})
+}
 
-async function readLog() {
+async function loadSelected() {
+  const filePath = currentPath.value
+  if (!filePath) {
+    logEntries.value = []
+    return
+  }
+
+  const res = await FileAPI.ReadLogFile(filePath)
+  if (!res.success) {
+    errorMsg.value = res.message || 'Failed to read file'
+    logEntries.value = []
+    return
+  }
+
+  logEntries.value = await useLogParser(res.content)
+}
+
+async function selectFile(file: LogFile) {
+  if (file.path === selectedFile.value) return
+
+  selectedFile.value = file.path
   isLoading.value = true
   errorMsg.value = ''
   try {
-    let filePath: string
-    if (isDirectory.value) {
-      if (!selectedFile.value) return
-      // GetLogFilesInDirectory returns filenames only, join with directory path
-      const dir = props.connection.path.endsWith('/') ? props.connection.path : props.connection.path + '/'
-      filePath = dir + selectedFile.value
-    } else {
-      filePath = props.connection.path
-    }
-    const content = await FileAPI.ReadFile(filePath)
-    logEntries.value = await useLogParser(content)
+    await loadSelected()
   } catch (e: any) {
     errorMsg.value = e?.message ?? String(e)
   } finally {
