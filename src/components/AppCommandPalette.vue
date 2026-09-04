@@ -36,6 +36,16 @@
               {{ conn.name }}
             </CommandItem>
           </CommandGroup>
+          <CommandGroup v-if="activeFolder === 'ssh'" heading="Copy SSH Command">
+            <CommandItem
+              v-for="conn in remoteConnections"
+              :key="conn.uid"
+              :value="'ssh-' + conn.name"
+              @select="() => { copySshCommand(conn); close() }"
+            >
+              {{ conn.name }}
+            </CommandItem>
+          </CommandGroup>
         </CommandList>
       </Command>
     </DialogContent>
@@ -50,7 +60,8 @@ import {
 } from '@/components/ui/command'
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
-import { Plus, FolderOpen, FolderClosed, LayoutGrid, Settings } from 'lucide-vue-next'
+import { copySshCommand } from '@/lib/sshCommand'
+import { Plus, FolderOpen, FolderClosed, LayoutGrid, Settings, Clipboard } from 'lucide-vue-next'
 
 const applicationStore = useApplicationStore()
 const connectionStore = useConnectionStore()
@@ -58,6 +69,8 @@ const connectionStore = useConnectionStore()
 const isOpen = ref(false)
 const searchTerm = ref('')
 const activeFolder = ref('')
+
+const remoteConnections = computed(() => connectionStore.connections.filter(c => c.type === 'remote'))
 
 const actions = computed(() => {
   const items: any[] = [
@@ -70,6 +83,9 @@ const actions = computed(() => {
   }
   if (connectionStore.openConnections.length > 0) {
     items.splice(2, 0, { label: 'Close Connection...', icon: FolderClosed, action: () => { activeFolder.value = 'close' } })
+  }
+  if (remoteConnections.value.length > 0) {
+    items.push({ label: 'Copy SSH Command...', icon: Clipboard, action: () => { activeFolder.value = 'ssh' } })
   }
   return items
 })
