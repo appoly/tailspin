@@ -89,10 +89,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { Connection, LogEntry, LogFile, SshRequest, SshOptions } from '@/types/interfaces'
 import { SshAPI, StorageAPI } from '@/lib/backend'
 import { useLogParser } from '@/composables/useLogParser'
+import { useAutoFetch } from '@/composables/useAutoFetch'
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { basename, isRotatedLogName, parseRemoteLogFiles } from '@/helpers'
 import LogViewer from './LogViewer.vue'
@@ -124,16 +125,17 @@ const passphrase = ref('')
 const sshOptions = ref<SshOptions>({ numberOfBytes: 500 * 1024 })
 const currentFileSize = ref(0)
 const lastReadBytes = ref(0)
-const autoFetchSeconds = ref(0)
-const countdown = ref(0)
-let autoFetchIntervalId: ReturnType<typeof setInterval> | undefined
-let countdownIntervalId: ReturnType<typeof setInterval> | undefined
 
-const autoFetchIntervals = [
-  { label: '30s', value: 30 },
-  { label: '1m', value: 60 },
-  { label: '2m', value: 120 },
-]
+const {
+  autoFetchSeconds,
+  countdown,
+  intervals: autoFetchIntervals,
+  setAutoFetch,
+  stopAutoFetch,
+} = useAutoFetch({
+  connection: () => props.connection,
+  fetchUpdates,
+})
 
 const currentPath = computed(() => (isDirectory.value ? selectedFile.value : props.connection.path))
 
@@ -170,10 +172,6 @@ onMounted(async () => {
   } else {
     await readLog()
   }
-})
-
-onUnmounted(() => {
-  stopAutoFetch()
 })
 
 function buildSshRequest(): SshRequest {
@@ -279,13 +277,14 @@ async function selectFile(file: LogFile) {
   }
 }
 
-async function fetchUpdates() {
-  if (isUpdating.value || isLoading.value) return
+/** Returns the entries this tick brought in, so the composable can announce errors. */
+async function fetchUpdates(): Promise<LogEntry[]> {
+  if (isUpdating.value || isLoading.value) return []
   isUpdating.value = true
   try {
     const req = buildSshRequest()
     const filePath = currentPath.value
-    if (!filePath) return
+    if (!filePath) return []
 
     const res = await SshAPI.ReadNextFromPath(req, filePath, lastReadBytes.value)
     if (res.success && res.message) {
@@ -296,47 +295,18 @@ async function fetchUpdates() {
       if (newEntries.length) {
         logEntries.value = [...newEntries, ...logEntries.value]
       }
+      return newEntries
     }
   } catch {
     // Silently fail on auto-fetch
   } finally {
     isUpdating.value = false
   }
+  return []
 }
 
 function toggleSshOptions() {
   showSshOptions.value = !showSshOptions.value
-}
-
-function setAutoFetch(seconds: number) {
-  stopAutoFetch()
-  autoFetchSeconds.value = seconds
-  countdown.value = seconds
-
-  countdownIntervalId = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) countdown.value = seconds
-  }, 1000)
-
-  autoFetchIntervalId = setInterval(() => {
-    fetchUpdates()
-    countdown.value = seconds
-  }, seconds * 1000)
-
-  applicationStore.autoFetching = {
-    connectionId: props.connection.uid,
-    intervalId: autoFetchIntervalId,
-  }
-}
-
-function stopAutoFetch() {
-  autoFetchSeconds.value = 0
-  countdown.value = 0
-  if (autoFetchIntervalId) clearInterval(autoFetchIntervalId)
-  if (countdownIntervalId) clearInterval(countdownIntervalId)
-  autoFetchIntervalId = undefined
-  countdownIntervalId = undefined
-  applicationStore.autoFetching = { connectionId: null, intervalId: undefined }
 }
 
 async function downloadFile(file?: LogFile) {
