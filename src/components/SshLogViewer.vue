@@ -1,12 +1,18 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center gap-2">
-        <span id="logViewerHeader" class="text-xs text-muted-foreground font-mono">{{ connection.ssh?.host }}:{{ connection.path }}</span>
-        <span v-if="isUpdating" class="text-xs text-blue-400 animate-pulse">Updating...</span>
+      <div class="flex items-center gap-2 min-w-0">
+        <span id="logViewerHeader" class="flex items-baseline gap-1 min-w-0 text-xs font-mono" :title="headerPath">
+          <span class="text-muted-foreground truncate">{{ headerBase }}</span>
+          <template v-if="headerFile">
+            <span class="shrink-0 text-muted-foreground">·</span>
+            <span class="shrink-0 text-foreground">{{ headerFile }}</span>
+          </template>
+        </span>
+        <span v-if="isUpdating" class="text-xs text-blue-400 animate-pulse shrink-0">Updating...</span>
       </div>
       <div class="flex items-center gap-1.5">
-        <Button variant="outline" size="sm" class="h-7 text-xs" @click="downloadFile" :disabled="isLoading || isDownloading">
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="downloadFile()" :disabled="isLoading || isDownloading">
           <Download class="h-3 w-3 mr-1" :class="{ 'animate-bounce': isDownloading }" />
           Download
         </Button>
@@ -21,8 +27,9 @@
       </div>
     </div>
 
-    <!-- Auto-fetch controls -->
-    <div class="flex items-center gap-2 mb-3">
+    <!-- Auto-fetch controls. A rotated file is finished being written to, so
+         polling it would only cost handshakes. -->
+    <div v-if="!isRotatedSelection" class="flex items-center gap-2 mb-3">
       <span class="text-xs text-muted-foreground">Auto-fetch:</span>
       <Button
         v-for="interval in autoFetchIntervals"
@@ -42,6 +49,7 @@
         Next in {{ countdown }}s
       </span>
     </div>
+    <div v-else class="text-xs text-muted-foreground mb-3">Rotated file, won't change</div>
 
     <!-- SSH Options panel -->
     <LogSshOptions
@@ -53,20 +61,28 @@
       @submitted="readLog"
     />
 
-    <!-- File selector for directories -->
-    <div v-if="isDirectory && remoteFiles.length" class="mb-3">
-      <select v-model="selectedFile" @change="readLog" class="w-full h-8 rounded-md border border-input bg-background px-2 text-xs">
-        <option value="" disabled>Select a log file...</option>
-        <option v-for="file in remoteFiles" :key="file.path" :value="file.path">
-          {{ file.path }} ({{ file.size }})
-        </option>
-      </select>
-    </div>
+    <LogFileBrowser
+      v-if="isDirectory"
+      :files="remoteFiles"
+      :selected="selectedFile"
+      canDownload
+      @select="selectFile"
+      @download="downloadFile"
+    />
+
+    <!-- An auth failure is worth a word about what to fix, so it is rendered here
+         with the hint under it rather than inside LogViewer. -->
+    <template v-if="showAuthFailureHint">
+      <div class="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+        {{ errorMsg }}
+      </div>
+      <p class="text-xs text-muted-foreground mt-1.5 mb-2">{{ authFailureHint }}</p>
+    </template>
 
     <LogViewer
       :logEntries="logEntries"
       :isLoading="isLoading"
-      :errorMsg="errorMsg"
+      :errorMsg="showAuthFailureHint ? '' : errorMsg"
     />
 
     <!-- Passphrase dialog -->
@@ -79,19 +95,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import type { Connection, LogEntry, SshRequest, SshOptions } from '@/types/interfaces'
-import { SshAPI, CryptoAPI, StorageAPI } from '@/lib/backend'
+import { ref, computed, onMounted } from 'vue'
+import type { Connection, LogEntry, LogFile, SshRequest, SshOptions } from '@/types/interfaces'
+import { SshAPI, StorageAPI } from '@/lib/backend'
 import { useLogParser } from '@/composables/useLogParser'
+import { useAutoFetch } from '@/composables/useAutoFetch'
 import { useApplicationStore } from '@/stores/useApplicationStore'
-import { bytesToHumanReadableFileSize } from '@/helpers'
+import { basename, isRotatedLogName, parseRemoteLogFiles } from '@/helpers'
 import LogViewer from './LogViewer.vue'
 import LogSshOptions from './LogSshOptions.vue'
+import LogFileBrowser from './LogFileBrowser.vue'
 import ConnectionSshPassphraseDialog from './ConnectionSshPassphraseDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Download, Settings, RefreshCw } from 'lucide-vue-next'
 
-const props = defineProps<{ connection: Connection }>()
+const props = defineProps<{
+  connection: Connection
+  /** Shown under the error when the failure looks like SSH auth rather than anything else. */
+  authFailureHint?: string
+}>()
 
 const applicationStore = useApplicationStore()
 const logEntries = ref<LogEntry[]>([])
@@ -100,7 +122,8 @@ const isUpdating = ref(false)
 const isDownloading = ref(false)
 const errorMsg = ref('')
 const isDirectory = ref(false)
-const remoteFiles = ref<{ path: string; size: string }[]>([])
+const hasProbedPath = ref(false)
+const remoteFiles = ref<LogFile[]>([])
 const selectedFile = ref('')
 const showSshOptions = ref(false)
 const showPassphraseDialog = ref(false)
@@ -108,16 +131,42 @@ const passphrase = ref('')
 const sshOptions = ref<SshOptions>({ numberOfBytes: 500 * 1024 })
 const currentFileSize = ref(0)
 const lastReadBytes = ref(0)
-const autoFetchSeconds = ref(0)
-const countdown = ref(0)
-let autoFetchIntervalId: ReturnType<typeof setInterval> | undefined
-let countdownIntervalId: ReturnType<typeof setInterval> | undefined
 
-const autoFetchIntervals = [
-  { label: '30s', value: 30 },
-  { label: '1m', value: 60 },
-  { label: '2m', value: 120 },
-]
+const {
+  autoFetchSeconds,
+  countdown,
+  intervals: autoFetchIntervals,
+  setAutoFetch,
+  stopAutoFetch,
+} = useAutoFetch({
+  connection: () => props.connection,
+  fetchUpdates,
+})
+
+const currentPath = computed(() => (isDirectory.value ? selectedFile.value : props.connection.path))
+
+const isRotatedSelection = computed(() => {
+  // Until the path has been probed we do not know whether connection.path is a
+  // directory, so assume the live log rather than flashing the rotated notice.
+  if (!hasProbedPath.value) return false
+  const path = currentPath.value
+  return !!path && isRotatedLogName(basename(path))
+})
+
+// The directory can be long, so it gets to truncate while the file name stays whole.
+const headerBase = computed(() => `${props.connection.ssh?.host}:${props.connection.path}`)
+const headerFile = computed(() => (isDirectory.value && selectedFile.value ? basename(selectedFile.value) : ''))
+const headerPath = computed(() => (headerFile.value ? `${headerBase.value} · ${headerFile.value}` : headerBase.value))
+
+const showAuthFailureHint = computed(() => {
+  if (!errorMsg.value || !props.authFailureHint) return false
+  const message = errorMsg.value.toLowerCase()
+  return (
+    message.includes('authentication') ||
+    message.includes('all configured authentication methods failed') ||
+    message.includes('permission denied')
+  )
+})
 
 onMounted(async () => {
   const storedBytes = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024)
@@ -128,10 +177,6 @@ onMounted(async () => {
   } else {
     await readLog()
   }
-})
-
-onUnmounted(() => {
-  stopAutoFetch()
 })
 
 function buildSshRequest(): SshRequest {
@@ -171,6 +216,7 @@ async function readLog() {
     }
 
     isDirectory.value = typeRes.message === 'directory'
+    hasProbedPath.value = true
 
     if (isDirectory.value) {
       const dirRes = await SshAPI.GetFilesInDirectory(req, props.connection.path)
@@ -178,27 +224,15 @@ async function readLog() {
         errorMsg.value = dirRes.message || 'Failed to list directory'
         return
       }
-      remoteFiles.value = parseLsOutput(dirRes.message || '')
-      if (remoteFiles.value.length && !selectedFile.value) {
-        selectedFile.value = remoteFiles.value[0].path
+      remoteFiles.value = parseRemoteLogFiles(dirRes.message || '')
+      // Newest file by default, and again if whatever was open has rotated away.
+      const stillThere = remoteFiles.value.some(file => file.path === selectedFile.value)
+      if (!stillThere) {
+        selectedFile.value = remoteFiles.value[0]?.path ?? ''
       }
     }
 
-    const filePath = isDirectory.value ? selectedFile.value : props.connection.path
-    if (!filePath) return
-
-    const res = await SshAPI.ReadFromPath(req, filePath, sshOptions.value.numberOfBytes)
-    if (!res.success) {
-      errorMsg.value = res.message || 'Failed to read file'
-      return
-    }
-
-    if (res.fileSize) {
-      currentFileSize.value = parseInt(res.fileSize, 10) || 0
-    }
-    lastReadBytes.value = currentFileSize.value
-
-    logEntries.value = await useLogParser(res.message || '')
+    await loadSelected(req)
   } catch (e: any) {
     errorMsg.value = e?.message ?? String(e)
   } finally {
@@ -206,13 +240,56 @@ async function readLog() {
   }
 }
 
-async function fetchUpdates() {
-  if (isUpdating.value || isLoading.value) return
+/** Read whatever is currently selected, without re-probing the directory. */
+async function loadSelected(request?: SshRequest) {
+  const filePath = currentPath.value
+  if (!filePath) return
+
+  const req = request ?? buildSshRequest()
+  const res = await SshAPI.ReadFromPath(req, filePath, sshOptions.value.numberOfBytes)
+  if (!res.success) {
+    errorMsg.value = res.message || 'Failed to read file'
+    logEntries.value = []
+    return
+  }
+
+  if (res.fileSize) {
+    currentFileSize.value = parseInt(res.fileSize, 10) || 0
+  }
+  lastReadBytes.value = currentFileSize.value
+
+  logEntries.value = await useLogParser(res.message || '')
+}
+
+async function selectFile(file: LogFile) {
+  if (file.path === selectedFile.value) return
+
+  selectedFile.value = file.path
+  // Nothing more is ever appended to a rotated file, so stop polling it.
+  if (isRotatedSelection.value) {
+    stopAutoFetch()
+  }
+
+  isLoading.value = true
+  errorMsg.value = ''
+  lastReadBytes.value = 0
+  try {
+    await loadSelected()
+  } catch (e: any) {
+    errorMsg.value = e?.message ?? String(e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+/** Returns the entries this tick brought in, so the composable can announce errors. */
+async function fetchUpdates(): Promise<LogEntry[]> {
+  if (isUpdating.value || isLoading.value) return []
   isUpdating.value = true
   try {
     const req = buildSshRequest()
-    const filePath = isDirectory.value ? selectedFile.value : props.connection.path
-    if (!filePath) return
+    const filePath = currentPath.value
+    if (!filePath) return []
 
     const res = await SshAPI.ReadNextFromPath(req, filePath, lastReadBytes.value)
     if (res.success && res.message) {
@@ -223,69 +300,22 @@ async function fetchUpdates() {
       if (newEntries.length) {
         logEntries.value = [...newEntries, ...logEntries.value]
       }
+      return newEntries
     }
   } catch {
     // Silently fail on auto-fetch
   } finally {
     isUpdating.value = false
   }
-}
-
-function parseLsOutput(output: string): { path: string; size: string }[] {
-  const lines = output.split('\n').filter(l => l.trim())
-  const files: { path: string; size: string }[] = []
-  for (const line of lines) {
-    const spaceIdx = line.trim().indexOf(' ')
-    if (spaceIdx === -1) continue
-    const size = line.trim().substring(0, spaceIdx)
-    const path = line.trim().substring(spaceIdx + 1)
-    if (path) {
-      files.push({
-        path,
-        size: bytesToHumanReadableFileSize(parseInt(size, 10) || 0),
-      })
-    }
-  }
-  return files
+  return []
 }
 
 function toggleSshOptions() {
   showSshOptions.value = !showSshOptions.value
 }
 
-function setAutoFetch(seconds: number) {
-  stopAutoFetch()
-  autoFetchSeconds.value = seconds
-  countdown.value = seconds
-
-  countdownIntervalId = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) countdown.value = seconds
-  }, 1000)
-
-  autoFetchIntervalId = setInterval(() => {
-    fetchUpdates()
-    countdown.value = seconds
-  }, seconds * 1000)
-
-  applicationStore.autoFetching = {
-    connectionId: props.connection.uid,
-    intervalId: autoFetchIntervalId,
-  }
-}
-
-function stopAutoFetch() {
-  autoFetchSeconds.value = 0
-  countdown.value = 0
-  if (autoFetchIntervalId) clearInterval(autoFetchIntervalId)
-  if (countdownIntervalId) clearInterval(countdownIntervalId)
-  autoFetchIntervalId = undefined
-  countdownIntervalId = undefined
-  applicationStore.autoFetching = { connectionId: null, intervalId: undefined }
-}
-
-async function downloadFile() {
-  const filePath = isDirectory.value ? selectedFile.value : props.connection.path
+async function downloadFile(file?: LogFile) {
+  const filePath = file?.path ?? currentPath.value
   if (!filePath) return
 
   const safeName = filePath.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^_+/, '')

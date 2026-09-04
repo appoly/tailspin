@@ -13,7 +13,8 @@
  *
  * Output is deterministic, so regenerating gives byte-identical logs.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, utimesSync, writeFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -189,9 +190,44 @@ const files = {
   }),
 };
 
+// What logrotate leaves behind on a real box: older days gzipped, plus the
+// most recent rotation still uncompressed. Same generator, smaller files.
+const rotated = {};
+for (const day of [18, 19, 20, 21, 22]) {
+  rotated[`laravel-2026-08-${day}.log.gz`] = gzipSync(
+    buildLog({
+      env: "production",
+      start: `2026-08-${day}T06:00:00Z`,
+      count: 40,
+      stepSeconds: 1200,
+      mix: { info: 0.5, debug: 0.2, warning: 0.16, error: 0.12, notice: 0.02 },
+    })
+  );
+}
+rotated["laravel.log.1"] = buildLog({
+  env: "production",
+  start: "2026-08-22T00:10:00Z",
+  count: 120,
+  stepSeconds: 600,
+  mix: { info: 0.44, debug: 0.2, warning: 0.18, error: 0.14, notice: 0.02, critical: 0.02 },
+});
+
+/** Last timestamp in a log, so the file's mtime matches what it contains. */
+function lastEntryTime(contents) {
+  if (Buffer.isBuffer(contents)) return null;
+  const stamps = [...contents.matchAll(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/gm)];
+  const last = stamps.at(-1)?.[1];
+  return last ? new Date(last.replace(" ", "T") + "Z") : null;
+}
+
 mkdirSync(logsDir, { recursive: true });
-for (const [name, contents] of Object.entries(files)) {
-  writeFileSync(join(logsDir, name), contents);
+for (const [name, contents] of Object.entries({ ...files, ...rotated })) {
+  const target = join(logsDir, name);
+  writeFileSync(target, contents);
+  // Gzipped files take the day in their name; plain logs take their last entry.
+  const fromName = name.match(/(\d{4}-\d{2}-\d{2})/)?.[1];
+  const mtime = lastEntryTime(contents) ?? (fromName ? new Date(`${fromName}T23:59:00Z`) : new Date());
+  utimesSync(target, mtime, mtime);
 }
 
 // Fictional hosts use the RFC 5737 documentation ranges, so nothing here can
@@ -221,6 +257,15 @@ const config = {
       iconColor: "#f97316",
       type: "local",
       path: join(logsDir, "laravel.log"),
+      isFavorite: true,
+    },
+    {
+      uid: "demo-all-logs-0006",
+      name: "Acme Widgets — All logs",
+      icon: "folder",
+      iconColor: "#fbbf24",
+      type: "local",
+      path: logsDir,
       isFavorite: true,
     },
     {

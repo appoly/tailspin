@@ -70,6 +70,31 @@
 
     <Separator />
 
+    <!-- Auto-fetch -->
+    <section class="flex items-start gap-6 py-5">
+      <div class="w-52 shrink-0">
+        <h3 class="text-sm font-medium">Auto-fetch</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">What happens while a log is polling for new entries.</p>
+      </div>
+      <div class="flex-1 min-w-0 max-w-2xl">
+        <div class="flex items-center gap-2">
+          <input
+            id="notify-on-errors"
+            type="checkbox"
+            :checked="notifyOnErrors"
+            @change="saveNotifyOnErrors(($event.target as HTMLInputElement).checked)"
+            class="rounded border-border"
+          />
+          <label for="notify-on-errors" class="text-xs text-muted-foreground cursor-pointer">
+            Notify on new errors during auto-fetch
+          </label>
+        </div>
+        <SavedTick :visible="notifySaved" />
+      </div>
+    </section>
+
+    <Separator />
+
     <!-- Forge -->
     <section class="flex items-start gap-6 py-5">
       <div class="w-52 shrink-0">
@@ -222,6 +247,8 @@ const sshKeyPath = ref('')
 const sshKeyPathSaved = ref(false)
 const sshDefaultBytes = ref(500 * 1024)
 const sshBytesSaved = ref(false)
+const notifyOnErrors = ref(true)
+const notifySaved = ref(false)
 const showDeleteConnectionsDialog = ref(false)
 const showDeleteConfigDialog = ref(false)
 
@@ -246,6 +273,7 @@ const transferOk = ref(true)
 onMounted(async () => {
   sshKeyPath.value = await StorageAPI.Get('app.sshKeyPath', '') as string
   sshDefaultBytes.value = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024) as number
+  notifyOnErrors.value = await StorageAPI.Get('app.notifyOnErrors', true) !== false
   hasLegacyConfig.value = await ConfigAPI.HasLegacy()
 })
 
@@ -275,6 +303,7 @@ async function applyTransfer(result: { success: boolean; canceled?: boolean; mes
     await applicationStore.initForgeSectionEnabled()
     sshKeyPath.value = await StorageAPI.Get('app.sshKeyPath', '') as string
     sshDefaultBytes.value = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024) as number
+    notifyOnErrors.value = await StorageAPI.Get('app.notifyOnErrors', true) !== false
   }
 }
 
@@ -298,6 +327,12 @@ async function saveSshDefaultBytes(value: string) {
   sshDefaultBytes.value = Number(value)
   await StorageAPI.Set('ssh.numberOfBytes', sshDefaultBytes.value)
   flash(sshBytesSaved)
+}
+
+async function saveNotifyOnErrors(enabled: boolean) {
+  notifyOnErrors.value = enabled
+  await StorageAPI.Set('app.notifyOnErrors', enabled)
+  flash(notifySaved)
 }
 
 function flash(flag: { value: boolean }) {

@@ -17,6 +17,9 @@ export const useApplicationStore = defineStore('application', () => {
     connectionId: null,
     intervalId: undefined,
   })
+  // Errors auto-fetched into a tab the user has not looked at since, keyed by
+  // connection uid, so the titlebar can mark the tab.
+  const unseenErrors = ref<Record<string, number>>({})
 
   async function init() {
     canUseSafeStorage.value = await CryptoAPI.IsEncryptionAvailable()
@@ -60,6 +63,15 @@ export const useApplicationStore = defineStore('application', () => {
     return true
   }
 
+  function addUnseenErrors(connectionId: string, count: number) {
+    if (count <= 0) return
+    unseenErrors.value[connectionId] = (unseenErrors.value[connectionId] ?? 0) + count
+  }
+
+  function clearUnseenErrors(connectionId: string) {
+    delete unseenErrors.value[connectionId]
+  }
+
   async function initForgeSectionEnabled() {
     forgeSectionEnabled.value = (await StorageAPI.Get('app.forgeEnabled', true)) !== false
   }
@@ -75,9 +87,9 @@ export const useApplicationStore = defineStore('application', () => {
 
   return {
     openConnections, page, routeParams, canUseSafeStorage, downloads,
-    forgeSectionEnabled, autoFetching,
+    forgeSectionEnabled, autoFetching, unseenErrors,
     init, changePage, addOpenConnection, closeConnection, closeAllConnections,
-    goToConnection, updateDownloads, initForgeSectionEnabled,
+    goToConnection, updateDownloads, addUnseenErrors, clearUnseenErrors, initForgeSectionEnabled,
     toggleForgeSectionEnabled, deleteAllConfigData,
   }
 })

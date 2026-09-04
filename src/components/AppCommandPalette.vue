@@ -1,98 +1,98 @@
 <template>
   <Dialog :open="isOpen" @update:open="isOpen = $event">
-    <DialogContent class="p-0 gap-0 max-w-lg" @interact-outside="isOpen = false">
-      <Command v-model:search-term="searchTerm" class="rounded-lg border-0">
-        <CommandInput placeholder="Type a command or search..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup v-if="!activeFolder" heading="Actions">
-            <CommandItem
-              v-for="action in filteredActions"
-              :key="action.label"
-              :value="action.label"
-              @select="action.action"
+    <!-- The dialog's own close button would sit on top of the search field -->
+    <DialogContent class="p-0 gap-0 max-w-xl overflow-hidden [&>button]:hidden">
+      <DialogTitle class="sr-only">Command palette</DialogTitle>
+      <DialogDescription class="sr-only">
+        Search your connections, open tabs and app actions.
+      </DialogDescription>
+
+      <ListboxRoot class="flex flex-col overflow-hidden" highlight-on-hover>
+        <div class="flex items-center border-b px-3">
+          <Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <ListboxFilter
+            v-model="searchTerm"
+            auto-focus
+            placeholder="Search connections, tabs and actions…"
+            class="flex h-11 w-full bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground"
+          />
+        </div>
+
+        <ListboxContent class="max-h-[60vh] overflow-y-auto overflow-x-hidden p-1 outline-hidden">
+          <div v-if="groups.length === 0" class="py-6 text-center text-sm text-muted-foreground">
+            Nothing matches
+          </div>
+
+          <ListboxGroup v-for="group in groups" :key="group.heading" class="py-1">
+            <ListboxGroupLabel class="px-2 py-1 text-xs font-medium text-muted-foreground">
+              {{ group.heading }}
+            </ListboxGroupLabel>
+            <ListboxItem
+              v-for="item in group.items"
+              :key="item.id"
+              :value="item.id"
+              class="flex cursor-default select-none items-center gap-2.5 rounded-md px-2 py-1.5 text-sm outline-hidden data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+              @select="item.run()"
             >
-              <component :is="action.icon" class="mr-2 h-4 w-4" />
-              {{ action.label }}
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup v-if="activeFolder === 'open'" heading="Open Connection">
-            <CommandItem
-              v-for="conn in connectionStore.connections"
-              :key="conn.uid"
-              :value="'open-' + conn.name"
-              @select="() => { applicationStore.goToConnection(conn.uid); close() }"
-            >
-              {{ conn.name }}
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup v-if="activeFolder === 'close'" heading="Close Connection">
-            <CommandItem
-              v-for="conn in connectionStore.openConnections"
-              :key="conn.uid"
-              :value="'close-' + conn.name"
-              @select="() => { applicationStore.closeConnection(conn.uid); applicationStore.changePage('connections'); close() }"
-            >
-              {{ conn.name }}
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
-      </Command>
+              <component
+                :is="item.icon"
+                class="h-4 w-4 shrink-0"
+                :style="{ color: item.iconColor || 'currentColor' }"
+              />
+              <div class="flex min-w-0 flex-1 items-baseline gap-1.5">
+                <span class="max-w-[55%] shrink-0 truncate">{{ item.title }}</span>
+                <span v-if="item.subtitle" class="truncate text-[11px] font-mono text-muted-foreground">
+                  · {{ item.subtitle }}
+                </span>
+              </div>
+              <Badge
+                v-for="badge in item.badges"
+                :key="badge"
+                :variant="badge === 'SSH' ? 'secondary' : 'outline'"
+                class="shrink-0 px-1.5 py-0 text-[10px] font-normal"
+              >
+                {{ badge }}
+              </Badge>
+            </ListboxItem>
+          </ListboxGroup>
+        </ListboxContent>
+
+        <div class="flex items-center gap-3 border-t px-3 py-1.5 text-[11px] text-muted-foreground">
+          <span class="flex items-center gap-1"><kbd :class="kbdClass">↑↓</kbd> navigate</span>
+          <span class="flex items-center gap-1"><kbd :class="kbdClass">↵</kbd> select</span>
+          <span class="flex items-center gap-1"><kbd :class="kbdClass">esc</kbd> close</span>
+        </div>
+      </ListboxRoot>
     </DialogContent>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import {
-  Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
-} from '@/components/ui/command'
-import { useApplicationStore } from '@/stores/useApplicationStore'
-import { useConnectionStore } from '@/stores/useConnectionStore'
-import { Plus, FolderOpen, FolderClosed, LayoutGrid, Settings } from 'lucide-vue-next'
+  ListboxRoot, ListboxFilter, ListboxContent, ListboxGroup, ListboxGroupLabel, ListboxItem,
+} from 'reka-ui'
+import { Search } from 'lucide-vue-next'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
+import { useCommandPalette } from '@/composables/useCommandPalette'
 
-const applicationStore = useApplicationStore()
-const connectionStore = useConnectionStore()
+const kbdClass = 'text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded'
 
 const isOpen = ref(false)
 const searchTerm = ref('')
-const activeFolder = ref('')
 
-const actions = computed(() => {
-  const items: any[] = [
-    { label: 'Create Connection', icon: Plus, action: () => { applicationStore.changePage('connections.add'); close() } },
-    { label: 'Show All Connections', icon: LayoutGrid, action: () => { applicationStore.changePage('connections'); close() } },
-    { label: 'Open Settings', icon: Settings, action: () => { applicationStore.changePage('settings'); close() } },
-  ]
-  if (connectionStore.connections.length > 0) {
-    items.splice(1, 0, { label: 'Open Connection...', icon: FolderOpen, action: () => { activeFolder.value = 'open' } })
-  }
-  if (connectionStore.openConnections.length > 0) {
-    items.splice(2, 0, { label: 'Close Connection...', icon: FolderClosed, action: () => { activeFolder.value = 'close' } })
-  }
-  return items
+const { groups } = useCommandPalette(searchTerm, () => { isOpen.value = false })
+
+// A stale term would filter the next open before the user has typed anything.
+watch(isOpen, (open) => {
+  if (!open) searchTerm.value = ''
 })
 
-const filteredActions = computed(() => {
-  if (!searchTerm.value) return actions.value
-  return actions.value.filter(a => a.label.toLowerCase().includes(searchTerm.value.toLowerCase()))
-})
-
-function close() {
-  isOpen.value = false
-  searchTerm.value = ''
-  activeFolder.value = ''
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault()
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault()
     isOpen.value = !isOpen.value
-    if (!isOpen.value) close()
-  }
-  if (e.key === 'Escape' && activeFolder.value) {
-    activeFolder.value = ''
   }
 }
 

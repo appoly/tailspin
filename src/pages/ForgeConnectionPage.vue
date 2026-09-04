@@ -31,7 +31,7 @@
           Save to Connections
         </Button>
       </div>
-      <SshLogViewer :connection="siteConnection!" />
+      <SshLogViewer :connection="siteConnection!" :authFailureHint="authFailureHint" />
     </div>
 
     <!-- Server/site list -->
@@ -144,6 +144,14 @@ const siteConnection = computed<Connection | null>(() => {
     },
   }
 })
+
+// Forge sites are always key auth against the site's own user, so an auth
+// failure here is nearly always the key missing from the server in Forge.
+const authFailureHint = computed(
+  () =>
+    `Check that the SSH key at ${userStore.defaultSshPath || 'your default key path'} is added to this server in ` +
+    `Forge for the user '${selectedSite.value?.username ?? ''}'. Forge → Server → SSH Keys.`
+)
 
 function saveToConnections() {
   if (!siteConnection.value) return
