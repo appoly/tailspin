@@ -1,4 +1,5 @@
 import { ipcMain, dialog, safeStorage, app, shell } from "electron";
+import { expandHome } from "../helpers";
 import * as fs from "fs";
 import * as path from "path";
 import * as zlib from "zlib";
@@ -16,21 +17,26 @@ export default () => {
     return dialog.showOpenDialog(options);
   });
   ipcMain.handle("read-file-from-path", (event, path) => {
+    path = expandHome(path);
     return fs.readFileSync(path, "utf-8");
   });
   ipcMain.handle("read-log-file-from-path", (event, filePath: string, maxBytes: number) => {
+    filePath = expandHome(filePath);
     return readLogFile(filePath, maxBytes);
   });
   ipcMain.handle("read-log-file-from-offset", (event, filePath: string, offset: number) => {
+    filePath = expandHome(filePath);
     return readLogFileFromOffset(filePath, offset);
   });
   ipcMain.handle("is-file-or-directory", (event, path) => {
+    path = expandHome(path);
     if (!fs.existsSync) {
       return null;
     }
     return fs.lstatSync(path).isDirectory() ? "directory" : "file";
   });
   ipcMain.handle("get-files-in-directory", (event, directory: string) => {
+    directory = expandHome(directory);
     return listLogFiles(directory);
   });
   ipcMain.handle("encrypt-string", (event, string) => {
@@ -47,6 +53,7 @@ export default () => {
     return shell.openPath(app.getPath("downloads"));
   });
   ipcMain.handle("open-folder-from-path", (event, path) => {
+    path = expandHome(path);
     return shell.openPath(path);
   });
 };

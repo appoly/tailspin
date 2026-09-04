@@ -1,7 +1,6 @@
 import { ipcMain, safeStorage, app } from "electron";
 import { createHash } from "node:crypto";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { expandHome } from "../helpers";
 import SSH2Promise from "ssh2-promise";
 import type { SshDetailsToIpc } from "../../../shared/interfaces";
 
@@ -39,7 +38,7 @@ export default () => {
     handleSsh(
       async (ssh) => {
         // Determine whether the path is a file, directory, or does not exist:
-        const quoted = shellQuote(path);
+        const quoted = quotePath(path);
         let response = await ssh.exec(`test -d ${quoted} && echo "directory" || (test -f ${quoted} && echo "file")`);
         // The renderer compares this with strict equality, so strip the shell's trailing newline
         return { success: true, message: typeof response === "string" ? response.trim() : response };
@@ -58,7 +57,7 @@ export default () => {
         const directory = path.length > 1 ? path.replace(/\/+$/, "") : path;
         // An empty directory leaves the glob unexpanded and stat complains about it;
         // that is not worth surfacing, and `test -d` already proved the path exists.
-        let response = await ssh.exec(`stat -c '%Y %s %n' ${shellQuote(directory)}/*.log* 2>/dev/null | sort -rn`);
+        let response = await ssh.exec(`stat -c '%Y %s %n' ${quotePath(directory)}/*.log* 2>/dev/null | sort -rn`);
         return { success: true, message: response };
       },
       options,
@@ -75,7 +74,7 @@ export default () => {
             return readCompressed(ssh, path, bytes);
           }
 
-          const quoted = shellQuote(path);
+          const quoted = quotePath(path);
           let response = "";
           // If number of bytes is 0, it means read the entire file with tail:
           if (bytes === 0) {
@@ -101,7 +100,7 @@ export default () => {
       }
       return handleSsh(
         async (ssh) => {
-          const quoted = shellQuote(path);
+          const quoted = quotePath(path);
           const offset = toByteCount(fileSizeAtLastReadInBytes);
           const response = await ssh.exec(`tail -c +${offset} -- ${quoted}`); // Read from the last read position
           const fileSize = await ssh.exec(`stat -c %s -- ${quoted}`);
@@ -119,7 +118,9 @@ export default () => {
         async (ssh) => {
           // sftp talks the protocol directly, so the path never reaches a shell.
           let sftp = ssh.sftp();
-          await sftp.fastGet(path, app.getPath("downloads") + "/" + fileName);
+          // No shell here either, so "~" is resolved against the login directory.
+          const remotePath = /^~(\/|$)/.test(path) ? path.replace(/^~/, await sftp.realpath(".")) : path;
+          await sftp.fastGet(remotePath, app.getPath("downloads") + "/" + fileName);
           return { success: true, message: "Downloaded to Downloads folder" };
         },
         options,
@@ -138,6 +139,18 @@ export default () => {
  */
 function shellQuote(value: string): string {
   return `'${String(value ?? "").replace(/'/g, "'\\''")}'`;
+}
+
+/**
+ * Like shellQuote, but a leading "~" stays outside the quotes so the remote
+ * shell still expands it. Paths such as ~/site/storage/logs are common on
+ * Forge boxes and quoting the tilde would turn them into a literal directory.
+ */
+function quotePath(path: string): string {
+  const value = String(path ?? "");
+  if (value === "~") return "~";
+  if (value.startsWith("~/")) return `~/${shellQuote(value.slice(2))}`;
+  return shellQuote(value);
 }
 
 /** Never interpolate a renderer-supplied number into a command without flattening it first. */
@@ -163,7 +176,7 @@ function parseGzipListing(output: string): number | null {
 }
 
 async function readCompressed(ssh: SSH2Promise, path: string, numberOfBytes: number) {
-  const quoted = shellQuote(path);
+  const quoted = quotePath(path);
   const uncompressedSize = parseGzipListing(await ssh.exec(`gzip -l -- ${quoted} 2>/dev/null | tail -n 1`));
 
   if (uncompressedSize === null) {
@@ -210,12 +223,6 @@ function formatBytes(bytes: number): string {
 
 function formatErrorToString(err: any) {
   return typeof err === "string" ? err : err.message ?? "Error has occurred";
-}
-
-function expandHome(path: string): string {
-  if (path === "~") return homedir();
-  if (path.startsWith("~/")) return join(homedir(), path.slice(2));
-  return path;
 }
 
 function decryptString(string: string) {
