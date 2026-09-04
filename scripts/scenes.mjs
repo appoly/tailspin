@@ -15,6 +15,7 @@ const SIDEBAR = {
 };
 
 const PRODUCTION = "Acme Widgets — Production";
+const ALL_LOGS = "Acme Widgets — All logs";
 
 export function defineScenes({ scenes, cdp, shot, record, sleep, write }) {
   // Clicking straight after a reload occasionally lands before the list has
@@ -32,6 +33,15 @@ export function defineScenes({ scenes, cdp, shot, record, sleep, write }) {
         if (attempt === 3) throw error;
       }
     }
+  };
+
+  // The directory connection: a file browser above the table.
+  const openAllLogs = async () => {
+    await cdp.waitFor(() => cdp.centreOfText(ALL_LOGS), { what: "all logs card" });
+    await sleep(300);
+    await cdp.clickText(ALL_LOGS);
+    await cdp.waitFor(() => cdp.centreOfText("files", "button"), { what: "file browser", timeoutMs: 6000 });
+    await sleep(900);
   };
 
   const filterErrors = async () => {
@@ -58,6 +68,11 @@ export function defineScenes({ scenes, cdp, shot, record, sleep, write }) {
     await filterErrors();
     await expandFirstEntry();
     await shot("log-entry");
+  };
+
+  scenes["file-browser"] = async () => {
+    await openAllLogs();
+    await shot("file-browser");
   };
 
   scenes["forge"] = async () => {
@@ -108,6 +123,12 @@ export function defineScenes({ scenes, cdp, shot, record, sleep, write }) {
         await filterErrors();
         await sleep(900);
         await expandFirstEntry();
+        await sleep(2200);
+        await cdp.click(SIDEBAR.connections);
+        await sleep(900);
+        await openAllLogs();
+        await sleep(600);
+        await cdp.clickText("laravel-2026-08-22.log.gz", { selector: "span" });
         await sleep(2200);
         await cdp.click(SIDEBAR.settings);
         await sleep(1500);

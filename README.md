@@ -36,7 +36,7 @@ text, expand one to read its full stack trace without losing your place, and lea
 running while you reproduce the bug.
 
 <p align="center">
-  <img src="docs/media/tour.gif" alt="Opening a connection, filtering to errors and expanding an entry" width="900" />
+  <img src="docs/media/tour.gif" alt="Opening a connection, filtering to errors, expanding an entry and browsing rotated logs" width="900" />
 </p>
 
 ![Tailspin viewing a Laravel log](docs/media/log-viewer.png)
@@ -66,8 +66,8 @@ The same screen in light and dark:
 |  |  |
 |---|---|
 | **Connections.** Favourites, drag-to-reorder, local and SSH side by side.<br><img src="docs/media/connections.png" alt="Connections list" /> | **An expanded entry.** Filtered to errors, stack trace in full.<br><img src="docs/media/log-entry.png" alt="Expanded log entry with stack trace" /> |
-| **Laravel Forge.** Pull in servers and sites with an API token.<br><img src="docs/media/forge.png" alt="Forge servers and sites" /> | **Command palette.** ⌘K to jump between connections and pages.<br><img src="docs/media/command-palette.png" alt="Command palette" /> |
-| **Settings.** Theme, default key, Forge token, config export and import.<br><img src="docs/media/settings.png" alt="Settings" /> | |
+| **Every file on the box.** Rotated and gzipped logs in a browser, newest first.<br><img src="docs/media/file-browser.png" alt="File browser listing rotated and gzipped logs" /> | **Command palette.** ⌘K searches connections, open tabs and actions in one list.<br><img src="docs/media/command-palette.png" alt="Command palette" /> |
+| **Laravel Forge.** Pull in servers and sites with an API token.<br><img src="docs/media/forge.png" alt="Forge servers and sites" /> | **Settings.** Theme, default key, Forge token, notifications, config export and import.<br><img src="docs/media/settings.png" alt="Settings" /> |
 
 </details>
 
