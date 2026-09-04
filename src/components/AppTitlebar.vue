@@ -21,6 +21,11 @@
         <component :is="getIcon(conn.icon)" class="h-3 w-3 shrink-0" :style="{ color: conn.iconColor }" />
         <span class="truncate">{{ conn.name }}</span>
         <span
+          v-if="hasUnseenErrors(conn.uid)"
+          class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"
+          title="New errors since you last looked"
+        />
+        <span
           role="button"
           class="ml-1 rounded-sm opacity-60 hover:opacity-100 hover:bg-muted-foreground/20 p-0.5"
           @click.stop="closeTab(conn.uid)"
@@ -41,13 +46,31 @@
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { X, Terminal } from 'lucide-vue-next'
-import { nextTick, markRaw } from 'vue'
+import { nextTick, watch } from 'vue'
 import * as icons from 'lucide-vue-next'
 
 const applicationStore = useApplicationStore()
 const connectionStore = useConnectionStore()
 
 const isMac = navigator.userAgent.includes('Mac')
+
+const connectionPagePrefix = 'connections.page.'
+
+// Looking at the tab counts as having seen its errors.
+watch(
+  () => applicationStore.page,
+  page => {
+    if (page.startsWith(connectionPagePrefix)) {
+      applicationStore.clearUnseenErrors(page.slice(connectionPagePrefix.length))
+    }
+  },
+  { immediate: true }
+)
+
+function hasUnseenErrors(uid: string): boolean {
+  if (applicationStore.page === connectionPagePrefix + uid) return false
+  return (applicationStore.unseenErrors[uid] ?? 0) > 0
+}
 
 function getIcon(name: string) {
   // Map common icon names to lucide equivalents
