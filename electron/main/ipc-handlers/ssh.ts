@@ -1,5 +1,7 @@
 import { ipcMain, safeStorage, app } from "electron";
 import { createHash } from "node:crypto";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import SSH2Promise from "ssh2-promise";
 import type { SshDetailsToIpc } from "../../../shared/interfaces";
 
@@ -210,6 +212,12 @@ function formatErrorToString(err: any) {
   return typeof err === "string" ? err : err.message ?? "Error has occurred";
 }
 
+function expandHome(path: string): string {
+  if (path === "~") return homedir();
+  if (path.startsWith("~/")) return join(homedir(), path.slice(2));
+  return path;
+}
+
 function decryptString(string: string) {
   let buffer = Buffer.from(string, "base64");
   return safeStorage.decryptString(buffer);
@@ -217,7 +225,9 @@ function decryptString(string: string) {
 
 function resolveSecret({ password }: SshDetailsToIpc, decryptNeeded: boolean): string {
   if (!decryptNeeded) {
-    return password;
+    // The unencrypted "secret" is a private key path, and ssh2 reads it as-is,
+    // so a shell-style "~/.ssh/id_ed25519" has to be expanded here.
+    return expandHome(password);
   }
   if (!safeStorage.isEncryptionAvailable()) {
     throw new Error("Cannot decrypt password, safe storage is not available.");
