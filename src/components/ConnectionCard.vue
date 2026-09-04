@@ -11,7 +11,7 @@
           :style="{ backgroundColor: iconTint }"
         >
           <component
-            :is="getIcon(connection.icon)"
+            :is="getConnectionIcon(connection.icon)"
             class="h-4 w-4"
             :style="{ color: connection.iconColor || 'currentColor' }"
           />
@@ -94,18 +94,14 @@ import type { Connection } from '@/types/interfaces'
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { copySshCommand, openInTerminal } from '@/lib/sshCommand'
+import { getConnectionIcon } from '@/lib/connectionIcons'
 import {
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
 } from '@/components/ui/context-menu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import {
-  Star, Pencil, Trash2, FolderOpen, Clipboard, Terminal, Server, Database, Globe, Cloud, Monitor,
-  HardDrive, Folder, Shield, Zap, Code, Wifi, Lock, Key, Box, Cpu,
-  Layers, Network, Radio, Rocket, Tag, Wrench, Activity, Briefcase,
-  Coffee, Compass, Hash, Heart, Home,
-} from 'lucide-vue-next'
+import { Star, Pencil, Trash2, FolderOpen, Clipboard, Terminal } from 'lucide-vue-next'
 
 const props = defineProps<{ connection: Connection }>()
 const applicationStore = useApplicationStore()
@@ -123,19 +119,6 @@ const iconTint = computed(() => {
   const color = props.connection.iconColor
   return color ? `color-mix(in srgb, ${color} 14%, transparent)` : 'hsl(var(--muted))'
 })
-
-function getIcon(name: string) {
-  const map: Record<string, any> = {
-    terminal: Terminal, server: Server, database: Database, globe: Globe,
-    cloud: Cloud, monitor: Monitor, 'hard-drive': HardDrive, folder: Folder,
-    shield: Shield, zap: Zap, code: Code, wifi: Wifi, lock: Lock,
-    key: Key, box: Box, cpu: Cpu, layers: Layers, network: Network,
-    radio: Radio, rocket: Rocket, star: Star, tag: Tag, wrench: Wrench,
-    activity: Activity, briefcase: Briefcase, coffee: Coffee, compass: Compass,
-    hash: Hash, heart: Heart, home: Home,
-  }
-  return map[name] || Terminal
-}
 
 function toggleFavorite() {
   connectionStore.updateConnection({ ...props.connection, isFavorite: !props.connection.isFavorite })

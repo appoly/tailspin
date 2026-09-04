@@ -21,7 +21,7 @@
         @auxclick.middle.prevent="closeTab(conn.uid)"
         @contextmenu.prevent
       >
-        <component :is="getIcon(conn.icon)" class="h-3 w-3 shrink-0" :style="{ color: conn.iconColor }" />
+        <component :is="getConnectionIcon(conn.icon)" class="h-3 w-3 shrink-0" :style="{ color: conn.iconColor }" />
         <span class="truncate">{{ conn.name }}</span>
         <span
           v-if="hasUnseenErrors(conn.uid)"
@@ -48,9 +48,9 @@
 <script setup lang="ts">
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
-import { X, Terminal } from 'lucide-vue-next'
+import { X } from 'lucide-vue-next'
 import { nextTick, onMounted, onUnmounted, watch } from 'vue'
-import * as icons from 'lucide-vue-next'
+import { getConnectionIcon } from '@/lib/connectionIcons'
 
 const applicationStore = useApplicationStore()
 const connectionStore = useConnectionStore()
@@ -109,24 +109,6 @@ watch(
 function hasUnseenErrors(uid: string): boolean {
   if (applicationStore.page === connectionPagePrefix + uid) return false
   return (applicationStore.unseenErrors[uid] ?? 0) > 0
-}
-
-function getIcon(name: string) {
-  // Map common icon names to lucide equivalents
-  const iconMap: Record<string, any> = {
-    terminal: Terminal,
-    server: icons.Server,
-    database: icons.Database,
-    globe: icons.Globe,
-    cloud: icons.Cloud,
-    code: icons.Code,
-    folder: icons.Folder,
-    file: icons.File,
-    shield: icons.Shield,
-    zap: icons.Zap,
-    monitor: icons.Monitor,
-  }
-  return iconMap[name] || Terminal
 }
 
 function closeTab(uid: string) {

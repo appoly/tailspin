@@ -4,12 +4,8 @@ import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useUserStore } from '@/stores/useUserStore'
 import { copySshCommand, openInTerminal } from '@/lib/sshCommand'
-import {
-  Activity, BookOpen, Box, Briefcase, Clipboard, Cloud, Code, Coffee, Compass, Cpu,
-  Database, Download, Folder, Globe, Hammer, HardDrive, Hash, Heart, Home, Key,
-  Layers, Lock, Monitor, Moon, Network, Plus, Radio, Rocket, Server, Settings,
-  Shield, Star, Sun, Tag, Terminal, Wifi, Wrench, X, Zap,
-} from 'lucide-vue-next'
+import { getConnectionIcon } from '@/lib/connectionIcons'
+import { BookOpen, Clipboard, Download, Hammer, HardDrive, Monitor, Moon, Plus, Settings, Sun, Terminal, X } from 'lucide-vue-next'
 
 export interface PaletteItem {
   id: string
@@ -32,22 +28,6 @@ export interface PaletteGroup {
 const CONNECTION_PAGE_PREFIX = 'connections.page.'
 const RECENT_STORAGE_KEY = 'commandPalette.recentConnections'
 const RECENT_LIMIT = 10
-
-// Same set the connection cards and the icon picker use; kept here so the
-// palette does not import a page component just for its icon lookup.
-const connectionIcons: Record<string, Component> = {
-  terminal: Terminal, server: Server, database: Database, globe: Globe,
-  cloud: Cloud, monitor: Monitor, 'hard-drive': HardDrive, folder: Folder,
-  shield: Shield, zap: Zap, code: Code, wifi: Wifi, lock: Lock,
-  key: Key, box: Box, cpu: Cpu, layers: Layers, network: Network,
-  radio: Radio, rocket: Rocket, star: Star, tag: Tag, wrench: Wrench,
-  activity: Activity, briefcase: Briefcase, coffee: Coffee, compass: Compass,
-  hash: Hash, heart: Heart, home: Home,
-}
-
-function getConnectionIcon(name: string): Component {
-  return connectionIcons[name] || Terminal
-}
 
 /** Accent-insensitive so "gonçalves" is reachable by typing "goncalves". */
 function normalise(value: string): string {

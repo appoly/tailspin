@@ -2,7 +2,7 @@
   <div class="space-y-3">
     <div class="flex items-center gap-3">
       <component
-        :is="getIcon(connection.icon)"
+        :is="getConnectionIcon(connection.icon)"
         class="h-5 w-5 shrink-0"
         :style="{ color: connection.iconColor || 'currentColor' }"
       />
@@ -47,12 +47,8 @@ import { useApplicationStore } from '@/stores/useApplicationStore'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { copySshCommand, openInTerminal } from '@/lib/sshCommand'
-import {
-  X, Terminal, Clipboard, Check, Server, Database, Globe, Cloud, Monitor,
-  HardDrive, Folder, Shield, Zap, Code, Wifi, Lock, Key, Box, Cpu,
-  Layers, Network, Radio, Rocket, Star, Tag, Wrench, Activity, Briefcase,
-  Coffee, Compass, Hash, Heart, Home,
-} from 'lucide-vue-next'
+import { getConnectionIcon } from '@/lib/connectionIcons'
+import { X, Terminal, Clipboard, Check } from 'lucide-vue-next'
 import LocalLogViewer from '@/components/LocalLogViewer.vue'
 import SshLogViewer from '@/components/SshLogViewer.vue'
 
@@ -63,19 +59,6 @@ const copied = ref(false)
 const fallbackMessage = ref('')
 let copiedTimeout: ReturnType<typeof setTimeout> | undefined
 let fallbackTimeout: ReturnType<typeof setTimeout> | undefined
-
-function getIcon(name: string) {
-  const map: Record<string, any> = {
-    terminal: Terminal, server: Server, database: Database, globe: Globe,
-    cloud: Cloud, monitor: Monitor, 'hard-drive': HardDrive, folder: Folder,
-    shield: Shield, zap: Zap, code: Code, wifi: Wifi, lock: Lock,
-    key: Key, box: Box, cpu: Cpu, layers: Layers, network: Network,
-    radio: Radio, rocket: Rocket, star: Star, tag: Tag, wrench: Wrench,
-    activity: Activity, briefcase: Briefcase, coffee: Coffee, compass: Compass,
-    hash: Hash, heart: Heart, home: Home,
-  }
-  return map[name] || Terminal
-}
 
 function flagCopied() {
   copied.value = true

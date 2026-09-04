@@ -8,7 +8,7 @@
     <PopoverContent class="w-64 p-2">
       <div class="grid grid-cols-6 gap-1 mb-2">
         <button
-          v-for="(icon, name) in iconOptions"
+          v-for="(icon, name) in connectionIcons"
           :key="name"
           class="flex items-center justify-center h-8 w-8 rounded-md transition-colors"
           :class="modelValue === name ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'"
@@ -43,11 +43,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import {
-  Terminal, Server, Database, Globe, Cloud, Code, Folder, Shield, Zap, Monitor,
-  HardDrive, Wifi, Lock, Key, Box, Cpu, Layers, Network, Radio, Rocket,
-  Star, Tag, Wrench, Activity, Briefcase, Coffee, Compass, Hash, Heart, Home,
-} from 'lucide-vue-next'
+import { connectionIcons, getConnectionIcon } from '@/lib/connectionIcons'
 
 const props = defineProps<{
   modelValue: string
@@ -59,15 +55,5 @@ defineEmits<{
   'update:color': [value: string]
 }>()
 
-const iconOptions: Record<string, any> = {
-  terminal: Terminal, server: Server, database: Database, globe: Globe,
-  cloud: Cloud, code: Code, folder: Folder, shield: Shield, zap: Zap,
-  monitor: Monitor, 'hard-drive': HardDrive, wifi: Wifi, lock: Lock,
-  key: Key, box: Box, cpu: Cpu, layers: Layers, network: Network,
-  radio: Radio, rocket: Rocket, star: Star, tag: Tag, wrench: Wrench,
-  activity: Activity, briefcase: Briefcase, coffee: Coffee, compass: Compass,
-  hash: Hash, heart: Heart, home: Home,
-}
-
-const currentIcon = computed(() => iconOptions[props.modelValue] || Terminal)
+const currentIcon = computed(() => getConnectionIcon(props.modelValue))
 </script>
