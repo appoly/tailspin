@@ -69,6 +69,16 @@
         <Pencil class="mr-2 h-3.5 w-3.5" />
         Edit Connection
       </ContextMenuItem>
+      <template v-if="connection.type === 'remote'">
+        <ContextMenuItem @select="copyCommand">
+          <Clipboard class="mr-2 h-3.5 w-3.5" />
+          Copy SSH Command
+        </ContextMenuItem>
+        <ContextMenuItem @select="openTerminal">
+          <Terminal class="mr-2 h-3.5 w-3.5" />
+          Open in Terminal
+        </ContextMenuItem>
+      </template>
       <ContextMenuSeparator />
       <ContextMenuItem class="text-destructive" @select="deleteConnection">
         <Trash2 class="mr-2 h-3.5 w-3.5" />
@@ -83,6 +93,7 @@ import { computed } from 'vue'
 import type { Connection } from '@/types/interfaces'
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
+import { copySshCommand, openInTerminal } from '@/lib/sshCommand'
 import {
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
 } from '@/components/ui/context-menu'
@@ -90,7 +101,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import {
-  Star, Pencil, Trash2, FolderOpen, Terminal, Server, Database, Globe, Cloud, Monitor,
+  Star, Pencil, Trash2, FolderOpen, Clipboard, Terminal, Server, Database, Globe, Cloud, Monitor,
   HardDrive, Folder, Shield, Zap, Code, Wifi, Lock, Key, Box, Cpu,
   Layers, Network, Radio, Rocket, Tag, Wrench, Activity, Briefcase,
   Coffee, Compass, Hash, Heart, Home,
@@ -132,6 +143,16 @@ function toggleFavorite() {
 
 function editConnection() {
   applicationStore.changePage('connections.edit', { connectionUid: props.connection.uid })
+}
+
+function copyCommand() {
+  copySshCommand(props.connection)
+}
+
+async function openTerminal() {
+  const result = await openInTerminal(props.connection)
+  // No ssh:// handler on this machine, so leave the user something to paste.
+  if (!result.success) await copySshCommand(props.connection)
 }
 
 function deleteConnection() {
