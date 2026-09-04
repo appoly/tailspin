@@ -47,14 +47,17 @@ The same screen in light and dark:
 
 ## Features
 
-- **No SSH session needed.** Open a log file on disk, or connect over SSH (password or private key, passphrase supported) and browse a server's `.log` files from the app.
-- **Stack traces you can actually read.** Multi-line Laravel entries are parsed into rows with timestamp, environment and severity, and expand in place for the full trace.
-- **Find the one that matters.** Filter by severity, search the text, and page through without scrolling past everything else.
-- **Watch it happen live.** Auto-fetch polls a remote log while you reproduce the bug, with new entries appearing at the top.
-- **Your whole Forge account.** Add an API token and every server and site is two clicks from its logs.
+- **No SSH session needed.** Open a log file on disk, or connect over SSH (password or private key, passphrase supported) and browse a server's logs from the app. Connections are pooled, so refreshing and auto-fetching reuse one session instead of reconnecting.
+- **Rotated and gzipped logs too.** `laravel.log.1`, `laravel-2026-08-24.log.gz` and friends show up alongside the live log. Compressed files are read from their tail on the server without ever pulling the whole thing down, and refuse politely if they would expand past a safe size.
+- **A file browser, not a dropdown.** Directories list their logs by name, size and last modified, newest first, with a filter box, right-click to download or copy the path, and a collapsed one-line summary once you have picked a file.
+- **Stack traces you can actually read.** Multi-line Laravel entries are parsed into rows with timestamp, environment and severity. Expand one and frames are laid out one per line with the file and line number emphasised, vendor frames dimmed and trailing JSON context pretty-printed.
+- **Find the one that matters.** Filter by severity, search the text with matches highlighted, and narrow by time range with quick presets or an exact from/to. Timestamps with an offset can be shown in server or local time.
+- **Watch it happen live.** Auto-fetch polls a remote or local log while you reproduce the bug, with new entries appearing at the top. A new error while you are on another tab gets an OS notification and a dot on the tab.
+- **Keyboard-first.** ⌘K opens a command palette for jumping between connections and pages. `/` focuses search, `j`/`k` move between rows, `enter` expands, `c` copies.
+- **Take it with you.** Export the filtered entries as text or JSON, download the remote file, or copy the `ssh` command and open the server in your terminal straight from the connection.
+- **Your whole Forge account.** Add an API token and every server and site is two clicks from its logs. If a site rejects your key, the app tells you where in Forge to add it.
 - **Several logs at once.** Saved connections with favourites, drag-to-reorder and custom icons, each open in its own tab.
 - **Credentials stay in the keychain.** SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`) rather than written to disk in plain text.
-- **Keyboard-first.** ⌘K opens a command palette for jumping between connections and pages.
 - **Yours to keep.** One signed download per platform that updates itself. It needs no account and talks to nothing but GitHub.
 
 <details>
