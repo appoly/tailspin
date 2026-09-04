@@ -1,4 +1,5 @@
 import { ipcRenderer, OpenDialogOptions, OpenDialogReturnValue } from "electron";
+import type { LocalLogRead, LogFile } from "../../../shared/interfaces";
 
 export function openFileDialogue(options: OpenDialogOptions): Promise<OpenDialogReturnValue> {
   return ipcRenderer.invoke("open-file-dialog", options);
@@ -8,11 +9,20 @@ export function readFromPath(path: string): Promise<string> {
   return ipcRenderer.invoke("read-file-from-path", path);
 }
 
+/**
+ * Read a log file, gunzipping it if needed and keeping only the last `maxBytes`.
+ * Falls back to the configured SSH byte budget so local and remote reads agree.
+ */
+export async function readLogFromPath(path: string, maxBytesOverride?: number): Promise<LocalLogRead> {
+  const maxBytes = maxBytesOverride ?? (await ipcRenderer.invoke("config-get", "ssh.numberOfBytes", 500 * 1024));
+  return ipcRenderer.invoke("read-log-file-from-path", path, maxBytes);
+}
+
 export function isFileOrDirectory(path: string): Promise<"file" | "directory" | null> {
   return ipcRenderer.invoke("is-file-or-directory", path);
 }
 
-export function getFilesInDirectory(path: string): Promise<string[]> {
+export function getFilesInDirectory(path: string): Promise<LogFile[]> {
   return ipcRenderer.invoke("get-files-in-directory", path);
 }
 
