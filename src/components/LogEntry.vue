@@ -1,8 +1,8 @@
 <template>
-  <div>
+  <div :class="active ? 'bg-accent/60 ring-1 ring-ring rounded-sm' : ''">
     <div
       class="flex items-start gap-2 px-2 py-1.5 cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/50"
-      @click="showAll = !showAll"
+      @click="$emit('toggle')"
     >
       <!-- Severity -->
       <div class="w-24 shrink-0">
@@ -15,12 +15,12 @@
         </span>
       </div>
       <!-- Timestamp -->
-      <div class="w-40 shrink-0 text-xs text-muted-foreground font-mono">
-        {{ logItem.timestamp }}
+      <div class="w-48 shrink-0 text-xs text-muted-foreground font-mono whitespace-nowrap">
+        {{ displayTimestamp }}
       </div>
       <!-- Text -->
       <div class="flex-1 min-w-0 text-xs text-muted-foreground break-all">
-        {{ truncate(logItem.text, 200) }}
+        <LogHighlight :text="collapsedText" :term="searchTerm" />
       </div>
       <!-- Copy button -->
       <Tooltip>
@@ -39,9 +39,9 @@
       </Tooltip>
     </div>
     <!-- Expanded view -->
-    <Collapsible :open="showAll">
+    <Collapsible :open="expanded">
       <CollapsibleContent>
-        <pre class="p-3 mx-2 mb-2 text-xs bg-muted/50 rounded-md overflow-auto max-h-[400px] font-mono select-text">{{ logItem.text }}</pre>
+        <LogStackTrace :text="logItem.text" :term="searchTerm" />
       </CollapsibleContent>
     </Collapsible>
   </div>
@@ -50,16 +50,35 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { LogEntry } from '@/types/interfaces'
+import type { TimeZoneMode } from '@/lib/logText'
+import { formatTimestamp } from '@/lib/logText'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { Clipboard, Check, Info, AlertTriangle, AlertCircle, HelpCircle, Bug, Bell, Flame, XCircle } from 'lucide-vue-next'
 import { ClipboardSetText } from '@/lib/backend'
+import LogHighlight from './LogHighlight.vue'
+import LogStackTrace from './LogStackTrace.vue'
 
-const props = defineProps<{ logItem: LogEntry }>()
+const props = withDefaults(defineProps<{
+  logItem: LogEntry
+  searchTerm?: string
+  timezone?: TimeZoneMode
+  expanded?: boolean
+  active?: boolean
+}>(), {
+  searchTerm: '',
+  timezone: 'server',
+  expanded: false,
+  active: false,
+})
 
-const showAll = ref(false)
+defineEmits<{ toggle: [] }>()
+
 const copied = ref(false)
+
+const collapsedText = computed(() => truncate(props.logItem.text, 200))
+const displayTimestamp = computed(() => formatTimestamp(props.logItem.timestamp, props.timezone))
 
 function truncate(text: string, max: number) {
   return text.length > max ? text.substring(0, max) + '...' : text

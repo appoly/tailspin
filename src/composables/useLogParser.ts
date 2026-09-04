@@ -22,7 +22,10 @@ export async function useLogParser(logData: string): Promise<LogEntry[]> {
         const entry = logEntries[i]
         if (entryIndex === 0 && !entry.match(dateTimestampRegex)) continue
 
-        const timestamp = entry.match(dateTimestampRegex)?.[1] ?? null
+        // Keep the offset on the timestamp when Laravel wrote one: without it
+        // there is no way to re-base the entry onto the reader's own clock.
+        const stamp = entry.match(dateTimestampRegex)
+        const timestamp = stamp ? stamp[1] + (stamp[3] ?? '') : null
 
         if (timestamp) {
           const matches = entry.match(logParsingRegex)
