@@ -25,6 +25,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "test:time": "node scripts/test-log-time.mjs",
     "pre-build": "vue-tsc --noEmit && vite build",
     "build": "npm run pre-build && electron-builder",
     "build:linux": "npm run pre-build && electron-builder -l --x64",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@electron/notarize": "^3.1.1",
+    "@internationalized/date": "^3.12.3",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.8",

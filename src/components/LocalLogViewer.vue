@@ -55,6 +55,7 @@
     />
 
     <LogViewer
+      :sourceKey="currentPath"
       :logEntries="logEntries"
       :isLoading="isLoading"
       :errorMsg="errorMsg"
