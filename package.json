@@ -42,7 +42,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron": "^42.9.2",
-    "electron-builder": "^26.15.3",
+    "electron-builder": "^26.16.1",
     "electron-devtools-installer": "^4.0.0",
     "electron-store": "^11.0.2",
     "gifenc": "^1.0.3",
