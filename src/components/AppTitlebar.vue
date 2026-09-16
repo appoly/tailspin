@@ -4,19 +4,26 @@
     <!-- macOS traffic light spacer -->
     <div v-if="isMac" class="w-[72px] shrink-0" />
 
-    <!-- Open connection tabs -->
-    <div class="flex-1 flex items-center gap-0.5 overflow-x-auto px-1" style="-webkit-app-region: no-drag">
+    <!-- Empty space uses native dragging; tabs distinguish clicks from drags. -->
+    <div class="flex-1 flex items-center gap-0.5 overflow-x-auto px-1">
       <button
         v-for="(conn, index) in connectionStore.openConnections"
         :key="conn.uid"
         :title="tabTitle(conn.name, index)"
-        class="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors max-w-[160px] truncate"
+        style="-webkit-app-region: no-drag"
+        class="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md transition-colors max-w-[160px] truncate select-none touch-none"
         :class="[
           applicationStore.page === 'connections.page.' + conn.uid
             ? 'bg-accent text-accent-foreground'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         ]"
-        @click="applicationStore.goToConnection(conn.uid)"
+        @pointerdown="tabDrag.start"
+        @pointermove="tabDrag.move"
+        @pointerup="tabDrag.finish"
+        @pointercancel="tabDrag.cancel"
+        @lostpointercapture="tabDrag.cancel"
+        @dragstart.prevent
+        @click="tabDrag.allowClick($event) && applicationStore.goToConnection(conn.uid)"
         @mousedown.middle.prevent
         @auxclick.middle.prevent="closeTab(conn.uid)"
         @contextmenu.prevent
@@ -31,6 +38,7 @@
         <span
           role="button"
           class="ml-1 rounded-sm opacity-60 hover:opacity-100 hover:bg-muted-foreground/20 p-0.5"
+          @pointerdown.stop
           @click.stop="closeTab(conn.uid)"
         >
           <X class="h-2.5 w-2.5" />
@@ -51,9 +59,11 @@ import { useConnectionStore } from '@/stores/useConnectionStore'
 import { X } from 'lucide-vue-next'
 import { nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { getConnectionIcon } from '@/lib/connectionIcons'
+import { createTabWindowDrag } from '@/lib/tabWindowDrag'
 
 const applicationStore = useApplicationStore()
 const connectionStore = useConnectionStore()
+const tabDrag = createTabWindowDrag(window.api.Window)
 
 const isMac = navigator.userAgent.includes('Mac')
 const modifierLabel = isMac ? '⌘' : 'Ctrl+'
@@ -84,8 +94,15 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', handleKeydown))
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('blur', tabDrag.cancel)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('blur', tabDrag.cancel)
+  tabDrag.cancel()
+})
 
 function tabTitle(name: string, index: number): string {
   const total = connectionStore.openConnections.length

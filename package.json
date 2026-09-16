@@ -26,6 +26,7 @@
   "scripts": {
     "dev": "vite",
     "test:time": "node scripts/test-log-time.mjs",
+    "test:titlebar": "node scripts/test-titlebar-drag.mjs",
     "pre-build": "vue-tsc --noEmit && vite build",
     "build": "npm run pre-build && electron-builder",
     "build:linux": "npm run pre-build && electron-builder -l --x64",
