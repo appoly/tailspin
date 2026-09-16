@@ -80,6 +80,7 @@
     </template>
 
     <LogViewer
+      :sourceKey="currentPath"
       :logEntries="logEntries"
       :isLoading="isLoading"
       :errorMsg="showAuthFailureHint ? '' : errorMsg"

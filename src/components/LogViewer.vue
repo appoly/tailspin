@@ -1,8 +1,8 @@
 <template>
   <div class="mt-2 mb-4 space-y-2">
     <!-- Row 1: search, time range, export, page size -->
-    <div class="flex items-center gap-2">
-      <div class="flex-1 min-w-0">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex-1 min-w-40">
         <LogSearchBar
           :searchTerm="searchTerm"
           @update:searchTerm="searchTerm = $event"
@@ -11,17 +11,16 @@
         />
       </div>
       <LogTimeFilter
-        :preset="preset"
-        :from="from"
-        :to="to"
+        :key="sourceKey"
+        :selection="selection"
+        :summary="timeSummary"
         :timezone="timezone"
         :canSwitchTimezone="canSwitchTimezone"
         :active="isRangeActive"
         :label="rangeLabel"
-        :newestLabel="newestLabel"
-        @update:preset="setPreset"
-        @update:from="setFrom"
-        @update:to="setTo"
+        :disabled="isLoading"
+        :previewCount="previewCount"
+        @apply="setSelection"
         @update:timezone="timezone = $event"
         @clear="clearRange"
       />
@@ -77,9 +76,15 @@
     </div>
   </div>
 
+  <div v-if="logEntries.length && !isLoading && !filtered.length" class="space-y-2 py-12 text-center">
+    <p class="text-sm font-medium">No entries match these filters</p>
+    <p class="text-xs text-muted-foreground">{{ isRangeActive ? 'Widen the time window or clear the time filter. Only loaded entries are searched.' : 'Try another search or severity.' }}</p>
+    <Button v-if="isRangeActive" variant="outline" size="sm" @click="clearRange">Clear time filter</Button>
+  </div>
+
   <!-- Entries -->
   <LogEntriesTable
-    v-if="logEntries.length && !isLoading"
+    v-if="filtered.length && !isLoading"
     :entries="filtered"
     :page="page"
     :itemsPerPage="itemsPerPage"
@@ -100,7 +105,6 @@
 import { computed, ref, toRef, watch } from 'vue'
 import type { LogEntry } from '@/types/interfaces'
 import { LogStatuses } from '@/constants/LogStatuses'
-import { formatRangeLabel } from '@/lib/logText'
 import { useLogFilters } from '@/composables/useLogFilters'
 import LogSearchBar from './LogSearchBar.vue'
 import LogSeverityFilter from './LogSeverityFilter.vue'
@@ -115,6 +119,7 @@ const props = defineProps<{
   logEntries: LogEntry[]
   isLoading: boolean
   errorMsg: string
+  sourceKey?: string
 }>()
 
 const page = ref(1)
@@ -124,19 +129,15 @@ const {
   searchTerm,
   activeSearch,
   selectedSeverity,
-  preset,
-  from,
-  to,
+  selection,
+  timeSummary,
   timezone,
   canSwitchTimezone,
-  serverOffset,
-  newestMillis,
   isRangeActive,
   rangeLabel,
   filtered,
-  setPreset,
-  setFrom,
-  setTo,
+  setSelection,
+  previewCount,
   clearRange,
 } = useLogFilters(toRef(props, 'logEntries'))
 
@@ -144,9 +145,10 @@ defineExpose({ changePage })
 
 // Changing a filter invalidates the page you were on; new entries arriving does not.
 watch(
-  () => [activeSearch.value, selectedSeverity.value, preset.value, from.value, to.value],
+  () => [activeSearch.value, selectedSeverity.value, selection.value, timezone.value],
   () => { page.value = 1 }
 )
+watch(() => props.sourceKey, () => { clearRange(); page.value = 1 })
 watch(itemsPerPage, () => { page.value = 1 })
 
 const severityFilters = computed(() => {
@@ -157,13 +159,6 @@ const severityFilters = computed(() => {
     if (count > 0) filterCounts.push({ severity: upper, count })
   }
   return filterCounts
-})
-
-const newestLabel = computed(() => {
-  const newest = newestMillis.value
-  if (newest === null) return ''
-  const offset = timezone.value === 'local' ? null : serverOffset.value
-  return formatRangeLabel(newest, offset)
 })
 
 function changePage(p: number) { page.value = p }
