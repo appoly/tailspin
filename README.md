@@ -51,13 +51,14 @@ The same screen in light and dark:
 - **Rotated and gzipped logs too.** `laravel.log.1`, `laravel-2026-08-24.log.gz` and friends show up alongside the live log. Compressed files are read from their tail on the server without ever pulling the whole thing down, and refuse politely if they would expand past a safe size.
 - **A file browser, not a dropdown.** Directories list their logs by name, size and last modified, newest first, with a filter box, right-click to download or copy the path, and a collapsed one-line summary once you have picked a file.
 - **Stack traces you can actually read.** Multi-line Laravel entries are parsed into rows with timestamp, environment and severity. Expand one and frames are laid out one per line with the file and line number emphasised, vendor frames dimmed and trailing JSON context pretty-printed.
-- **Find the one that matters.** Filter by severity or search highlighted text. Type `6am` in **Find time** to explore a window around it, choose an exact range, or click an hour in the activity strip. Single-day logs start with time only; multi-day logs offer a calendar with loaded dates marked. Preview the matching count before applying. Detection and filtering use loaded entries, so large or remote files may need more data loaded. Timestamps with an offset can be shown in log or local time.
+- **Find the one that matters.** Filter by severity or search highlighted text. When the file holds more than is loaded, jump straight to a time (a few 4 KB probes, whatever the file size) or search the whole file for a string, bounded and rate-limited so a production box never notices. A bar above the table always says which slice of the file you are looking at. Type `6am` in **Find time** to explore a window around it, choose an exact range, or click an hour in the activity strip. Single-day logs start with time only; multi-day logs offer a calendar with loaded dates marked. Preview the matching count before applying. Detection and filtering use loaded entries, so large or remote files may need more data loaded. Timestamps with an offset can be shown in log or local time.
 - **Watch it happen live.** Auto-fetch polls a remote or local log while you reproduce the bug, with new entries appearing at the top. A new error while you are on another tab gets an OS notification and a dot on the tab.
 - **Keyboard-first.** ⌘K opens a palette that searches connections, open tabs and actions in one list. `⌘1`–`⌘9` switch tabs and middle-click closes them. `/` focuses search, `j`/`k` move between rows, `enter` expands, `c` copies.
 - **Take it with you.** Export the filtered entries as text or JSON, download the remote file, or copy the `ssh` command and open the server in your terminal straight from the connection.
 - **Your whole Forge account.** Add an API token and every server and site is two clicks from its logs. If a site rejects your key, the app tells you where in Forge to add it.
-- **Several logs at once.** Saved connections with favourites, drag-to-reorder and custom icons, each open in its own tab.
+- **Several logs at once.** Saved connections with favourites, tags to filter by, drag-to-reorder, custom icons and a compact list view, each open in its own tab.
 - **Credentials stay in the keychain.** SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`) rather than written to disk in plain text.
+- **Let your agent read the logs, not the server.** Turn on the built-in MCP server and any MCP-capable agent (Claude Code, Cursor, Codex, Claude Desktop, …) can list your connections and pull filtered, parsed log entries through Tailspin. Read-only, byte-capped, opt-in per connection, and it never sees a credential. See [Using with AI agents](#using-with-ai-agents-mcp).
 - **Yours to keep.** One signed download per platform that updates itself. It needs no account and talks to nothing but GitHub.
 
 <details>
@@ -65,7 +66,9 @@ The same screen in light and dark:
 
 |  |  |
 |---|---|
-| **Connections.** Favourites, drag-to-reorder, local and SSH side by side.<br><img src="docs/media/connections.png" alt="Connections list" /> | **An expanded entry.** Filtered to errors, stack trace in full.<br><img src="docs/media/log-entry.png" alt="Expanded log entry with stack trace" /> |
+| **Connections.** Favourites on top, tags to filter by, local and SSH side by side.<br><img src="docs/media/connections.png" alt="Connections list" /> | **An expanded entry.** Filtered to errors, stack trace in full.<br><img src="docs/media/log-entry.png" alt="Expanded log entry with stack trace" /> |
+| **Whole-file search.** Two hits in a 300 MB log, found in a second, newest first.<br><img src="docs/media/search-results.png" alt="Search results across a whole file" /> | **Jump to a time.** A window seeked to 03:00 in a file far larger than what is loaded, with Earlier and Later paging.<br><img src="docs/media/mode-window.png" alt="Window mode around a time" /> |
+| **MCP server.** One switch, per-connection opt-in, and the client config ready to copy.<br><img src="docs/media/mcp-settings.png" alt="MCP server settings" /> | **Only what is loaded is searched, until you ask.** The way out, one line under the search box.<br><img src="docs/media/search-affordance.png" alt="Whole-file search affordance" /> |
 | **Every file on the box.** Rotated and gzipped logs in a browser, newest first.<br><img src="docs/media/file-browser.png" alt="File browser listing rotated and gzipped logs" /> | **Command palette.** ⌘K searches connections, open tabs and actions in one list.<br><img src="docs/media/command-palette.png" alt="Command palette" /> |
 | **Laravel Forge.** Pull in servers and sites with an API token.<br><img src="docs/media/forge.png" alt="Forge servers and sites" /> | **Settings.** Theme, default key, Forge token, notifications, config export and import.<br><img src="docs/media/settings.png" alt="Settings" /> |
 
@@ -78,6 +81,47 @@ Grab the latest release from the [releases page](https://github.com/appoly/tails
 - **macOS:** `…_arm64.dmg` (Apple Silicon) or `…_x64.dmg` (Intel). Builds are signed and notarized, so they open without Gatekeeper warnings.
 - **Windows:** `…​.exe` NSIS installer.
 - **Linux:** `…​.AppImage`.
+
+## Using with AI agents (MCP)
+
+Debugging a production bug with an agent usually means either pasting stack traces into the chat or
+handing it an `ssh` session. Tailspin offers a third option: a built-in [MCP](https://modelcontextprotocol.io)
+server that lets the agent read logs *through* Tailspin, with the same fixed commands and byte caps
+the UI uses. Any MCP client works: Claude Code, Cursor, Codex, Claude Desktop, Zed, and so on.
+
+1. **Settings → MCP server → Enable.** Tailspin starts listening on a local socket (a per-user Unix
+   socket, or a named pipe on Windows). Nothing opens a network port.
+2. **Turn on "Expose to MCP" for each connection** the agent may read. Everything else stays invisible.
+3. **Register the server with your client.** Settings shows a ready-made JSON snippet for clients
+   configured by file, and a one-line command for Claude Code (`claude mcp add tailspin …`). Both
+   point at the Tailspin binary itself, so no separate Node install is needed.
+4. **Tell the agent it exists.** One line in your project instructions (`CLAUDE.md`, `AGENTS.md`,
+   `.cursorrules`, …) does it:
+   `Use the tailspin MCP tools to read server logs. Do not ssh into servers to read logs.`
+
+The agent gets four read-only tools:
+
+| Tool | What it does |
+|---|---|
+| `list_connections` | Connections you have exposed, with ids. Nothing about them beyond name, `user@host` and path. |
+| `list_log_files` | Log files on a connection, newest first, rotated and gzipped included. |
+| `read_log` | Tail a file and return parsed entries filtered by severity, text and time window, one line each. Capped at 2 MB read. Passing `since` seeks to that time in the file instead of reading the tail. |
+| `search_log` | Find a fixed string anywhere in a file, newest matches first. Runs `grep` on the server under `timeout` and `nice`, one search per file every 10 s, 15 s and 1 GB caps. Only on connections with "Allow whole-file search" turned on; local files always. |
+| `get_log_entry` | The full text and stack trace of one entry from a previous read or search. Reads are kept for ten minutes, 8 MB total. |
+
+What it cannot do: write anything, run an arbitrary command, download files, read outside a
+connection's configured path, or see any connection you have not opted in. Search patterns are
+literal strings passed to `grep -F` as a quoted argument, never a regex and never part of the
+command text. Tailspin has to be open, which also
+means every read happens in an app you can see. Obvious secrets (bearer tokens, `api_key=…`,
+passwords) are masked before entries leave the app; turn that off in Settings if it gets in the way.
+
+Log content is untrusted input to the agent. The tool descriptions say so, and the surface is kept
+read-only for exactly that reason.
+
+To see what a session looks like, [docs/mcp-demo.md](docs/mcp-demo.md) is an unedited transcript of
+three prompts against the demo data: "which connections can you see", "show me the errors", and
+"I think we had an outage at 11:20, check the logs".
 
 ## Development
 

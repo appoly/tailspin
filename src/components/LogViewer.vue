@@ -1,12 +1,24 @@
 <template>
   <div class="mt-2 mb-4 space-y-2">
+    <!-- Row 0: where the entries on screen came from -->
+    <LogViewModeBar
+      v-if="viewMode && fileSize"
+      :mode="viewMode"
+      :fileSize="fileSize"
+      :loadedBytes="loadedBytes ?? 0"
+      :busy="busy"
+      @exit="$emit('exitMode')"
+      @shift="$emit('shiftWindow', $event)"
+    />
+
     <!-- Row 1: search, time range, export, page size -->
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex-1 min-w-40">
         <LogSearchBar
           :searchTerm="searchTerm"
           @update:searchTerm="searchTerm = $event"
-          placeholder="Search message text"
+          @submit="submitSearch"
+          :placeholder="viewMode?.kind === 'search' ? 'Filter these matches' : 'Search loaded entries'"
           :disabled="isLoading"
         />
       </div>
@@ -19,10 +31,12 @@
         :active="isRangeActive"
         :label="rangeLabel"
         :disabled="isLoading"
+        :canJump="canJump"
         :previewCount="previewCount"
         @apply="setSelection"
         @update:timezone="timezone = $event"
         @clear="clearRange"
+        @jump="jump"
       />
       <LogExportMenu :entries="filtered" />
       <select v-model="itemsPerPage" class="h-8 rounded-md border border-input bg-background px-2 text-xs">
@@ -32,6 +46,27 @@
         <option :value="200">200 / page</option>
       </select>
       <slot name="additional-filters" />
+    </div>
+
+    <!-- Row 1b: the way out of "only loaded entries are searched" -->
+    <div v-if="showWholeFileSearch || notice" class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+      <template v-if="showWholeFileSearch">
+        <span>{{ filtered.length }} {{ filtered.length === 1 ? 'match' : 'matches' }} in the loaded {{ formatSize(loadedBytes ?? 0) }}.</span>
+        <Button
+          variant="link"
+          size="xs"
+          class="h-auto p-0 text-xs"
+          :disabled="busy || !searchAvailability?.available"
+          :title="searchAvailability?.available ? 'Runs on the server, bounded and rate-limited' : searchAvailability?.reason"
+          @click="submitSearch"
+        >
+          <Loader2 v-if="busy" class="size-3 animate-spin" />
+          Search the whole file ({{ formatSize(fileSize ?? 0) }})
+          <kbd v-if="!busy && searchAvailability?.available" class="ml-1 rounded bg-muted px-1 py-0.5 text-[10px]">↵</kbd>
+        </Button>
+        <span v-if="searchAvailability && !searchAvailability.available" class="text-[11px]">{{ searchAvailability.reason }}</span>
+      </template>
+      <span v-if="notice" class="text-[11px]" :class="notice.toLowerCase().includes('next search') ? 'text-amber-500' : 'text-destructive'">{{ notice }}</span>
     </div>
 
     <!-- Row 2: severities and the running total -->
@@ -78,7 +113,7 @@
 
   <div v-if="logEntries.length && !isLoading && !filtered.length" class="space-y-2 py-12 text-center">
     <p class="text-sm font-medium">No entries match these filters</p>
-    <p class="text-xs text-muted-foreground">{{ isRangeActive ? 'Widen the time window or clear the time filter. Only loaded entries are searched.' : 'Try another search or severity.' }}</p>
+    <p class="text-xs text-muted-foreground">{{ isRangeActive ? 'Widen the time window or clear the time filter. Only loaded entries are searched.' : viewMode?.kind === 'search' ? 'None of the matches pass these filters.' : 'Try another search or severity.' }}</p>
     <Button v-if="isRangeActive" variant="outline" size="sm" @click="clearRange">Clear time filter</Button>
   </div>
 
@@ -88,7 +123,7 @@
     :entries="filtered"
     :page="page"
     :itemsPerPage="itemsPerPage"
-    :searchTerm="activeSearch"
+    :searchTerm="activeSearch || (viewMode?.kind === 'search' ? viewMode.pattern : '')"
     :timezone="timezone"
     @changePage="changePage"
   />
@@ -103,9 +138,13 @@
 
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue'
-import type { LogEntry } from '@/types/interfaces'
+import type { LogEntry, LogViewMode, SearchAvailability } from '@/types/interfaces'
 import { LogStatuses } from '@/constants/LogStatuses'
 import { useLogFilters } from '@/composables/useLogFilters'
+import { entryClockMillis, selectionBounds, type TimeSelection } from '@/lib/logTimeFilter'
+import { timestampOffset } from '@/lib/logText'
+import { formatSize } from '$/search'
+import LogViewModeBar from './LogViewModeBar.vue'
 import LogSearchBar from './LogSearchBar.vue'
 import LogSeverityFilter from './LogSeverityFilter.vue'
 import LogTimeFilter from './LogTimeFilter.vue'
@@ -113,13 +152,27 @@ import LogExportMenu from './LogExportMenu.vue'
 import LogEntriesTable from './LogEntriesTable.vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { ArrowUp } from 'lucide-vue-next'
+import { ArrowUp, Loader2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   logEntries: LogEntry[]
   isLoading: boolean
   errorMsg: string
   sourceKey?: string
+  /** Everything below is optional: a viewer without seek/search simply omits it. */
+  viewMode?: LogViewMode
+  fileSize?: number
+  loadedBytes?: number
+  searchAvailability?: SearchAvailability
+  canJump?: boolean
+  notice?: string
+  busy?: boolean
+}>()
+const emit = defineEmits<{
+  searchWholeFile: [pattern: string]
+  jumpToTime: [clockMillis: number]
+  shiftWindow: [direction: -1 | 1]
+  exitMode: []
 }>()
 
 const page = ref(1)
@@ -162,6 +215,45 @@ const severityFilters = computed(() => {
 })
 
 function changePage(p: number) { page.value = p }
+
+// The file holds more than is loaded, so a search over what is loaded is not the
+// whole story. Only offered in tail mode: a window or a result set is already a
+// deliberate slice.
+const showWholeFileSearch = computed(() =>
+  !!props.searchAvailability &&
+  props.viewMode?.kind === 'tail' &&
+  !!props.fileSize && (props.loadedBytes ?? 0) < props.fileSize &&
+  activeSearch.value.trim().length > 0
+)
+
+function submitSearch() {
+  const pattern = searchTerm.value.trim()
+  if (!pattern || !showWholeFileSearch.value || !props.searchAvailability?.available || props.busy) return
+  emit('searchWholeFile', pattern)
+}
+
+/**
+ * The time filter works on the clock shown in the table; the file is sorted on
+ * the clock as written. They differ only when times are displayed in the
+ * reader's zone, by whatever offset the log carries.
+ */
+function displayedToWritten(millis: number): number {
+  if (timezone.value !== 'local') return millis
+  const sample = props.logEntries.find(entry => timestampOffset(entry.timestamp))
+  if (!sample) return millis
+  const shown = entryClockMillis(sample, 'local')
+  const written = entryClockMillis(sample, 'server')
+  return shown === null || written === null ? millis : millis - (shown - written)
+}
+
+function jump(selection: TimeSelection) {
+  const bounds = selectionBounds(selection)
+  if (!bounds) return
+  // Land in the middle of what was asked for, then keep the filter so those
+  // entries are what shows first. Clearing the filter reveals the whole window.
+  setSelection(selection)
+  emit('jumpToTime', displayedToWritten(Math.floor((bounds.from + bounds.to) / 2)))
+}
 
 function toggleSeverity(s: string) {
   selectedSeverity.value = selectedSeverity.value === s ? '' : s

@@ -8,6 +8,7 @@
       :placeholder="placeholder"
       :disabled="disabled"
       class="pl-8 h-8 text-sm"
+      @keydown.enter.prevent="$emit('submit')"
     />
     <kbd v-if="!searchTerm" class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] text-muted-foreground bg-muted px-1 py-0.5 rounded">
       /
@@ -25,7 +26,7 @@ defineProps<{
   disabled?: boolean
   searchTerm: string
 }>()
-defineEmits<{ 'update:searchTerm': [value: string] }>()
+defineEmits<{ 'update:searchTerm': [value: string]; submit: [] }>()
 
 const inputRef = ref()
 

@@ -51,6 +51,38 @@
       </div>
     </template>
 
+    <div>
+      <label class="text-xs text-muted-foreground mb-1 block">Tags</label>
+      <Input v-model="form.tags" list="connection-tag-suggestions" placeholder="prod, client-x" class="h-8 text-sm" />
+      <datalist id="connection-tag-suggestions">
+        <option v-for="tag in knownTags" :key="tag" :value="tag" />
+      </datalist>
+      <p class="text-[11px] text-muted-foreground mt-1">Comma-separated. Used to filter the connections list; agents see them too.</p>
+    </div>
+
+    <div class="rounded-md border border-border divide-y divide-border">
+      <div class="flex items-start justify-between gap-4 px-3 py-2.5">
+        <div class="min-w-0">
+          <label for="mcp-enabled" class="text-xs font-medium block cursor-pointer">Expose to MCP</label>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            Lets an AI agent connected to Tailspin's MCP server read this connection's logs. Read-only; off by default.
+          </p>
+        </div>
+        <Switch id="mcp-enabled" v-model="form.mcpEnabled" class="mt-0.5" />
+      </div>
+      <div v-if="form.type === 'remote'" class="flex items-start justify-between gap-4 px-3 py-2.5">
+        <div class="min-w-0">
+          <label for="search-enabled" class="text-xs font-medium block cursor-pointer">Allow whole-file search</label>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            Lets you, and any agent, search a log end to end instead of just its loaded tail. Runs on the server:
+            one search per file every 10 seconds, 15 second limit, files up to 1 GB. Off by default.
+          </p>
+        </div>
+        <Switch id="search-enabled" v-model="form.searchEnabled" class="mt-0.5" />
+      </div>
+      <p v-else class="px-3 py-2 text-[11px] text-muted-foreground">Whole-file search is always available for local files.</p>
+    </div>
+
     <div class="flex justify-end pt-2">
       <Button type="submit" size="sm" class="h-8 text-xs" :disabled="saving">
         <Loader2 v-if="saving" class="h-3.5 w-3.5 mr-1.5 animate-spin" />
@@ -70,6 +102,7 @@ import { CryptoAPI, FileAPI } from '@/lib/backend'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Switch } from '@/components/ui/switch'
 import { Loader2 } from 'lucide-vue-next'
 import ConnectionIconPicker from './ConnectionIconPicker.vue'
 import ConnectionSshForm from './ConnectionSshForm.vue'
@@ -96,7 +129,29 @@ const form = reactive({
   path: defaults?.path || '',
   type: (defaults?.type || 'local') as 'local' | 'remote',
   isFavorite: defaults?.isFavorite || false,
+  mcpEnabled: defaults?.mcpEnabled || false,
+  searchEnabled: defaults?.searchEnabled || false,
+  tags: (defaults?.tags ?? []).join(', '),
 })
+
+// Tags already in use elsewhere, offered as suggestions so spellings stay consistent.
+const knownTags = computed(() => {
+  const tags = new Set<string>()
+  for (const c of connectionStore.connections) for (const tag of c.tags ?? []) tags.add(tag)
+  return [...tags].sort((a, b) => a.localeCompare(b))
+})
+
+function parseTags(value: string): string[] {
+  const seen = new Set<string>()
+  const tags: string[] = []
+  for (const raw of value.split(',')) {
+    const tag = raw.trim().replace(/\s+/g, ' ').slice(0, 30)
+    if (!tag || seen.has(tag.toLowerCase())) continue
+    seen.add(tag.toLowerCase())
+    tags.push(tag)
+  }
+  return tags
+}
 
 const sshDetails = ref<SshDetails>({
   host: defaults?.ssh?.host || '',
@@ -149,6 +204,9 @@ async function handleSave() {
       path: form.path,
       type: form.type,
       isFavorite: form.isFavorite,
+      mcpEnabled: form.mcpEnabled,
+      searchEnabled: form.type === 'remote' ? form.searchEnabled : true,
+      tags: parseTags(form.tags),
       ...(ssh ? { ssh } : {}),
     }
 

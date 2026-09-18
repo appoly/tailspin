@@ -1,5 +1,11 @@
 import { ipcRenderer } from "electron";
 import { SshDetailsToIpc, SshIpcResponse } from "../../../shared/interfaces";
+import type { SearchOutcome, WindowRead } from "../../../shared/search";
+
+export interface WindowTarget {
+  targetMs?: number;
+  offset?: number;
+}
 
 export function testSshCredentials(options: SshDetailsToIpc, passwordIsEncrypted: boolean): Promise<SshIpcResponse> {
   return ipcRenderer.invoke("test-ssh-credentials", options, passwordIsEncrypted);
@@ -42,6 +48,16 @@ export async function downloadFromPath(
   fileName: string
 ): Promise<SshIpcResponse> {
   return ipcRenderer.invoke("ssh-download-from-path", options, path, doesPasswordNeedDecrypting(options), fileName);
+}
+
+/** Bounded whole-file search; see shared/search.ts for the limits it enforces. */
+export function searchFile(options: SshDetailsToIpc, path: string, pattern: string, limit: number): Promise<SearchOutcome> {
+  return ipcRenderer.invoke("ssh-search-file", options, path, doesPasswordNeedDecrypting(options), pattern, limit);
+}
+
+/** A slice of the file centred on a time, or starting at an offset. */
+export function readWindow(options: SshDetailsToIpc, path: string, target: WindowTarget, bytes: number): Promise<WindowRead> {
+  return ipcRenderer.invoke("ssh-window", options, path, doesPasswordNeedDecrypting(options), target, bytes);
 }
 
 function doesPasswordNeedDecrypting(options: SshDetailsToIpc): boolean {

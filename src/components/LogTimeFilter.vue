@@ -5,7 +5,7 @@ import { boundsLabel, clockMillis, dayLabel, normalizeTime, selectionBounds, typ
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import LogDatePicker from './LogDatePicker.vue'
-import { Clock, X, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { Clock, X, ChevronLeft, ChevronRight, Crosshair } from 'lucide-vue-next'
 
 const props = defineProps<{
   selection: TimeSelection | null
@@ -15,12 +15,15 @@ const props = defineProps<{
   active: boolean
   label: string
   disabled?: boolean
+  /** The file has more than is loaded and can be seeked, so a time with no loaded entries can be jumped to. */
+  canJump?: boolean
   previewCount: (value: TimeSelection) => number
 }>()
 const emit = defineEmits<{
   apply: [value: TimeSelection]
   'update:timezone': [value: TimeZoneMode]
   clear: []
+  jump: [value: TimeSelection]
 }>()
 const id = useId()
 const open = ref(false)
@@ -106,6 +109,11 @@ function apply() {
   open.value = false
 }
 function clear() { emit('clear'); open.value = false }
+function jump() {
+  if (!bounds.value) return
+  emit('jump', { ...draft.value, time: normalizeTime(draft.value.time)!, endTime: normalizeTime(draft.value.endTime) ?? '' })
+  open.value = false
+}
 </script>
 
 <template>
@@ -198,7 +206,11 @@ function clear() { emit('clear'); open.value = false }
               <template v-if="bounds">
                 <p class="text-sm font-medium">{{ count.toLocaleString() }} matching {{ count === 1 ? 'entry' : 'entries' }}</p>
                 <p class="text-xs tabular-nums text-muted-foreground">{{ previewLabel }}</p>
-                <p v-if="count === 0" class="text-xs text-muted-foreground">Try a wider window or another time. Only loaded entries are searched.</p>
+                <p v-if="count === 0 && !canJump" class="text-xs text-muted-foreground">Try a wider window or another time. Only loaded entries are searched.</p>
+                <div v-else-if="count === 0" class="flex items-center justify-between gap-2">
+                  <p class="text-xs text-muted-foreground">Not in the loaded part of the file.</p>
+                  <Button type="button" size="xs" class="h-6 text-xs shrink-0" @click="jump"><Crosshair class="size-3" /> Jump to it in the file</Button>
+                </div>
               </template>
               <p v-else class="text-xs" :class="draft.time ? 'text-destructive' : 'text-muted-foreground'">{{ draft.time ? error : 'Enter a time or select an hour above.' }}</p>
             </div>

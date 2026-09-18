@@ -3,6 +3,12 @@
 
 import type { OpenDialogOptions } from "electron";
 import type { LocalLogRead, LocalLogTailRead, LogFile, SshRequest, SshResponse } from "@/types/interfaces";
+import type { SearchOutcome, WindowRead } from "$/search";
+
+export interface WindowTarget {
+  targetMs?: number;
+  offset?: number;
+}
 
 const bridge = window.api;
 
@@ -79,6 +85,12 @@ export const FileAPI = {
   GetLogFilesInDirectory(path: string): Promise<LogFile[]> {
     return bridge.Application.getFilesInDirectory(path);
   },
+  SearchLogFile(path: string, pattern: string, limit: number): Promise<SearchOutcome> {
+    return bridge.Application.searchLogFile(path, pattern, limit);
+  },
+  ReadLogWindow(path: string, target: WindowTarget, bytes: number): Promise<WindowRead> {
+    return bridge.Application.readLogWindow(path, target, bytes);
+  },
   OpenFolderToFile(fileName: string): Promise<void> {
     return bridge.Application.openFolderToFile(fileName);
   },
@@ -109,6 +121,12 @@ export const SshAPI = {
   DownloadFile(req: SshRequest, remotePath: string, fileName: string): Promise<SshResponse> {
     return bridge.Ssh.downloadFromPath(req, remotePath, fileName);
   },
+  SearchFile(req: SshRequest, path: string, pattern: string, limit: number): Promise<SearchOutcome> {
+    return bridge.Ssh.searchFile(req, path, pattern, limit);
+  },
+  ReadWindow(req: SshRequest, path: string, target: WindowTarget, bytes: number): Promise<WindowRead> {
+    return bridge.Ssh.readWindow(req, path, target, bytes);
+  },
 };
 
 function throwOnForgeError<T extends { error?: string }>(response: T): T {
@@ -136,6 +154,11 @@ export const UpdaterAPI = {
   OnProgress: (cb: (p: { percent: number }) => void) => bridge.Updater.onProgress(cb),
   OnDownloaded: (cb: () => void) => bridge.Updater.onDownloaded(cb),
   OnError: (cb: (message: string) => void) => bridge.Updater.onError(cb),
+};
+
+export const McpAPI = {
+  GetStatus: () => bridge.Mcp.getStatus(),
+  SetEnabled: (enabled: boolean) => bridge.Mcp.setEnabled(enabled),
 };
 
 export const ForgeAPI = {

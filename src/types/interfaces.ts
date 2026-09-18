@@ -65,6 +65,12 @@ export interface BaseConnection {
   ssh?: SshDetails
   isFavorite?: boolean
   iconColor?: string
+  /** Opt-in: visible to the MCP server, so an agent may read this connection's logs. */
+  mcpEnabled?: boolean
+  /** Opt-in for remote connections: whole-file search may run on the server. Local connections always may. */
+  searchEnabled?: boolean
+  /** Free-text labels such as "prod" or a client name, for filtering. */
+  tags?: string[]
 }
 
 export interface Connection extends BaseConnection {
@@ -92,4 +98,16 @@ export interface Download {
 
 export interface SshOptions {
   numberOfBytes: number
+}
+
+/** Where the entries on screen came from; see useLogViewMode. */
+export type LogViewMode =
+  | { kind: 'tail' }
+  | { kind: 'window'; targetMs: number | null; offset: number; bytes: number; atStart: boolean; atEnd: boolean }
+  | { kind: 'search'; pattern: string; matches: number; scanned: 'whole' | 'partial'; durationMs: number; timedOut: boolean }
+
+/** Whether whole-file search may run right now, and if not, why. */
+export interface SearchAvailability {
+  available: boolean
+  reason?: string
 }

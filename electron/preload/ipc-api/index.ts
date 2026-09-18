@@ -5,6 +5,7 @@ import * as Forge from "./Forge";
 import * as Updater from "./Updater";
 import * as Shell from "./Shell";
 import * as Window from "./Window";
+import * as Mcp from "./Mcp";
 
 // api exports functions that make up the frontend api, ie that in
 // turn either do IPC calls to main for db communication or use
@@ -20,4 +21,5 @@ export default {
   Updater,
   Shell,
   Window,
+  Mcp,
 };

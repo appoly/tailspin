@@ -9,6 +9,9 @@
     output: "release",
   },
   files: ["dist-electron", "dist"],
+  // The MCP shim is loaded by a plain Node process (ELECTRON_RUN_AS_NODE), which
+  // cannot read inside the asar, so it has to exist on disk.
+  asarUnpack: ["dist-electron/mcp-shim/**"],
   // Auto-updates read this repo's GitHub releases: CI publishes the installers
   // plus the latest*.yml manifests electron-updater needs. Public repo, so the
   // app needs no token to check.

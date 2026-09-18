@@ -44,6 +44,27 @@ export default defineConfig(({ command }) => {
           },
         },
         {
+          // The MCP shim: a plain Node script (run via ELECTRON_RUN_AS_NODE) that
+          // bridges an MCP client's stdio to the running app's local socket.
+          entry: "electron/mcp-shim/index.ts",
+          onstart() {
+            // Nothing to launch; the MCP client spawns this on demand.
+          },
+          vite: {
+            build: {
+              sourcemap,
+              minify: isBuild,
+              outDir: "dist-electron/mcp-shim",
+              rollupOptions: {
+                external: mainProcessExternals,
+              },
+            },
+            define: {
+              APP_VERSION: JSON.stringify(pkg.version),
+            },
+          },
+        },
+        {
           entry: "electron/preload/index.ts",
           onstart(options) {
             // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete,

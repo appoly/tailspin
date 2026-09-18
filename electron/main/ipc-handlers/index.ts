@@ -4,6 +4,7 @@ import ssh from "./ssh";
 import forge from "./forge";
 import shell from "./shell";
 import window from "./window";
+import mcp from "./mcp";
 
 export default () => {
   application();
@@ -12,4 +13,5 @@ export default () => {
   forge();
   shell();
   window();
+  mcp();
 };
