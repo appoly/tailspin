@@ -51,14 +51,27 @@
       </div>
     </template>
 
-    <div class="flex items-start justify-between gap-4 rounded-md border border-border px-3 py-2.5">
-      <div class="min-w-0">
-        <label for="mcp-enabled" class="text-xs font-medium block cursor-pointer">Expose to MCP</label>
-        <p class="text-[11px] text-muted-foreground mt-0.5">
-          Lets an AI agent connected to Tailspin's MCP server read this connection's logs. Read-only; off by default.
-        </p>
+    <div class="rounded-md border border-border divide-y divide-border">
+      <div class="flex items-start justify-between gap-4 px-3 py-2.5">
+        <div class="min-w-0">
+          <label for="mcp-enabled" class="text-xs font-medium block cursor-pointer">Expose to MCP</label>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            Lets an AI agent connected to Tailspin's MCP server read this connection's logs. Read-only; off by default.
+          </p>
+        </div>
+        <Switch id="mcp-enabled" v-model="form.mcpEnabled" class="mt-0.5" />
       </div>
-      <Switch id="mcp-enabled" v-model="form.mcpEnabled" class="mt-0.5" />
+      <div v-if="form.type === 'remote'" class="flex items-start justify-between gap-4 px-3 py-2.5">
+        <div class="min-w-0">
+          <label for="search-enabled" class="text-xs font-medium block cursor-pointer">Allow whole-file search</label>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            Lets you, and any agent, search a log end to end instead of just its loaded tail. Runs on the server:
+            one search per file every 10 seconds, 15 second limit, files up to 1 GB. Off by default.
+          </p>
+        </div>
+        <Switch id="search-enabled" v-model="form.searchEnabled" class="mt-0.5" />
+      </div>
+      <p v-else class="px-3 py-2 text-[11px] text-muted-foreground">Whole-file search is always available for local files.</p>
     </div>
 
     <div class="flex justify-end pt-2">
@@ -108,6 +121,7 @@ const form = reactive({
   type: (defaults?.type || 'local') as 'local' | 'remote',
   isFavorite: defaults?.isFavorite || false,
   mcpEnabled: defaults?.mcpEnabled || false,
+  searchEnabled: defaults?.searchEnabled || false,
 })
 
 const sshDetails = ref<SshDetails>({
@@ -162,6 +176,7 @@ async function handleSave() {
       type: form.type,
       isFavorite: form.isFavorite,
       mcpEnabled: form.mcpEnabled,
+      searchEnabled: form.type === 'remote' ? form.searchEnabled : true,
       ...(ssh ? { ssh } : {}),
     }
 

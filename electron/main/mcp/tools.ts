@@ -14,6 +14,9 @@ import {
   withSsh,
 } from "../services/ssh";
 import { parseLogEntries } from "../../../shared/logParser";
+import { writtenClockMillis } from "../../../shared/logSeek";
+import { localWindow, remoteWindow, runLocalSearch, runRemoteSearch } from "../services/log-search";
+import { searchSizeLimitMessage, type SearchOutcome } from "../../../shared/search";
 import type { Connection, LogEntry, LogFile, SshDetailsToIpc } from "../../../shared/interfaces";
 import {
   McpDefaultLimit,
@@ -23,6 +26,7 @@ import {
   type McpLogEntrySummary,
   type McpLogFileSummary,
   type McpReadLogResult,
+  type McpSearchLogResult,
   type McpToolName,
 } from "../../../shared/mcp";
 
@@ -57,6 +61,8 @@ export async function runTool(tool: McpToolName, args: Record<string, unknown>):
       return readLog(args);
     case "get_log_entry":
       return getLogEntry(args);
+    case "search_log":
+      return searchLog(args);
     default:
       throw new McpToolError(`Unknown tool: ${String(tool)}`);
   }
@@ -79,7 +85,12 @@ function summarise(connection: Connection): McpConnectionSummary {
       ? { target: `${connection.ssh.username}@${connection.ssh.host}` }
       : {}),
     path: connection.path,
+    searchable: isSearchable(connection),
   };
+}
+
+function isSearchable(connection: Connection): boolean {
+  return connection.type === "local" || connection.searchEnabled === true;
 }
 
 function listConnections() {
@@ -280,16 +291,20 @@ function parseTimeBound(value: unknown, key: string): number | null {
     const unit = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }[relative[2].toLowerCase() as "s" | "m" | "h" | "d"];
     return Date.now() - Number(relative[1]) * unit;
   }
-  const parsed = Date.parse(text.replace(" ", "T"));
+  // A bare time is compared to timestamps as written in the log; one with an
+  // offset or Z is absolute. Either way both sides end up on the same axis.
+  const bare = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?$/.test(text);
+  const parsed = Date.parse(bare ? `${text.replace(" ", "T")}Z` : text.replace(" ", "T"));
   if (Number.isNaN(parsed)) {
     throw new McpToolError(`'${key}' must be an ISO 8601 datetime or a relative window like "30m", "2h", "1d".`);
   }
   return parsed;
 }
 
-/** Laravel writes "YYYY-MM-DD HH:MM:SS" with an optional offset; without one it is read as local time. */
+/** With an offset the timestamp is absolute; without one it is taken as written, like `since`/`until`. */
 function entryTime(entry: LogEntry): number {
-  return Date.parse(entry.timestamp.replace(" ", "T"));
+  if (/[+-]\d\d:\d\d$/.test(entry.timestamp)) return Date.parse(entry.timestamp.replace(" ", "T"));
+  return writtenClockMillis(entry.timestamp) ?? NaN;
 }
 
 // Obvious secrets get masked before they reach an agent's transcript. This is a
@@ -371,9 +386,30 @@ async function readLog(args: Record<string, unknown>): Promise<McpReadLogResult>
   return withLock(connection.uid, async () => {
     const target = await describeTarget(connection);
     const file = chooseFile(connection, target, requestedFile);
-    const { content, fileSize } = await readRaw(connection, file, bytes);
+    let { content, fileSize } = await readRaw(connection, file, bytes);
+    let mode: "tail" | "window" = "tail";
 
-    const parsed = parseLogEntries(content);
+    let parsed = parseLogEntries(content);
+
+    // The tail did not reach back to `since`: seek to it instead of returning
+    // nothing. Costs a handful of 4 KB probes, never a scan.
+    const oldestMs = parsed.length ? entryTime(parsed[parsed.length - 1]) : NaN;
+    if (since !== null && !file.compressed && fileSize > content.length && (Number.isNaN(oldestMs) || oldestMs > since)) {
+      const window =
+        connection.type === "local"
+          ? await localWindow(file.path, { targetMs: since }, bytes)
+          : await (async () => {
+              const { options, encrypted } = sshDetails(connection);
+              return remoteWindow(options, encrypted, file.path, { targetMs: since }, bytes);
+            })();
+      if (window.success) {
+        content = window.content;
+        fileSize = window.fileSize;
+        parsed = parseLogEntries(content);
+        mode = "window";
+      }
+    }
+
     const matched = parsed.filter((entry) => {
       if (severities && !severities.has(entry.severity.toLowerCase())) return false;
       if (search && !entry.text.toLowerCase().includes(search) && !entry.timestamp.includes(search)) return false;
@@ -393,7 +429,8 @@ async function readLog(args: Record<string, unknown>): Promise<McpReadLogResult>
 
     const notes: string[] = [];
     if (matched.length > page.length) notes.push(`${matched.length - page.length} more matching entries; raise 'limit' or narrow the filters.`);
-    if (fileSize > content.length) notes.push(`Only the last ${content.length} of ${fileSize} bytes were read; older entries need a larger 'bytes' or a rotated file.`);
+    if (mode === "window") notes.push(`Seeked to 'since' and read ${content.length} bytes from there; the tail of the file was not read.`);
+    else if (fileSize > content.length) notes.push(`Only the last ${content.length} of ${fileSize} bytes were read; pass 'since' to seek further back, or use search_log.`);
     if (parsed.length === 0 && content.length > 0) notes.push("No Laravel-formatted entries found in the bytes read.");
 
     return {
@@ -405,6 +442,55 @@ async function readLog(args: Record<string, unknown>): Promise<McpReadLogResult>
       entries_parsed: parsed.length,
       entries_matched: matched.length,
       entries: page.map((entry) => summariseEntry(entry, ids.get(entry)!)),
+      mode,
+      ...(notes.length ? { note: notes.join(" ") } : {}),
+    };
+  });
+}
+
+async function searchLog(args: Record<string, unknown>): Promise<McpSearchLogResult> {
+  const connection = resolveConnection(requireString(args, "connection"));
+  const pattern = requireString(args, "pattern");
+  const requestedFile = typeof args.file === "string" && args.file.trim() ? args.file.trim() : undefined;
+  const limit = args.limit;
+
+  if (!isSearchable(connection)) {
+    throw new McpToolError(
+      `Whole-file search is not enabled for '${connection.name}'. Turn on 'Allow whole-file search' on it in Tailspin, or use read_log.`
+    );
+  }
+
+  return withLock(connection.uid, async () => {
+    const target = await describeTarget(connection);
+    const file = chooseFile(connection, target, requestedFile);
+    const tooBig = searchSizeLimitMessage(file.size, file.compressed);
+    if (tooBig) throw new McpToolError(tooBig);
+
+    let outcome: SearchOutcome;
+    if (connection.type === "local") {
+      outcome = await runLocalSearch(file.path, pattern, limit);
+    } else {
+      const { options, encrypted } = sshDetails(connection);
+      outcome = await runRemoteSearch(options, encrypted, file.path, pattern, limit);
+    }
+    if (!outcome.success) throw new McpToolError(outcome.message ?? "Search failed.");
+
+    const readId = rememberRead(outcome.entries, connection.name, file.name, outcome.entries.reduce((n, e) => n + e.text.length, 0));
+    const notes: string[] = [];
+    if (outcome.timedOut) notes.push("The search hit its time limit; older parts of the file were not scanned.");
+    else if (outcome.scanned === "partial") notes.push("Stopped after enough matches; older matches may exist. Narrow the pattern or pass a rotated file.");
+    if (outcome.entries.length === 0 && outcome.scanned === "whole") notes.push("No matches anywhere in the file.");
+
+    return {
+      read_id: readId,
+      connection: connection.name,
+      file: file.name,
+      pattern,
+      scanned: outcome.scanned,
+      duration_ms: outcome.durationMs,
+      timed_out: outcome.timedOut,
+      entries_matched: outcome.entries.length,
+      entries: outcome.entries.map((entry, index) => summariseEntry(entry, index)),
       ...(notes.length ? { note: notes.join(" ") } : {}),
     };
   });

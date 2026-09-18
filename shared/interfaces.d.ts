@@ -65,6 +65,8 @@ export interface BaseConnection {
   iconColor?: string;
   /** Opt-in: visible to the MCP server, so an agent may read this connection's logs. */
   mcpEnabled?: boolean;
+  /** Opt-in for remote connections: whole-file search may run on the server. Local connections always may. */
+  searchEnabled?: boolean;
 }
 
 export interface Connection extends BaseConnection {

@@ -3,6 +3,11 @@ import { createHash } from "node:crypto";
 import SSH2Promise from "ssh2-promise";
 import { expandHome } from "../helpers";
 import type { LogFile, SshDetailsToIpc } from "../../../shared/interfaces";
+import {
+  SearchContextLines,
+  SearchOutputCapBytes,
+  SearchTimeoutSeconds,
+} from "../../../shared/search";
 
 // Everything that talks to a remote box lives here so the IPC handlers (driven
 // by the renderer) and the MCP server (driven by an agent) run the exact same
@@ -135,6 +140,62 @@ export async function readSince(ssh: SSH2Promise, path: string, fileSizeAtLastRe
   const response = await ssh.exec(`tail -c +${offset} -- ${quoted}`);
   const fileSize = await ssh.exec(`stat -c %s -- ${quoted}`);
   return { success: true, message: response, fileSize };
+}
+
+/**
+ * `length` bytes starting at byte `offset` (0-based). `tail -c +N` is 1-based
+ * and seeks rather than reads, so this costs the same on a 3 GB file as a 3 KB one.
+ */
+export async function readRange(ssh: SSH2Promise, path: string, offset: number, length: number): Promise<string> {
+  const from = toByteCount(offset) + 1;
+  const count = Math.max(1, toByteCount(length));
+  return ssh.exec(`tail -c +${from} -- ${quotePath(path)} 2>/dev/null | head -c ${count}`);
+}
+
+/**
+ * Bounded whole-file search. Everything the caller controls arrives as a
+ * positional argument to `sh -c`, so the pattern and path are never part of
+ * the command text and the shell never interprets them. Numbers are flattened
+ * first. The pipeline is wrapped in `timeout` and `nice`, grep stops after
+ * enough matching lines, and the output is capped, so the worst case is one
+ * sequential read that gives up after SearchTimeoutSeconds.
+ *
+ * Plain files are read backwards with `tac`, so the newest matches come first
+ * and a search that finds enough of them touches only the end of the file.
+ * Compressed files have no backwards mode; they are decompressed forward
+ * (same cost as opening them in the UI) and the newest output kept.
+ *
+ * stderr is discarded because ssh2-promise rejects on any stderr output, and
+ * the exit status is printed on stdout instead so a timeout stays visible.
+ */
+export async function searchRemote(
+  ssh: SSH2Promise,
+  path: string,
+  pattern: string,
+  limit: number,
+  compressed: boolean
+): Promise<{ raw: string; timedOut: boolean; reversed: boolean; capped: boolean }> {
+  const context = SearchContextLines;
+  const cap = SearchOutputCapBytes;
+  // A match can sit on several lines of one entry, so allow more matching lines than entries wanted.
+  const maxLines = Math.max(1, Math.floor(limit)) * 3;
+  const grep = `LC_ALL=C grep -F -i -A ${context} -B ${context} -e "$2"`;
+  const script = compressed
+    ? `LC_ALL=C nice -n 19 gzip -dc -- "$1" | ${grep} | tail -c ${cap}`
+    : `LC_ALL=C nice -n 19 tac -- "$1" | ${grep} -m ${maxLines} | head -c ${cap}`;
+  const command =
+    `timeout ${SearchTimeoutSeconds} sh -c ${shellQuote(script)} sh ${quotePath(path)} ${shellQuote(pattern)} 2>/dev/null; ` +
+    `echo "__TAILSPIN_STATUS:$?"`;
+  const output = String(await ssh.exec(command));
+  const at = output.lastIndexOf("__TAILSPIN_STATUS:");
+  const status = at === -1 ? null : Number(output.slice(at + "__TAILSPIN_STATUS:".length).trim());
+  const raw = at === -1 ? output : output.slice(0, at).replace(/\n$/, "");
+  return {
+    raw,
+    timedOut: status === 124,
+    reversed: !compressed,
+    capped: Buffer.byteLength(raw, "utf8") >= cap - 1024,
+  };
 }
 
 /**

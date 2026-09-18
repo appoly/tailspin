@@ -1,5 +1,7 @@
 import { ipcRenderer, OpenDialogOptions, OpenDialogReturnValue } from "electron";
 import type { LocalLogRead, LocalLogTailRead, LogFile } from "../../../shared/interfaces";
+import type { SearchOutcome, WindowRead } from "../../../shared/search";
+import type { WindowTarget } from "./Ssh";
 
 export function openFileDialogue(options: OpenDialogOptions): Promise<OpenDialogReturnValue> {
   return ipcRenderer.invoke("open-file-dialog", options);
@@ -21,6 +23,14 @@ export async function readLogFromPath(path: string, maxBytesOverride?: number): 
 /** Just the bytes appended since `offset`, for auto-fetch ticks. */
 export function readLogFromOffset(path: string, offset: number): Promise<LocalLogTailRead> {
   return ipcRenderer.invoke("read-log-file-from-offset", path, offset);
+}
+
+export function searchLogFile(path: string, pattern: string, limit: number): Promise<SearchOutcome> {
+  return ipcRenderer.invoke("search-log-file", path, pattern, limit);
+}
+
+export function readLogWindow(path: string, target: WindowTarget, bytes: number): Promise<WindowRead> {
+  return ipcRenderer.invoke("log-window", path, target, bytes);
 }
 
 export function isFileOrDirectory(path: string): Promise<"file" | "directory" | null> {

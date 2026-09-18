@@ -59,16 +59,29 @@
       :logEntries="logEntries"
       :isLoading="isLoading"
       :errorMsg="errorMsg"
+      :viewMode="viewMode"
+      :fileSize="currentFileSize"
+      :loadedBytes="loadedBytes"
+      :searchAvailability="searchAvailability"
+      :canJump="canJump"
+      :notice="viewNotice"
+      :busy="viewBusy"
+      @searchWholeFile="searchWholeFile"
+      @jumpToTime="jumpToTime"
+      @shiftWindow="shiftWindow"
+      @exitMode="exitMode"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import type { Connection, LogEntry, LogFile } from '@/types/interfaces'
-import { FileAPI } from '@/lib/backend'
+import type { Connection, LogEntry, LogFile, SearchAvailability } from '@/types/interfaces'
+import { FileAPI, StorageAPI } from '@/lib/backend'
+import { searchSizeLimitMessage } from '$/search'
 import { useLogParser } from '@/composables/useLogParser'
 import { useAutoFetch, DefaultAutoFetchIntervals } from '@/composables/useAutoFetch'
+import { useLogViewMode } from '@/composables/useLogViewMode'
 import { basename, isRotatedLogName } from '@/helpers'
 import LogViewer from './LogViewer.vue'
 import LogFileBrowser from './LogFileBrowser.vue'
@@ -86,6 +99,10 @@ const hasProbedPath = ref(false)
 const logFiles = ref<LogFile[]>([])
 const selectedFile = ref('')
 const lastReadBytes = ref(0)
+const currentFileSize = ref(0)
+const loadedBytes = ref(0)
+/** Window size for seeks; the same fetch size remote connections use. */
+const windowBytes = ref(500 * 1024)
 
 const {
   autoFetchSeconds,
@@ -103,6 +120,37 @@ const {
 
 const currentPath = computed(() => (isDirectory.value ? selectedFile.value : props.connection.path))
 
+const {
+  mode: viewMode,
+  busy: viewBusy,
+  notice: viewNotice,
+  searchWholeFile,
+  jumpToTime,
+  shiftWindow,
+  exitMode,
+  resetToTail,
+} = useLogViewMode(
+  {
+    search: (pattern, limit) => FileAPI.SearchLogFile(currentPath.value, pattern, limit),
+    window: (target, bytes) => FileAPI.ReadLogWindow(currentPath.value, target, bytes),
+    bytes: () => windowBytes.value,
+    reloadTail: () => loadSelected(),
+    onLeaveTail: () => stopAutoFetch(),
+  },
+  logEntries,
+  isLoading,
+)
+
+const isCompressedSelection = computed(() => currentPath.value.toLowerCase().endsWith('.gz'))
+
+// Local files are always searchable; only the size ceiling applies.
+const searchAvailability = computed<SearchAvailability>(() => {
+  const tooBig = searchSizeLimitMessage(currentFileSize.value, isCompressedSelection.value)
+  return tooBig ? { available: false, reason: tooBig } : { available: true }
+})
+
+const canJump = computed(() => !isCompressedSelection.value && currentFileSize.value > loadedBytes.value)
+
 const isRotatedSelection = computed(() => {
   if (!hasProbedPath.value) return false
   const path = currentPath.value
@@ -114,12 +162,16 @@ const headerBase = computed(() => props.connection.path)
 const headerFile = computed(() => (isDirectory.value && selectedFile.value ? basename(selectedFile.value) : ''))
 const headerPath = computed(() => (headerFile.value ? `${headerBase.value} · ${headerFile.value}` : headerBase.value))
 
-onMounted(refresh)
+onMounted(async () => {
+  windowBytes.value = (await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024)) as number
+  await refresh()
+})
 
 /** Re-read the directory listing (if any) and then whatever is selected. */
 async function refresh() {
   isLoading.value = true
   errorMsg.value = ''
+  resetToTail()
 
   try {
     isDirectory.value = (await FileAPI.IsFileOrDirectory(props.connection.path)) === 'directory'
@@ -158,6 +210,8 @@ async function loadSelected() {
   // Where the next incremental read starts. The whole file was just parsed, even
   // when only its tail was read, so the end of it is the honest offset.
   lastReadBytes.value = res.fileSize
+  currentFileSize.value = res.fileSize
+  loadedBytes.value = res.content.length
   logEntries.value = await useLogParser(res.content)
 }
 
@@ -173,6 +227,7 @@ async function selectFile(file: LogFile) {
   isLoading.value = true
   errorMsg.value = ''
   lastReadBytes.value = 0
+  resetToTail()
   try {
     await loadSelected()
   } catch (e: any) {
@@ -188,6 +243,8 @@ async function selectFile(file: LogFile) {
  * the offset and is handled with a full re-read rather than a bogus append.
  */
 async function fetchUpdates(): Promise<LogEntry[]> {
+  // Only the tail grows. A window or a result set is a fixed slice.
+  if (viewMode.value.kind !== 'tail') return []
   if (isUpdating.value || isLoading.value) return []
 
   const filePath = currentPath.value
@@ -204,6 +261,7 @@ async function fetchUpdates(): Promise<LogEntry[]> {
     }
 
     lastReadBytes.value = res.fileSize
+    currentFileSize.value = res.fileSize
     if (!res.content) return []
 
     const newEntries = await useLogParser(res.content)

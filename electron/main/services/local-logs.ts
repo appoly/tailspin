@@ -1,6 +1,13 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as zlib from "zlib";
+import * as readline from "node:readline";
+import {
+  SearchContextLines,
+  SearchMaxLimit,
+  SearchOutputCapBytes,
+  SearchTimeoutSeconds,
+} from "../../../shared/search";
 import type { LocalLogRead, LocalLogTailRead, LogFile } from "../../../shared/interfaces";
 import { MaxCompressedUncompressedBytes, MaxFileSizeToLoadBytes, formatBytes } from "./ssh";
 
@@ -250,4 +257,101 @@ export async function readLocalLogTail(filePath: string, budget: number): Promis
       compressed,
     };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Whole-file search and range reads, the local counterparts of services/ssh.ts.
+
+
+/** `length` bytes from `offset`, decoded as UTF-8. */
+export async function readLocalRange(filePath: string, offset: number, length: number): Promise<string> {
+  const { size } = fs.statSync(filePath);
+  const start = Math.max(0, Math.min(Math.floor(offset), size));
+  const count = Math.max(0, Math.min(Math.floor(length), size - start));
+  if (count === 0) return "";
+  const buffer = Buffer.alloc(count);
+  const fd = fs.openSync(filePath, "r");
+  try {
+    const read = fs.readSync(fd, buffer, 0, count, start);
+    return buffer.subarray(0, read).toString("utf-8");
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/**
+ * Stream the file (gunzipping if needed) line by line and collect a block of
+ * context around every matching line, in the same "--"-separated shape grep
+ * produces, so the remote and local results go through one parser. Only the
+ * newest blocks are kept, bounded by count and by line length, and the whole
+ * thing gives up after SearchTimeoutSeconds. A local disk is not a production
+ * box, but memory still has to stay bounded whatever the file contains.
+ */
+export function searchLocalFile(
+  filePath: string,
+  pattern: string,
+  limit: number
+): Promise<{ raw: string; timedOut: boolean; truncated: boolean }> {
+  const needle = pattern.toLowerCase();
+  const context = SearchContextLines;
+  const maxBlocks = Math.min(Math.max(1, Math.floor(limit)), SearchMaxLimit) * 2;
+  const maxBlockLines = context * 4;
+  const deadline = Date.now() + SearchTimeoutSeconds * 1000;
+
+  return new Promise((resolve, reject) => {
+    const source = fs.createReadStream(filePath);
+    const input = filePath.toLowerCase().endsWith(".gz") ? source.pipe(zlib.createGunzip()) : source;
+    const lines = readline.createInterface({ input, crlfDelay: Infinity });
+
+    const recent: string[] = []; // the last `context` lines, for the head of a new block
+    const blocks: string[][] = []; // newest last
+    let open: string[] | null = null;
+    let remainingAfter = 0;
+    let timedOut = false;
+    let truncated = false;
+    let bytesKept = 0;
+    let lineCount = 0;
+
+    const closeBlock = () => {
+      if (!open) return;
+      blocks.push(open);
+      bytesKept += open.reduce((n, l) => n + l.length + 1, 0);
+      open = null;
+      while (blocks.length > maxBlocks || (bytesKept > SearchOutputCapBytes && blocks.length > 1)) {
+        const dropped = blocks.shift()!;
+        bytesKept -= dropped.reduce((n, l) => n + l.length + 1, 0);
+        truncated = true;
+      }
+    };
+
+    const finish = () => {
+      closeBlock();
+      resolve({ raw: blocks.map((b) => b.join("\n")).join("\n--\n"), timedOut, truncated });
+    };
+
+    lines.on("line", (line) => {
+      lineCount++;
+      if ((lineCount & 1023) === 0 && Date.now() > deadline) {
+        timedOut = true;
+        lines.close();
+        source.destroy();
+        return;
+      }
+      const matches = line.toLowerCase().includes(needle);
+      if (open) {
+        open.push(line);
+        if (matches) remainingAfter = context;
+        else remainingAfter--;
+        if (remainingAfter <= 0 || open.length >= maxBlockLines) closeBlock();
+      } else if (matches) {
+        open = [...recent, line];
+        remainingAfter = context;
+      }
+      recent.push(line);
+      if (recent.length > context) recent.shift();
+    });
+    lines.on("close", finish);
+    source.on("error", reject);
+    input.on("error", (err: Error) => (timedOut ? finish() : reject(err)));
+  });
 }

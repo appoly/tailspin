@@ -2,7 +2,7 @@
 // client) and the running Tailspin app. Newline-delimited JSON over a local
 // socket; one request per connection.
 
-export const McpToolNames = ["list_connections", "list_log_files", "read_log", "get_log_entry"] as const;
+export const McpToolNames = ["list_connections", "list_log_files", "read_log", "get_log_entry", "search_log"] as const;
 export type McpToolName = (typeof McpToolNames)[number];
 
 export interface McpSocketRequest {
@@ -27,6 +27,8 @@ export interface McpConnectionSummary {
   /** Remote only: user@host, so the model can tell servers apart. Never credentials. */
   target?: string;
   path: string;
+  /** Whether search_log may be used on it. Local connections always can. */
+  searchable: boolean;
 }
 
 export interface McpLogFileSummary {
@@ -54,6 +56,22 @@ export interface McpReadLogResult {
   bytes_read: number;
   file_size: number;
   entries_parsed: number;
+  entries_matched: number;
+  entries: McpLogEntrySummary[];
+  /** "tail" is the newest bytes; "window" means the read was seeked to `since`. */
+  mode: "tail" | "window";
+  note?: string;
+}
+
+export interface McpSearchLogResult {
+  read_id: string;
+  connection: string;
+  file: string;
+  pattern: string;
+  /** "whole" means the entire file was scanned; "partial" means it stopped after enough matches. */
+  scanned: "whole" | "partial";
+  duration_ms: number;
+  timed_out: boolean;
   entries_matched: number;
   entries: McpLogEntrySummary[];
   note?: string;

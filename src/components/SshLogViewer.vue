@@ -84,6 +84,17 @@
       :logEntries="logEntries"
       :isLoading="isLoading"
       :errorMsg="showAuthFailureHint ? '' : errorMsg"
+      :viewMode="viewMode"
+      :fileSize="currentFileSize"
+      :loadedBytes="loadedBytes"
+      :searchAvailability="searchAvailability"
+      :canJump="canJump"
+      :notice="viewNotice"
+      :busy="viewBusy"
+      @searchWholeFile="searchWholeFile"
+      @jumpToTime="jumpToTime"
+      @shiftWindow="shiftWindow"
+      @exitMode="exitMode"
     />
 
     <!-- Passphrase dialog -->
@@ -97,10 +108,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import type { Connection, LogEntry, LogFile, SshRequest, SshOptions } from '@/types/interfaces'
+import type { Connection, LogEntry, LogFile, SshRequest, SshOptions, SearchAvailability } from '@/types/interfaces'
 import { SshAPI, StorageAPI } from '@/lib/backend'
+import { searchSizeLimitMessage } from '$/search'
 import { useLogParser } from '@/composables/useLogParser'
 import { useAutoFetch } from '@/composables/useAutoFetch'
+import { useLogViewMode } from '@/composables/useLogViewMode'
 import { useApplicationStore } from '@/stores/useApplicationStore'
 import { basename, isRotatedLogName, parseRemoteLogFiles } from '@/helpers'
 import LogViewer from './LogViewer.vue'
@@ -132,6 +145,8 @@ const passphrase = ref('')
 const sshOptions = ref<SshOptions>({ numberOfBytes: 500 * 1024 })
 const currentFileSize = ref(0)
 const lastReadBytes = ref(0)
+/** Bytes of the tail currently on screen, so the UI can say how much of the file that is. */
+const loadedBytes = ref(0)
 
 const {
   autoFetchSeconds,
@@ -145,6 +160,39 @@ const {
 })
 
 const currentPath = computed(() => (isDirectory.value ? selectedFile.value : props.connection.path))
+
+const {
+  mode: viewMode,
+  busy: viewBusy,
+  notice: viewNotice,
+  searchWholeFile,
+  jumpToTime,
+  shiftWindow,
+  exitMode,
+  resetToTail,
+} = useLogViewMode(
+  {
+    search: (pattern, limit) => SshAPI.SearchFile(buildSshRequest(), currentPath.value, pattern, limit),
+    window: (target, bytes) => SshAPI.ReadWindow(buildSshRequest(), currentPath.value, target, bytes),
+    bytes: () => sshOptions.value.numberOfBytes || 500 * 1024,
+    reloadTail: () => loadSelected(),
+    onLeaveTail: () => stopAutoFetch(),
+  },
+  logEntries,
+  isLoading,
+)
+
+const isCompressedSelection = computed(() => currentPath.value.toLowerCase().endsWith('.gz'))
+
+const searchAvailability = computed<SearchAvailability>(() => {
+  if (!props.connection.searchEnabled) {
+    return { available: false, reason: "Whole-file search is off for this connection. Turn on “Allow whole-file search” in its settings." }
+  }
+  const tooBig = searchSizeLimitMessage(currentFileSize.value, isCompressedSelection.value)
+  return tooBig ? { available: false, reason: tooBig } : { available: true }
+})
+
+const canJump = computed(() => !isCompressedSelection.value && currentFileSize.value > loadedBytes.value)
 
 const isRotatedSelection = computed(() => {
   // Until the path has been probed we do not know whether connection.path is a
@@ -202,6 +250,7 @@ async function readLog() {
   isLoading.value = true
   errorMsg.value = ''
   lastReadBytes.value = 0
+  resetToTail()
 
   try {
     const req = buildSshRequest()
@@ -258,6 +307,7 @@ async function loadSelected(request?: SshRequest) {
     currentFileSize.value = parseInt(res.fileSize, 10) || 0
   }
   lastReadBytes.value = currentFileSize.value
+  loadedBytes.value = (res.message || '').length
 
   logEntries.value = await useLogParser(res.message || '')
 }
@@ -274,6 +324,7 @@ async function selectFile(file: LogFile) {
   isLoading.value = true
   errorMsg.value = ''
   lastReadBytes.value = 0
+  resetToTail()
   try {
     await loadSelected()
   } catch (e: any) {
@@ -285,6 +336,8 @@ async function selectFile(file: LogFile) {
 
 /** Returns the entries this tick brought in, so the composable can announce errors. */
 async function fetchUpdates(): Promise<LogEntry[]> {
+  // Only the tail grows. A window or a result set is a fixed slice.
+  if (viewMode.value.kind !== 'tail') return []
   if (isUpdating.value || isLoading.value) return []
   isUpdating.value = true
   try {

@@ -2,6 +2,7 @@ import { ipcMain, dialog, safeStorage, app, shell } from "electron";
 import { expandHome } from "../helpers";
 import * as fs from "fs";
 import { listLogFiles, readLogFile, readLogFileFromOffset } from "../services/local-logs";
+import { localWindow, runLocalSearch, type WindowTarget } from "../services/log-search";
 
 export default () => {
   ipcMain.handle("open-file-dialog", (event, options) => {
@@ -18,6 +19,12 @@ export default () => {
   ipcMain.handle("read-log-file-from-offset", (event, filePath: string, offset: number) => {
     filePath = expandHome(filePath);
     return readLogFileFromOffset(filePath, offset);
+  });
+  ipcMain.handle("search-log-file", (event, filePath: string, pattern: string, limit: number) => {
+    return runLocalSearch(filePath, pattern, limit);
+  });
+  ipcMain.handle("log-window", (event, filePath: string, target: WindowTarget, bytes: number) => {
+    return localWindow(filePath, target ?? {}, bytes);
   });
   ipcMain.handle("is-file-or-directory", (event, path) => {
     path = expandHome(path);

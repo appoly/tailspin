@@ -9,6 +9,7 @@ import {
   readTail,
   withSsh,
 } from "../services/ssh";
+import { remoteWindow, runRemoteSearch, type WindowTarget } from "../services/log-search";
 
 export default () => {
   ipcMain.handle("test-ssh-credentials", async (event, options, passwordIsEncrypted: boolean) =>
@@ -60,6 +61,17 @@ export default () => {
         options,
         passwordIsEncrypted
       )
+  );
+
+  ipcMain.handle(
+    "ssh-search-file",
+    async (event, options: SshDetailsToIpc, path: string, passwordIsEncrypted: boolean, pattern: string, limit: number) =>
+      runRemoteSearch(options, passwordIsEncrypted, path, pattern, limit)
+  );
+  ipcMain.handle(
+    "ssh-window",
+    async (event, options: SshDetailsToIpc, path: string, passwordIsEncrypted: boolean, target: WindowTarget, bytes: number) =>
+      remoteWindow(options, passwordIsEncrypted, path, target ?? {}, bytes)
   );
 
   // Nothing should outlive the app, including a socket sitting out its idle timeout.
