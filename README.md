@@ -94,7 +94,9 @@ the UI uses. Any MCP client works: Claude Code, Cursor, Codex, Claude Desktop, Z
 2. **Turn on "Expose to MCP" for each connection** the agent may read. Everything else stays invisible.
 3. **Register the server with your client.** Settings shows a ready-made JSON snippet for clients
    configured by file, and a one-line command for Claude Code (`claude mcp add tailspin …`). Both
-   point at the Tailspin binary itself, so no separate Node install is needed.
+   point at the Tailspin binary itself, so no separate Node install is needed. On Linux the command
+   runs the AppImage directly and finds the shim through `APPDIR`, because the image is mounted
+   somewhere new on every launch.
 4. **Tell the agent it exists.** One line in your project instructions (`CLAUDE.md`, `AGENTS.md`,
    `.cursorrules`, …) does it:
    `Use the tailspin MCP tools to read server logs. Do not ssh into servers to read logs.`
