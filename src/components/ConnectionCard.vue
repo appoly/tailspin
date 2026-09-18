@@ -1,4 +1,8 @@
 <template>
+  <div>
+  <!-- Single root element on purpose, with nothing beside it (not even a comment):
+       vuedraggable's item slot needs exactly one element to sort, and a fragment
+       root makes it lose track of the item ("Cannot read properties of null"). -->
   <ContextMenu>
     <ContextMenuTrigger as-child>
       <div
@@ -14,15 +18,14 @@
           @click.stop
         />
 
-        <!-- Icon -->
+        <!-- Icon on its tinted tile, the connection's signature everywhere it appears -->
         <div
-          v-if="!compact"
-          class="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
+          class="rounded-md flex items-center justify-center shrink-0"
+          :class="compact ? 'h-6 w-6' : 'h-8 w-8'"
           :style="{ backgroundColor: iconTint }"
         >
-          <component :is="icon" class="h-4 w-4" :style="{ color: connection.iconColor || 'currentColor' }" />
+          <component :is="icon" :class="compact ? 'h-3.5 w-3.5' : 'h-4 w-4'" :style="{ color: connection.iconColor || 'currentColor' }" />
         </div>
-        <component v-else :is="icon" class="h-3.5 w-3.5 shrink-0" :style="{ color: connection.iconColor || 'currentColor' }" />
 
         <!-- Name, location, tags -->
         <div v-if="!compact" class="flex-1 min-w-0">
@@ -101,6 +104,7 @@
       </div>
     </DialogContent>
   </Dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
