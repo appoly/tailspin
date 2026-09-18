@@ -113,8 +113,8 @@
       <div class="w-52 shrink-0">
         <h3 class="text-sm font-medium">MCP server</h3>
         <p class="text-xs text-muted-foreground mt-0.5">
-          Let an AI agent such as Claude Code read logs through Tailspin instead of over SSH.
-          Read-only, capped in size, and only for connections you tick "Expose to MCP" on.
+          Let an AI agent (Claude Code, Cursor, Codex, …) read logs through Tailspin instead of over SSH.
+          Read-only, capped in size, and only for connections with "Expose to MCP" turned on.
         </p>
       </div>
       <div class="flex-1 min-w-0 max-w-2xl space-y-3">
@@ -138,22 +138,23 @@
 
         <template v-if="mcp?.enabled">
           <p class="text-xs text-muted-foreground">
-            Only while Tailspin is open. Register it once with Claude Code:
+            Works only while Tailspin is open. Add this to your MCP client's config (Cursor, Codex, Claude Desktop, Zed, …):
           </p>
           <div class="flex items-start gap-2">
-            <pre class="flex-1 min-w-0 overflow-x-auto rounded-md border border-border bg-muted/40 px-2.5 py-2 text-[11px] font-mono whitespace-pre-wrap break-all">{{ mcp.claudeCodeCommand }}</pre>
-            <Button variant="outline" size="sm" class="h-8 shrink-0" @click="copyMcp(mcp.claudeCodeCommand, 'command')">
-              {{ mcpCopied === 'command' ? 'Copied' : 'Copy' }}
+            <pre class="flex-1 min-w-0 overflow-x-auto rounded-md border border-border bg-muted/40 px-2.5 py-2 text-[11px] font-mono whitespace-pre-wrap break-all">{{ mcp.jsonConfig }}</pre>
+            <Button variant="outline" size="sm" class="h-8 shrink-0" @click="copyMcp(mcp.jsonConfig, 'json')">
+              {{ mcpCopied === 'json' ? 'Copied' : 'Copy' }}
             </Button>
           </div>
-          <div class="flex items-center gap-2">
-            <Button variant="ghost" size="sm" class="h-7 text-xs" @click="copyMcp(mcp.jsonConfig, 'json')">
-              {{ mcpCopied === 'json' ? 'Copied JSON' : 'Copy JSON for other MCP clients' }}
+          <div class="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>For Claude Code, run the one-line command instead:</span>
+            <Button variant="ghost" size="sm" class="h-7 text-xs" @click="copyMcp(mcp.claudeCodeCommand, 'command')">
+              {{ mcpCopied === 'command' ? 'Copied' : 'Copy command' }}
             </Button>
           </div>
           <p class="text-[11px] text-muted-foreground">
-            The command points at this install; re-copy it if you move the app.
-            Then tell your agent about it, e.g. in CLAUDE.md: "Use the tailspin MCP tools to read server logs; never ssh for logs."
+            Both point at this install; re-copy if you move the app.
+            Then tell the agent it exists, e.g. in CLAUDE.md or AGENTS.md: "Use the tailspin MCP tools to read server logs; never ssh for logs."
           </p>
         </template>
       </div>
