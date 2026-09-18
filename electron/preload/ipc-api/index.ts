@@ -4,6 +4,7 @@ import * as Ssh from "./Ssh";
 import * as Forge from "./Forge";
 import * as Updater from "./Updater";
 import * as Shell from "./Shell";
+import * as Window from "./Window";
 import * as Mcp from "./Mcp";
 
 // api exports functions that make up the frontend api, ie that in
@@ -19,5 +20,6 @@ export default {
   Forge,
   Updater,
   Shell,
+  Window,
   Mcp,
 };
