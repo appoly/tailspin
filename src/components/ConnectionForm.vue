@@ -51,6 +51,15 @@
       </div>
     </template>
 
+    <div>
+      <label class="text-xs text-muted-foreground mb-1 block">Tags</label>
+      <Input v-model="form.tags" list="connection-tag-suggestions" placeholder="prod, client-x" class="h-8 text-sm" />
+      <datalist id="connection-tag-suggestions">
+        <option v-for="tag in knownTags" :key="tag" :value="tag" />
+      </datalist>
+      <p class="text-[11px] text-muted-foreground mt-1">Comma-separated. Used to filter the connections list; agents see them too.</p>
+    </div>
+
     <div class="rounded-md border border-border divide-y divide-border">
       <div class="flex items-start justify-between gap-4 px-3 py-2.5">
         <div class="min-w-0">
@@ -122,7 +131,27 @@ const form = reactive({
   isFavorite: defaults?.isFavorite || false,
   mcpEnabled: defaults?.mcpEnabled || false,
   searchEnabled: defaults?.searchEnabled || false,
+  tags: (defaults?.tags ?? []).join(', '),
 })
+
+// Tags already in use elsewhere, offered as suggestions so spellings stay consistent.
+const knownTags = computed(() => {
+  const tags = new Set<string>()
+  for (const c of connectionStore.connections) for (const tag of c.tags ?? []) tags.add(tag)
+  return [...tags].sort((a, b) => a.localeCompare(b))
+})
+
+function parseTags(value: string): string[] {
+  const seen = new Set<string>()
+  const tags: string[] = []
+  for (const raw of value.split(',')) {
+    const tag = raw.trim().replace(/\s+/g, ' ').slice(0, 30)
+    if (!tag || seen.has(tag.toLowerCase())) continue
+    seen.add(tag.toLowerCase())
+    tags.push(tag)
+  }
+  return tags
+}
 
 const sshDetails = ref<SshDetails>({
   host: defaults?.ssh?.host || '',
@@ -177,6 +206,7 @@ async function handleSave() {
       isFavorite: form.isFavorite,
       mcpEnabled: form.mcpEnabled,
       searchEnabled: form.type === 'remote' ? form.searchEnabled : true,
+      tags: parseTags(form.tags),
       ...(ssh ? { ssh } : {}),
     }
 

@@ -86,6 +86,7 @@ function summarise(connection: Connection): McpConnectionSummary {
       : {}),
     path: connection.path,
     searchable: isSearchable(connection),
+    ...(connection.tags?.length ? { tags: connection.tags } : {}),
   };
 }
 

@@ -69,6 +69,8 @@ export interface BaseConnection {
   mcpEnabled?: boolean
   /** Opt-in for remote connections: whole-file search may run on the server. Local connections always may. */
   searchEnabled?: boolean
+  /** Free-text labels such as "prod" or a client name, for filtering. */
+  tags?: string[]
 }
 
 export interface Connection extends BaseConnection {

@@ -68,7 +68,7 @@ server.registerTool(
   {
     title: "List log connections",
     description:
-      "List the Tailspin log connections that have been exposed to MCP, with the ids the other tools take. " +
+      "List the Tailspin log connections that have been exposed to MCP, with the ids the other tools take, their tags (e.g. 'prod', a client name) and whether search_log is allowed on them. " +
       "A connection only appears here if 'Expose to MCP' is ticked on it in Tailspin; everything else is invisible. " +
       "Start here.",
     inputSchema: {},

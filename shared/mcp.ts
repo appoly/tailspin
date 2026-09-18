@@ -29,6 +29,7 @@ export interface McpConnectionSummary {
   path: string;
   /** Whether search_log may be used on it. Local connections always can. */
   searchable: boolean;
+  tags?: string[];
 }
 
 export interface McpLogFileSummary {
