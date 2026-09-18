@@ -114,6 +114,10 @@ passwords) are masked before entries leave the app; turn that off in Settings if
 Log content is untrusted input to the agent. The tool descriptions say so, and the surface is kept
 read-only for exactly that reason.
 
+To see what a session looks like, [docs/mcp-demo.md](docs/mcp-demo.md) is an unedited transcript of
+three prompts against the demo data: "which connections can you see", "show me the errors", and
+"I think we had an outage at 11:20, check the logs".
+
 ## Development
 
 Requires Node 22+.
