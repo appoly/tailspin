@@ -104,7 +104,7 @@ The agent gets four read-only tools:
 | `list_connections` | Connections you have exposed, with ids. Nothing about them beyond name, `user@host` and path. |
 | `list_log_files` | Log files on a connection, newest first, rotated and gzipped included. |
 | `read_log` | Tail a file and return parsed entries filtered by severity, text and time window, one line each. Capped at 2 MB read. |
-| `get_log_entry` | The full text and stack trace of one entry from a previous read. |
+| `get_log_entry` | The full text and stack trace of one entry from a previous read. Reads are kept for ten minutes, 8 MB total. |
 
 What it cannot do: write anything, run a command, download files, read outside a connection's
 configured path, or see any connection you have not opted in. Tailspin has to be open, which also

@@ -32,9 +32,13 @@ import {
 // path. Per-connection exposure is opt-in (`connection.mcpEnabled`).
 
 const MessagePreviewChars = 300;
-const ReadCacheSize = 20;
+// Parsed reads are kept so get_log_entry can serve a stack trace without a
+// second round trip, but they are bounded by size and age rather than count:
+// twenty 2 MB reads would otherwise pin tens of megabytes for the app's lifetime.
+const ReadCacheMaxBytes = 8 * 1024 * 1024;
+const ReadCacheTtlMs = 10 * 60_000;
 
-type CachedRead = { entries: LogEntry[]; connection: string; file: string; at: number };
+type CachedRead = { entries: LogEntry[]; connection: string; file: string; at: number; bytes: number };
 const readCache = new Map<string, CachedRead>();
 
 // One remote read at a time per connection. An agent retrying in a tight loop
@@ -332,14 +336,25 @@ async function readRaw(connection: Connection, file: LogFile, bytes: number): Pr
   return { content: String(result.message ?? ""), fileSize: Number(result.fileSize) || 0 };
 }
 
-function rememberRead(entries: LogEntry[], connection: string, file: string): string {
-  const id = randomBytes(6).toString("base64url");
-  readCache.set(id, { entries, connection, file, at: Date.now() });
-  while (readCache.size > ReadCacheSize) {
-    const oldest = readCache.keys().next().value;
-    if (oldest === undefined) break;
+/** Drop expired reads, then the oldest until the rest fit the byte budget. */
+function pruneReadCache(now = Date.now()) {
+  for (const [id, cached] of readCache) {
+    if (now - cached.at > ReadCacheTtlMs) readCache.delete(id);
+  }
+  let total = 0;
+  for (const cached of readCache.values()) total += cached.bytes;
+  // Map iterates in insertion order, so the first key is always the oldest.
+  while (total > ReadCacheMaxBytes && readCache.size > 0) {
+    const oldest = readCache.keys().next().value!;
+    total -= readCache.get(oldest)!.bytes;
     readCache.delete(oldest);
   }
+}
+
+function rememberRead(entries: LogEntry[], connection: string, file: string, bytes: number): string {
+  const id = randomBytes(6).toString("base64url");
+  readCache.set(id, { entries, connection, file, at: Date.now(), bytes });
+  pruneReadCache();
   return id;
 }
 
@@ -373,7 +388,7 @@ async function readLog(args: Record<string, unknown>): Promise<McpReadLogResult>
 
     // Ids index the full parsed array so get_log_entry can find filtered-out neighbours too.
     const ids = new Map<LogEntry, number>(parsed.map((entry, index) => [entry, index]));
-    const readId = rememberRead(parsed, connection.name, file.name);
+    const readId = rememberRead(parsed, connection.name, file.name, content.length);
     const page = matched.slice(0, limit);
 
     const notes: string[] = [];
@@ -397,6 +412,7 @@ async function readLog(args: Record<string, unknown>): Promise<McpReadLogResult>
 
 function getLogEntry(args: Record<string, unknown>) {
   const readId = requireString(args, "read_id");
+  pruneReadCache();
   const cached = readCache.get(readId);
   if (!cached) {
     throw new McpToolError(`read_id '${readId}' is unknown or has expired. Call read_log again.`);
