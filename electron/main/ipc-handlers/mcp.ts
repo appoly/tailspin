@@ -17,29 +17,44 @@ function shellQuote(value: string): string {
   return `"${value.replace(/(["\\$`])/g, "\\$1")}"`;
 }
 
+/**
+ * How an MCP client should start the shim. On macOS and Windows the binary and
+ * the unpacked shim sit at stable paths. Inside a Linux AppImage neither does:
+ * the image is mounted under a fresh /tmp/.mount_XXXXXX on every launch, so
+ * process.execPath and the shim path are only valid until the app quits. The
+ * AppImage runtime sets APPIMAGE (the stable file) and APPDIR (the mount) for
+ * the process it starts, so the client runs the AppImage itself as Node and
+ * requires the shim by a path built from APPDIR at run time. Node's -e leaves
+ * no room for a positional argument, so the socket travels in the environment,
+ * which the shim already accepts.
+ */
+function launch(socket: string): { command: string; args: string[]; env: Record<string, string> } {
+  const appImage = process.platform === "linux" ? process.env.APPIMAGE : undefined;
+  if (appImage) {
+    return {
+      command: appImage,
+      args: ["-e", 'require(process.env.APPDIR + "/resources/app.asar.unpacked/dist-electron/mcp-shim/index.js")'],
+      env: { ELECTRON_RUN_AS_NODE: "1", TAILSPIN_MCP_SOCKET: socket },
+    };
+  }
+  return { command: process.execPath, args: [shimPath(), socket], env: { ELECTRON_RUN_AS_NODE: "1" } };
+}
+
 function status(): McpStatus {
-  const exec = process.execPath;
-  const shim = shimPath();
   const socket = socketPath();
+  const { command, args, env } = launch(socket);
   return {
     enabled: store().get("app.mcpEnabled", false) === true,
     running: isRunning(),
     socketPath: socket,
     claudeCodeCommand: [
-      "claude mcp add tailspin -e ELECTRON_RUN_AS_NODE=1 --",
-      shellQuote(exec),
-      shellQuote(shim),
-      shellQuote(socket),
+      "claude mcp add tailspin",
+      ...Object.entries(env).map(([key, value]) => `-e ${shellQuote(`${key}=${value}`)}`),
+      "--",
+      shellQuote(command),
+      ...args.map(shellQuote),
     ].join(" "),
-    jsonConfig: JSON.stringify(
-      {
-        mcpServers: {
-          tailspin: { command: exec, args: [shim, socket], env: { ELECTRON_RUN_AS_NODE: "1" } },
-        },
-      },
-      null,
-      2
-    ),
+    jsonConfig: JSON.stringify({ mcpServers: { tailspin: { command, args, env } } }, null, 2),
     error: lastStartError(),
   };
 }
