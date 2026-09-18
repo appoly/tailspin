@@ -56,7 +56,7 @@ The same screen in light and dark:
 - **Keyboard-first.** ⌘K opens a palette that searches connections, open tabs and actions in one list. `⌘1`–`⌘9` switch tabs and middle-click closes them. `/` focuses search, `j`/`k` move between rows, `enter` expands, `c` copies.
 - **Take it with you.** Export the filtered entries as text or JSON, download the remote file, or copy the `ssh` command and open the server in your terminal straight from the connection.
 - **Your whole Forge account.** Add an API token and every server and site is two clicks from its logs. If a site rejects your key, the app tells you where in Forge to add it.
-- **Several logs at once.** Saved connections with favourites, drag-to-reorder and custom icons, each open in its own tab.
+- **Several logs at once.** Saved connections with favourites, tags to filter by, drag-to-reorder, custom icons and a compact list view, each open in its own tab.
 - **Credentials stay in the keychain.** SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`) rather than written to disk in plain text.
 - **Let your agent read the logs, not the server.** Turn on the built-in MCP server and any MCP-capable agent (Claude Code, Cursor, Codex, Claude Desktop, …) can list your connections and pull filtered, parsed log entries through Tailspin. Read-only, byte-capped, opt-in per connection, and it never sees a credential. See [Using with AI agents](#using-with-ai-agents-mcp).
 - **Yours to keep.** One signed download per platform that updates itself. It needs no account and talks to nothing but GitHub.
@@ -66,7 +66,9 @@ The same screen in light and dark:
 
 |  |  |
 |---|---|
-| **Connections.** Favourites, drag-to-reorder, local and SSH side by side.<br><img src="docs/media/connections.png" alt="Connections list" /> | **An expanded entry.** Filtered to errors, stack trace in full.<br><img src="docs/media/log-entry.png" alt="Expanded log entry with stack trace" /> |
+| **Connections.** Favourites on top, tags to filter by, local and SSH side by side.<br><img src="docs/media/connections.png" alt="Connections list" /> | **An expanded entry.** Filtered to errors, stack trace in full.<br><img src="docs/media/log-entry.png" alt="Expanded log entry with stack trace" /> |
+| **Whole-file search.** Two hits in a 300 MB log, found in a second, newest first.<br><img src="docs/media/search-results.png" alt="Search results across a whole file" /> | **Jump to a time.** A window seeked to 03:00 in a file far larger than what is loaded, with Earlier and Later paging.<br><img src="docs/media/mode-window.png" alt="Window mode around a time" /> |
+| **MCP server.** One switch, per-connection opt-in, and the client config ready to copy.<br><img src="docs/media/mcp-settings.png" alt="MCP server settings" /> | **Only what is loaded is searched, until you ask.** The way out, one line under the search box.<br><img src="docs/media/search-affordance.png" alt="Whole-file search affordance" /> |
 | **Every file on the box.** Rotated and gzipped logs in a browser, newest first.<br><img src="docs/media/file-browser.png" alt="File browser listing rotated and gzipped logs" /> | **Command palette.** ⌘K searches connections, open tabs and actions in one list.<br><img src="docs/media/command-palette.png" alt="Command palette" /> |
 | **Laravel Forge.** Pull in servers and sites with an API token.<br><img src="docs/media/forge.png" alt="Forge servers and sites" /> | **Settings.** Theme, default key, Forge token, notifications, config export and import.<br><img src="docs/media/settings.png" alt="Settings" /> |
 

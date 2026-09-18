@@ -40,7 +40,14 @@
             ]"
             @click="applicationStore.changePage('connections.page.' + conn.uid)"
           >
-            <Terminal class="h-4 w-4" :style="{ color: conn.iconColor }" />
+            <!-- Same tinted tile and icon as the connection's card, so the rail reads as "those connections". -->
+            <span
+              class="flex h-7 w-7 items-center justify-center rounded-md ring-1 ring-inset ring-transparent transition-shadow"
+              :class="applicationStore.page === 'connections.page.' + conn.uid ? 'ring-foreground/20' : ''"
+              :style="{ backgroundColor: iconTint(conn) }"
+            >
+              <component :is="getConnectionIcon(conn.icon)" class="h-3.5 w-3.5" :style="{ color: conn.iconColor || 'currentColor' }" />
+            </span>
             <span v-if="applicationStore.autoFetching.connectionId === conn.uid"
               class="absolute -top-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-sky-500">
               <RefreshCw class="h-2 w-2 text-white animate-spin" />
@@ -87,12 +94,19 @@ import { useApplicationStore } from '@/stores/useApplicationStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Separator } from '@/components/ui/separator'
+import { getConnectionIcon } from '@/lib/connectionIcons'
+import type { Connection } from '@/types/interfaces'
 import {
-  BookOpen, Hammer, HardDrive, Terminal, Download, Settings, RefreshCw,
+  BookOpen, Hammer, HardDrive, Download, Settings, RefreshCw,
 } from 'lucide-vue-next'
 
 const applicationStore = useApplicationStore()
 const connectionStore = useConnectionStore()
+
+// Soft tint of the connection's icon color, matching ConnectionCard's tile
+function iconTint(conn: Connection): string {
+  return conn.iconColor ? `color-mix(in srgb, ${conn.iconColor} 14%, transparent)` : 'hsl(var(--muted))'
+}
 
 const inProgressCount = computed(() =>
   applicationStore.downloads.filter(d => d.type === 'inProgress').length

@@ -200,6 +200,8 @@ async function loadSelected() {
     return
   }
 
+  // The fetch size can change in Settings while this tab is open; windows should follow it.
+  windowBytes.value = (await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024)) as number
   const res = await FileAPI.ReadLogFile(filePath)
   if (!res.success) {
     errorMsg.value = res.message || 'Failed to read file'
