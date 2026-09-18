@@ -58,6 +58,7 @@ The same screen in light and dark:
 - **Your whole Forge account.** Add an API token and every server and site is two clicks from its logs. If a site rejects your key, the app tells you where in Forge to add it.
 - **Several logs at once.** Saved connections with favourites, drag-to-reorder and custom icons, each open in its own tab.
 - **Credentials stay in the keychain.** SSH passwords and the Forge token are encrypted with the OS keychain (Electron `safeStorage`) rather than written to disk in plain text.
+- **Let your agent read the logs, not the server.** Turn on the built-in MCP server and Claude Code (or any MCP client) can list your connections and pull filtered, parsed log entries through Tailspin. Read-only, byte-capped, opt-in per connection, and it never sees a credential. See [Using with Claude Code](#using-with-claude-code-mcp).
 - **Yours to keep.** One signed download per platform that updates itself. It needs no account and talks to nothing but GitHub.
 
 <details>
@@ -78,6 +79,45 @@ Grab the latest release from the [releases page](https://github.com/appoly/tails
 - **macOS:** `…_arm64.dmg` (Apple Silicon) or `…_x64.dmg` (Intel). Builds are signed and notarized, so they open without Gatekeeper warnings.
 - **Windows:** `…​.exe` NSIS installer.
 - **Linux:** `…​.AppImage`.
+
+## Using with Claude Code (MCP)
+
+Debugging a production bug with an agent usually means either pasting stack traces into the chat or
+handing it an `ssh` session. Tailspin offers a third option: an [MCP](https://modelcontextprotocol.io)
+server that lets the agent read logs *through* Tailspin, with the same fixed commands and byte caps
+the UI uses.
+
+1. **Settings → MCP server → Enable.** Tailspin starts listening on a local socket (a per-user Unix
+   socket, or a named pipe on Windows). Nothing opens a network port.
+2. **Tick "Expose to MCP" on each connection** the agent may read. Everything else stays invisible.
+3. **Copy the command** shown in Settings and run it once. It registers the server with Claude Code:
+
+   ```bash
+   claude mcp add tailspin -e ELECTRON_RUN_AS_NODE=1 -- "/Applications/Tailspin.app/Contents/MacOS/Tailspin" "<shim>" "<socket>"
+   ```
+
+   For other clients (Claude Desktop, Cursor, …) use **Copy JSON** instead. No Node install is needed:
+   the Tailspin binary itself runs the tiny stdio shim.
+4. **Tell the agent it exists.** A line in `CLAUDE.md` does it:
+   `Use the tailspin MCP tools to read server logs. Do not ssh into servers to read logs.`
+
+The agent gets four read-only tools:
+
+| Tool | What it does |
+|---|---|
+| `list_connections` | Connections you have exposed, with ids. No hosts, users or credentials beyond `user@host`. |
+| `list_log_files` | Log files on a connection, newest first, rotated and gzipped included. |
+| `read_log` | Tail a file and return parsed entries filtered by severity, text, and time window, with a one-line message each. Capped at 2 MB read. |
+| `get_log_entry` | The full text and stack trace of one entry from a previous read. |
+
+What it cannot do: write anything, run a command, download files, read outside a connection's
+configured path, or see any connection you have not opted in. Tailspin has to be open, which also
+means every read shows up in the app you are looking at. Obvious secrets (bearer tokens,
+`api_key=…`, passwords) are masked before entries leave the app; turn that off in Settings if it
+gets in the way.
+
+Log content is untrusted input to the agent. The tool descriptions say so, and the surface is kept
+read-only for exactly that reason.
 
 ## Development
 

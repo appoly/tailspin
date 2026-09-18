@@ -65,6 +65,8 @@ export interface BaseConnection {
   ssh?: SshDetails
   isFavorite?: boolean
   iconColor?: string
+  /** Opt-in: visible to the MCP server, so an agent may read this connection's logs. */
+  mcpEnabled?: boolean
 }
 
 export interface Connection extends BaseConnection {

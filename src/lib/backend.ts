@@ -138,6 +138,11 @@ export const UpdaterAPI = {
   OnError: (cb: (message: string) => void) => bridge.Updater.onError(cb),
 };
 
+export const McpAPI = {
+  GetStatus: () => bridge.Mcp.getStatus(),
+  SetEnabled: (enabled: boolean) => bridge.Mcp.setEnabled(enabled),
+};
+
 export const ForgeAPI = {
   async GetServers(encryptedApiKey: string): Promise<any> {
     return throwOnForgeError(await bridge.Forge.getServerList(encryptedApiKey));

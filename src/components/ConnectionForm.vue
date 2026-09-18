@@ -51,6 +51,16 @@
       </div>
     </template>
 
+    <div class="flex items-start justify-between gap-4 rounded-md border border-border px-3 py-2.5">
+      <div class="min-w-0">
+        <label for="mcp-enabled" class="text-xs font-medium block cursor-pointer">Expose to MCP</label>
+        <p class="text-[11px] text-muted-foreground mt-0.5">
+          Lets an AI agent connected to Tailspin's MCP server read this connection's logs. Read-only; off by default.
+        </p>
+      </div>
+      <Switch id="mcp-enabled" v-model="form.mcpEnabled" class="mt-0.5" />
+    </div>
+
     <div class="flex justify-end pt-2">
       <Button type="submit" size="sm" class="h-8 text-xs" :disabled="saving">
         <Loader2 v-if="saving" class="h-3.5 w-3.5 mr-1.5 animate-spin" />
@@ -70,6 +80,7 @@ import { CryptoAPI, FileAPI } from '@/lib/backend'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Switch } from '@/components/ui/switch'
 import { Loader2 } from 'lucide-vue-next'
 import ConnectionIconPicker from './ConnectionIconPicker.vue'
 import ConnectionSshForm from './ConnectionSshForm.vue'
@@ -96,6 +107,7 @@ const form = reactive({
   path: defaults?.path || '',
   type: (defaults?.type || 'local') as 'local' | 'remote',
   isFavorite: defaults?.isFavorite || false,
+  mcpEnabled: defaults?.mcpEnabled || false,
 })
 
 const sshDetails = ref<SshDetails>({
@@ -149,6 +161,7 @@ async function handleSave() {
       path: form.path,
       type: form.type,
       isFavorite: form.isFavorite,
+      mcpEnabled: form.mcpEnabled,
       ...(ssh ? { ssh } : {}),
     }
 

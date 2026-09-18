@@ -6,7 +6,7 @@ import Store from "electron-store";
 // Lazily constructed: electron-store resolves its path at construction time,
 // and in dev that path is redirected (see electron/main/user-data.ts).
 let storeInstance: Store | null = null;
-function store(): any {
+export function store(): any {
   if (!storeInstance) storeInstance = new Store();
   return storeInstance;
 }

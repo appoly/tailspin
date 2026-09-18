@@ -3,6 +3,7 @@ import store from "./store";
 import ssh from "./ssh";
 import forge from "./forge";
 import shell from "./shell";
+import mcp from "./mcp";
 
 export default () => {
   application();
@@ -10,4 +11,5 @@ export default () => {
   ssh();
   forge();
   shell();
+  mcp();
 };

@@ -18,6 +18,5 @@
       "$/*": ["./shared/*"],
     }
   },
-  "include": ["src", "index.d.ts", "shared"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src", "index.d.ts", "shared"]
 }

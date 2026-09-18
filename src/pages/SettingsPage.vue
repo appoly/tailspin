@@ -108,6 +108,59 @@
 
     <Separator />
 
+    <!-- MCP -->
+    <section class="flex items-start gap-6 py-5">
+      <div class="w-52 shrink-0">
+        <h3 class="text-sm font-medium">MCP server</h3>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          Let an AI agent such as Claude Code read logs through Tailspin instead of over SSH.
+          Read-only, capped in size, and only for connections you tick "Expose to MCP" on.
+        </p>
+      </div>
+      <div class="flex-1 min-w-0 max-w-2xl space-y-3">
+        <div class="flex items-center justify-between gap-4">
+          <label for="mcp-enabled" class="text-xs cursor-pointer">
+            Enable the MCP server
+            <span v-if="mcp?.enabled" class="ml-2 text-[11px]" :class="mcp.running ? 'text-emerald-500' : 'text-destructive'">
+              {{ mcp.running ? 'Listening' : (mcp.error || 'Not running') }}
+            </span>
+          </label>
+          <Switch id="mcp-enabled" :model-value="mcp?.enabled ?? false" @update:model-value="setMcpEnabled" />
+        </div>
+
+        <div class="flex items-center justify-between gap-4">
+          <label for="mcp-redact" class="text-xs text-muted-foreground cursor-pointer">
+            Mask obvious secrets (bearer tokens, api_key=…, passwords) in what the agent receives
+          </label>
+          <Switch id="mcp-redact" :model-value="mcpRedact" @update:model-value="saveMcpRedact" />
+        </div>
+        <SavedTick :visible="mcpSaved" />
+
+        <template v-if="mcp?.enabled">
+          <p class="text-xs text-muted-foreground">
+            Only while Tailspin is open. Register it once with Claude Code:
+          </p>
+          <div class="flex items-start gap-2">
+            <pre class="flex-1 min-w-0 overflow-x-auto rounded-md border border-border bg-muted/40 px-2.5 py-2 text-[11px] font-mono whitespace-pre-wrap break-all">{{ mcp.claudeCodeCommand }}</pre>
+            <Button variant="outline" size="sm" class="h-8 shrink-0" @click="copyMcp(mcp.claudeCodeCommand, 'command')">
+              {{ mcpCopied === 'command' ? 'Copied' : 'Copy' }}
+            </Button>
+          </div>
+          <div class="flex items-center gap-2">
+            <Button variant="ghost" size="sm" class="h-7 text-xs" @click="copyMcp(mcp.jsonConfig, 'json')">
+              {{ mcpCopied === 'json' ? 'Copied JSON' : 'Copy JSON for other MCP clients' }}
+            </Button>
+          </div>
+          <p class="text-[11px] text-muted-foreground">
+            The command points at this install; re-copy it if you move the app.
+            Then tell your agent about it, e.g. in CLAUDE.md: "Use the tailspin MCP tools to read server logs; never ssh for logs."
+          </p>
+        </template>
+      </div>
+    </section>
+
+    <Separator />
+
     <!-- Updates -->
     <section class="flex items-start gap-6 py-5">
       <div class="w-52 shrink-0">
@@ -220,7 +273,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, h, type FunctionalComponent } from 'vue'
-import { StorageAPI, FileAPI, ConfigAPI } from '@/lib/backend'
+import { StorageAPI, FileAPI, ConfigAPI, McpAPI } from '@/lib/backend'
 import { useForgeConnectionStore } from '@/stores/useForgeConnectionStore'
 import { useUserStore } from '@/stores/useUserStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
@@ -233,8 +286,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Check } from 'lucide-vue-next'
+import type { McpStatus } from '$/mcp'
 
 const userStore = useUserStore()
 const connectionStore = useConnectionStore()
@@ -251,6 +306,10 @@ const notifyOnErrors = ref(true)
 const notifySaved = ref(false)
 const showDeleteConnectionsDialog = ref(false)
 const showDeleteConfigDialog = ref(false)
+const mcp = ref<McpStatus | null>(null)
+const mcpRedact = ref(true)
+const mcpSaved = ref(false)
+const mcpCopied = ref<'command' | 'json' | null>(null)
 
 // Transient "Saved" confirmation shown under a control
 const SavedTick: FunctionalComponent<{ visible: boolean }> = (props) =>
@@ -275,7 +334,26 @@ onMounted(async () => {
   sshDefaultBytes.value = await StorageAPI.Get('ssh.numberOfBytes', 500 * 1024) as number
   notifyOnErrors.value = await StorageAPI.Get('app.notifyOnErrors', true) !== false
   hasLegacyConfig.value = await ConfigAPI.HasLegacy()
+  mcp.value = await McpAPI.GetStatus()
+  mcpRedact.value = await StorageAPI.Get('app.mcpRedact', true) !== false
 })
+
+async function setMcpEnabled(enabled: boolean) {
+  mcp.value = await McpAPI.SetEnabled(enabled)
+  flash(mcpSaved)
+}
+
+async function saveMcpRedact(enabled: boolean) {
+  mcpRedact.value = enabled
+  await StorageAPI.Set('app.mcpRedact', enabled)
+  flash(mcpSaved)
+}
+
+async function copyMcp(text: string, which: 'command' | 'json') {
+  await navigator.clipboard.writeText(text)
+  mcpCopied.value = which
+  setTimeout(() => { if (mcpCopied.value === which) mcpCopied.value = null }, 2000)
+}
 
 async function exportConfig() {
   const result = await ConfigAPI.Export()
